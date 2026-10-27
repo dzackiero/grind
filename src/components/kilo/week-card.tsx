@@ -10,8 +10,20 @@ import { TypeTag } from "./type-tag";
 import { PHASE_LABEL } from "./workout-types";
 
 /** One plan week: phase, segmented progress, totals and the workout list. */
-export function WeekCard({ week, progress, current, totalWeeks }: { week: Week; progress: Progress; current?: boolean; totalWeeks: number }) {
-  const stats = weekStats(week, progress);
+export function WeekCard({
+  week,
+  progress,
+  current,
+  totalWeeks,
+  actualKm,
+}: {
+  week: Week;
+  progress: Progress;
+  current?: boolean;
+  totalWeeks: number;
+  actualKm?: Record<string, number>;
+}) {
+  const stats = weekStats(week, progress, actualKm);
   const label = week.index === totalWeeks ? "Race week" : PHASE_LABEL[week.phase];
   return (
     <Card className={cn(current && "border-line-strong")} id={`week-${week.index}`}>

@@ -8,17 +8,25 @@ import { WeekStrip } from "@/components/kilo/week-strip";
 import { WorkoutCard } from "@/components/kilo/workout-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDuration } from "@/lib/plan";
-import { nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
-import { getViewerToday, requireViewerPlan } from "@/server/queries";
+import { RecoveryCard } from "@/components/kilo/recovery-card";
+import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
+import { getViewerActuals, getViewerIntervals, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Today · Kilo" };
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const [{ plan, progress }, today, { date }] = await Promise.all([requireViewerPlan(), getViewerToday(), searchParams]);
+  const [{ plan, progress }, today, { date }, actuals, wellness, intervals] = await Promise.all([
+    requireViewerPlan(),
+    getViewerToday(),
+    searchParams,
+    getViewerActuals(),
+    getViewerWellness(),
+    getViewerIntervals(),
+  ]);
   const selected = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
   const week = weekFor(plan, selected);
   const workouts = workoutsOn(plan, selected);
-  const stats = weekStats(week, progress);
+  const stats = weekStats(week, progress, actualKm(actuals));
   const upNext = nextWorkout(plan, progress, selected);
   const toRace = daysUntil(today, plan.raceDate);
   const beforeStart = selected < plan.startDate;
@@ -37,7 +45,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           </div>
         )}
         {workouts.length ? (
-          workouts.map((w) => <WorkoutCard key={w.id} workout={w} status={statusOf(progress, w)} />)
+          workouts.map((w) => <WorkoutCard key={w.id} workout={w} status={statusOf(progress, w)} actual={actuals[w.id]} />)
         ) : (
           <Card>
             <CardHeader>
@@ -82,6 +90,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           </CardContent>
         </Card>
       </Link>
+
+      <RecoveryCard wellness={wellness} connected={intervals.connected} />
 
       <Card>
         <CardContent className="grid grid-cols-2 gap-4">

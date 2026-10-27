@@ -54,6 +54,24 @@ export function mainPace(w: Workout): string | null {
   return null;
 }
 
+/** "just now", "5 min ago", "3 h ago", "2 days ago" */
+export function timeAgo(iso: string, now = Date.now()) {
+  const min = Math.round((now - Date.parse(iso)) / 60_000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `${h} h ago`;
+  const d = Math.round(h / 24);
+  return `${d} day${d === 1 ? "" : "s"} ago`;
+}
+
+/** 5:32 per km from metres and seconds */
+export function paceFrom(distanceM: number | null, seconds: number | null) {
+  if (!distanceM || !seconds) return null;
+  const secPerKm = seconds / (distanceM / 1000);
+  return `${Math.floor(secPerKm / 60)}:${String(Math.round(secPerKm % 60)).padStart(2, "0")}`;
+}
+
 export function formatDurationShort(sec: number) {
   if (sec >= 60 && sec % 60 === 0) return `${sec / 60} min`;
   if (sec > 60) return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;

@@ -18,9 +18,60 @@ export const athleteProfile = pgTable("athlete_profile", {
   userId: userId().primaryKey(),
   intervalsAthleteId: text("intervals_athlete_id"),
   intervalsApiKeyEnc: text("intervals_api_key_enc"),
+  /** Athlete name from intervals.icu, shown in Settings to confirm the right account */
+  intervalsAthleteName: text("intervals_athlete_name"),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  /** Last sync error, shown in Settings until the next successful sync */
+  lastSyncError: text("last_sync_error"),
   timezone: text("timezone").notNull().default("UTC"),
   ...timestamps,
 });
+
+/** Activities synced from intervals.icu (runs, strength, anything the watch recorded). */
+export const activity = pgTable(
+  "activity",
+  {
+    userId: userId(),
+    /** intervals.icu activity id, e.g. "i12345678" */
+    id: text("id").notNull(),
+    /** Local date of the start, YYYY-MM-DD */
+    date: date("date", { mode: "string" }).notNull(),
+    startLocal: text("start_local").notNull(),
+    type: text("type").notNull(),
+    name: text("name"),
+    distanceM: real("distance_m"),
+    movingTimeSec: integer("moving_time_sec"),
+    elapsedTimeSec: integer("elapsed_time_sec"),
+    avgHr: real("avg_hr"),
+    maxHr: real("max_hr"),
+    trainingLoad: real("training_load"),
+    elevationGainM: real("elevation_gain_m"),
+    raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.id] }), index("activity_user_date").on(t.userId, t.date)],
+);
+
+/** Daily wellness from intervals.icu (Huawei Health sends HRV, resting HR, sleep). */
+export const wellness = pgTable(
+  "wellness",
+  {
+    userId: userId(),
+    date: date("date", { mode: "string" }).notNull(),
+    restingHr: real("resting_hr"),
+    hrv: real("hrv"),
+    sleepSecs: integer("sleep_secs"),
+    sleepScore: real("sleep_score"),
+    readiness: real("readiness"),
+    weightKg: real("weight_kg"),
+    /** Fitness (CTL) and fatigue (ATL) as intervals.icu computes them */
+    ctl: real("ctl"),
+    atl: real("atl"),
+    raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.date] })],
+);
 
 /** One training plan. Each user has at most one active plan; older ones are archived. */
 export const plan = pgTable(

@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDuration, formatPace } from "@/lib/plan";
-import { weekFor, weekStats } from "@/lib/plan-view";
-import { getViewerToday, requireViewerPlan } from "@/server/queries";
+import { actualKm, weekFor, weekStats } from "@/lib/plan-view";
+import { getViewerActuals, getViewerToday, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Plan · Kilo" };
 
@@ -23,9 +23,10 @@ const ZONES = [
 ] as const;
 
 export default async function PlanPage() {
-  const [{ plan, progress }, today] = await Promise.all([requireViewerPlan(), getViewerToday()]);
+  const [{ plan, progress }, today, actuals] = await Promise.all([requireViewerPlan(), getViewerToday(), getViewerActuals()]);
   const current = weekFor(plan, today);
-  const chart = plan.weeks.map((w) => ({ week: w.index, planned: w.targetKm, done: weekStats(w, progress).kmDone }));
+  const real = actualKm(actuals);
+  const chart = plan.weeks.map((w) => ({ week: w.index, planned: w.targetKm, done: weekStats(w, progress, real).kmDone }));
   const totalKm = plan.weeks.reduce((s, w) => s + w.targetKm, 0);
   const doneKm = chart.reduce((s, w) => s + w.done, 0);
   const totalWorkouts = plan.weeks.reduce((s, w) => s + w.workouts.length, 0);
@@ -91,7 +92,7 @@ export default async function PlanPage() {
 
       <section className="flex flex-col gap-4" aria-label="Weeks">
         {plan.weeks.map((w) => (
-          <WeekCard key={w.index} week={w} progress={progress} current={w.index === current.index} totalWeeks={plan.weeks.length} />
+          <WeekCard key={w.index} week={w} progress={progress} current={w.index === current.index} totalWeeks={plan.weeks.length} actualKm={real} />
         ))}
       </section>
       <p className="text-muted-foreground text-center text-xs">Total {km(Math.round(totalKm))} over {plan.weeks.length} weeks.</p>
