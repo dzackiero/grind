@@ -12,9 +12,20 @@ export function strengthBlock(phase: Phase): StrengthBlock {
   return { base: "foundation", build: "strength", peak: "power", taper: "maintenance", recovery: "foundation" }[phase] as StrengthBlock;
 }
 
-/** Which sessions to schedule for a given number of sessions per week (same split as Runna). */
+/**
+ * Which sessions to schedule for a given number of sessions per week.
+ * 1–3 follow Runna's split; 4 is an upper/lower split twice; 5 adds a Full Body day.
+ */
 export function weeklySplit(sessions: number): Focus[] {
-  return ([[], ["full"], ["legs_core", "upper"], ["legs_core", "upper", "full"]] as Focus[][])[sessions] ?? [];
+  const splits: Focus[][] = [
+    [],
+    ["full"],
+    ["legs_core", "upper"],
+    ["legs_core", "upper", "full"],
+    ["legs_core", "upper", "legs_core", "upper"],
+    ["legs_core", "upper", "full", "legs_core", "upper"],
+  ];
+  return splits[sessions] ?? [];
 }
 
 interface Move {

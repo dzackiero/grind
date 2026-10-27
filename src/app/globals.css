@@ -4,122 +4,224 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Kilo design system → shadcn theme.
+ * shadcn's semantic variables carry the Kilo palette; Kilo-only tokens (workout types, plates, tiers)
+ * are added beside them. Source of truth: kilo-ds/project/tokens.json.
+ */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+  --font-display: var(--font-archivo);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Kilo extras */
+  --color-subtle: var(--ink-subtle);
+  --color-line-strong: var(--line-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-on-type: var(--on-type);
+  --color-type-easy: var(--type-easy);
+  --color-type-tempo: var(--type-tempo);
+  --color-type-intervals: var(--type-intervals);
+  --color-type-hills: var(--type-hills);
+  --color-type-long: var(--type-long);
+  --color-type-race: var(--type-race);
+  --color-type-strength: var(--type-strength);
+  --color-type-recovery: var(--type-recovery);
+  --color-type-easy-mark: var(--type-easy-mark);
+  --color-type-tempo-mark: var(--type-tempo-mark);
+  --color-type-intervals-mark: var(--type-intervals-mark);
+  --color-type-hills-mark: var(--type-hills-mark);
+  --color-type-long-mark: var(--type-long-mark);
+  --color-type-race-mark: var(--type-race-mark);
+  --color-type-strength-mark: var(--type-strength-mark);
+  --color-type-recovery-mark: var(--type-recovery-mark);
+  --color-plate-red: var(--plate-red);
+  --color-plate-blue: var(--plate-blue);
+  --color-plate-yellow: var(--plate-yellow);
+  --color-plate-green: var(--plate-green);
+  --color-plate-white: var(--plate-white);
+
+  /* radius-md 12px rows, radius-xl 20px cards */
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Light theme */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 1rem;
+  --background: #f3f4ef;
+  --foreground: #121410;
+  --card: #ffffff;
+  --card-foreground: #121410;
+  --popover: #ffffff;
+  --popover-foreground: #121410;
+  --primary: #c8f135;
+  --primary-foreground: #121410;
+  --secondary: #eef0e9;
+  --secondary-foreground: #121410;
+  --muted: #eef0e9;
+  --muted-foreground: #565c51;
+  --accent: #eef0e9;
+  --accent-foreground: #121410;
+  --destructive: #c42b2b;
+  --border: #dcdfd5;
+  --input: #9aa08f;
+  --ring: #4c6a00;
+  --chart-1: #c8f135;
+  --chart-2: #9aa08f;
+  --chart-3: #4c6a00;
+  --chart-4: #6e4fe6;
+  --chart-5: #1f72d6;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #121410;
+  --sidebar-primary: #c8f135;
+  --sidebar-primary-foreground: #121410;
+  --sidebar-accent: #eef0e9;
+  --sidebar-accent-foreground: #121410;
+  --sidebar-border: #dcdfd5;
+  --sidebar-ring: #4c6a00;
+
+  --ink-subtle: #646a5e;
+  --line-strong: #9aa08f;
+  --accent-ink: #4c6a00;
+  --accent-soft: #edf8c6;
+  --success: #1b8a4b;
+  --warning: #9a6700;
+  --on-type: #10120e;
+  --type-easy: #5ed28c;
+  --type-tempo: #ffc23d;
+  --type-intervals: #ff7a45;
+  --type-hills: #d69a62;
+  --type-long: #b49cff;
+  --type-race: #ff5c7a;
+  --type-strength: #6eb6ff;
+  --type-recovery: #4fd6cf;
+  --type-easy-mark: #1e9a55;
+  --type-tempo-mark: #a06c00;
+  --type-intervals-mark: #d9461a;
+  --type-hills-mark: #9a5f2c;
+  --type-long-mark: #6e4fe6;
+  --type-race-mark: #d21f47;
+  --type-strength-mark: #1f72d6;
+  --type-recovery-mark: #0e8c86;
+  /* PR plates: coloured like competition bumper plates */
+  --plate-red: #e0393e;
+  --plate-blue: #2f6fdb;
+  --plate-yellow: #f2c230;
+  --plate-green: #22914a;
+  --plate-white: #e6e8e3;
 }
 
+/* Dark theme (default) */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0d0f0c;
+  --foreground: #f0f2eb;
+  --card: #171a16;
+  --card-foreground: #f0f2eb;
+  --popover: #171a16;
+  --popover-foreground: #f0f2eb;
+  --primary: #c8f135;
+  --primary-foreground: #121410;
+  --secondary: #22261f;
+  --secondary-foreground: #f0f2eb;
+  --muted: #22261f;
+  --muted-foreground: #a7ad9f;
+  --accent: #22261f;
+  --accent-foreground: #f0f2eb;
+  --destructive: #ff6b6b;
+  --border: #2c3129;
+  --input: #4a5244;
+  --ring: #c8f135;
+  --chart-1: #c8f135;
+  --chart-2: #4a5244;
+  --chart-3: #c8f135;
+  --chart-4: #b49cff;
+  --chart-5: #6eb6ff;
+  --sidebar: #171a16;
+  --sidebar-foreground: #f0f2eb;
+  --sidebar-primary: #c8f135;
+  --sidebar-primary-foreground: #121410;
+  --sidebar-accent: #22261f;
+  --sidebar-accent-foreground: #f0f2eb;
+  --sidebar-border: #2c3129;
+  --sidebar-ring: #c8f135;
+
+  --ink-subtle: #8b9185;
+  --line-strong: #4a5244;
+  --accent-ink: #c8f135;
+  --accent-soft: #263011;
+  --success: #5ed28c;
+  --warning: #ffc23d;
+  --type-easy-mark: #5ed28c;
+  --type-tempo-mark: #ffc23d;
+  --type-intervals-mark: #ff7a45;
+  --type-hills-mark: #d69a62;
+  --type-long-mark: #b49cff;
+  --type-race-mark: #ff5c7a;
+  --type-strength-mark: #6eb6ff;
+  --type-recovery-mark: #4fd6cf;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Big numbers and titles: Archivo, slightly expanded, tabular digits */
+  .font-display {
+    font-stretch: 110%;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Uppercase label above a stat */
+  .kilo-label {
+    @apply text-subtle text-[11px] leading-[14px] font-semibold tracking-[0.08em] uppercase;
   }
 }

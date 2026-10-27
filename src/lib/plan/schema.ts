@@ -39,8 +39,8 @@ export const PlanInputSchema = z
     runDays: z.array(WeekdaySchema).min(3).max(6),
     longRunDay: WeekdaySchema,
     strength: z.object({
-      sessionsPerWeek: z.number().int().min(0).max(3),
-      days: z.array(WeekdaySchema).max(3),
+      sessionsPerWeek: z.number().int().min(0).max(5),
+      days: z.array(WeekdaySchema).max(5),
       equipment: z.enum(["gym", "bodyweight"]),
     }),
     intensity: IntensitySchema,

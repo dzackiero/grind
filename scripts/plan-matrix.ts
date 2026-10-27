@@ -22,7 +22,10 @@ for (const goal of ["5k", "10k", "half", "marathon"] as const)
           currentWeeklyKm: { beginner: 10, intermediate: 25, advanced: 45 }[experience],
           runDays,
           longRunDay: "sun",
-          strength: { sessionsPerWeek: 2, days: ["mon", "thu"], equipment: "gym" },
+          strength:
+            runDays.length >= 5
+              ? { sessionsPerWeek: 5, days: ["mon", "tue", "wed", "thu", "fri"], equipment: "gym" }
+              : { sessionsPerWeek: 2, days: ["mon", "thu"], equipment: "gym" },
         });
         plans++;
         const r = validatePlan(plan);

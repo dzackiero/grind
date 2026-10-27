@@ -101,6 +101,19 @@ describe("every template combination is valid", () => {
         }
 });
 
+describe("4–5 strength sessions", () => {
+  it.each([4, 5])("schedules %i sessions a week with leg days apart", (n) => {
+    const days = (["mon", "tue", "wed", "thu", "sat"] as const).slice(0, n);
+    const plan = generatePlan({ ...base, strength: { sessionsPerWeek: n, days: [...days], equipment: "gym" } });
+    expect(validatePlan(plan).errors).toEqual([]);
+    const week = plan.weeks[4].workouts.filter((w) => w.kind === "strength");
+    expect(week).toHaveLength(n);
+    const focuses = week.map((w) => (w.kind === "strength" ? w.focus : ""));
+    expect(focuses.filter((f) => f === "upper")).toHaveLength(2);
+    expect(focuses.filter((f) => f === "legs_core")).toHaveLength(2);
+  });
+});
+
 describe("validatePlan catches bad edits", () => {
   it("rejects back-to-back hard days", () => {
     const plan = generatePlan(base);

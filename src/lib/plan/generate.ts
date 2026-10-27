@@ -132,6 +132,10 @@ function assignStrength(focuses: ReturnType<typeof weeklySplit>, days: Weekday[]
       if (day === longDay) score += 2;
       if (prev === longDay) score += 1;
     });
+    // With 4–5 sessions there are two leg days: keep them apart
+    const legDays = p.filter((_, i) => focuses[i] !== "upper");
+    for (let a = 0; a < legDays.length; a++)
+      for (let b = a + 1; b < legDays.length; b++) if (circularDayGap(legDays[a], legDays[b]) === 1) score += 2;
     if (score < bestScore) {
       bestScore = score;
       best = p;
