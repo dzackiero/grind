@@ -1,0 +1,34 @@
+<!-- @dsCard height=288 -->
+<!doctype html><html><head><meta charset="utf-8"><title>Kilo cover</title><style>
+  html,body{margin:0;background:var(--bg)}
+  .cv{position:relative;width:960px;height:288px;overflow:hidden;background:var(--bg)}
+  .cv svg{position:absolute;inset:0}
+  .lime{fill:var(--accent)} .blue{fill:var(--type-strength)} .purple{fill:var(--type-long)} .orange{fill:var(--type-intervals)}
+  .cut{fill:var(--bg)} .rimline{fill:none;stroke:var(--accent);stroke-width:8} .hub{fill:var(--accent)}
+  .rimline2{fill:none;stroke:var(--type-long);stroke-width:6}
+  .r-lg{rx:var(--radius-lg)}
+  .txt{position:absolute;left:40px;bottom:36px;max-width:440px}
+  .name{font:800 120px/.92 var(--font-display);font-stretch:112%;letter-spacing:-.03em;color:var(--ink);margin:0}
+  .tag{font:400 14px/20px var(--font-body);color:var(--ink-muted);margin:8px 0 0}
+</style></head><body>
+<div class="cv">
+<!--
+  blocks: accent 240x228, type-strength 164x128, type-long 164x184, type-intervals 304x84; radius-lg corners
+  arrangement: one tall lime slab with satellites, bleeding off the top, right and bottom edges, all right of x=480
+  pattern: literal motif, weight plates cut from the blocks, because Kilo means kilometers and kilograms
+  scales: gaps space-4 (16px), corners radius-lg (20px), plate rings at 8px and 6px strokes
+-->
+<svg width="960" height="288" viewBox="0 0 960 288">
+  <rect class="lime r-lg" x="560" y="-20" width="240" height="228"/>
+  <rect class="blue r-lg" x="816" y="-20" width="164" height="128"/>
+  <rect class="purple r-lg" x="816" y="124" width="164" height="184"/>
+  <rect class="orange r-lg" x="496" y="224" width="304" height="84"/>
+  <circle class="cut" cx="680" cy="96" r="70"/>
+  <circle class="rimline" cx="680" cy="96" r="48"/>
+  <circle class="hub" cx="680" cy="96" r="14"/>
+  <circle class="cut" cx="898" cy="116" r="40"/>
+  <circle class="rimline2" cx="898" cy="116" r="24"/>
+</svg>
+<div class="txt"><h1 class="name">Kilo</h1><p class="tag">Run the kilometers. Lift the kilos. One plan for both.</p></div>
+</div>
+</body></html>
