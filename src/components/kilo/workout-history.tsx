@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Activity, Dumbbell, Footprints } from "lucide-react";
 import { formatPace } from "@/lib/plan";
-import type { HistoryEntry, HistoryFilters } from "@/server/progress/history-list";
+import type { HistoryEntry, HistoryFilters, MonthTotals } from "@/server/progress/history-list";
 
 const months = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(2020, i, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" }));
 const selectClass = "border-input bg-background h-10 w-full rounded-md border px-3 text-sm";
@@ -26,6 +26,9 @@ function pageUrl(filters: HistoryFilters, page: number) {
   params.set("page", String(page));
   return `/progress?${params}`;
 }
+const GENERIC_TITLES: Record<string, string> = { Run: "Outdoor run", TrailRun: "Trail run", VirtualRun: "Indoor run", Treadmill: "Indoor run" };
+/** An unnamed watch recording is shown as "Outdoor run" / "Indoor run" instead of the raw type. */
+function titleOf(entry: HistoryEntry) { return entry.title === entry.type ? GENERIC_TITLES[entry.type] ?? entry.title : entry.title; }
 function WorkoutCard({ entry }: { entry: HistoryEntry }) {
   const Icon = entry.kind === "run" ? Footprints : entry.kind === "strength" ? Dumbbell : Activity;
   const time = localTime(entry.startLocal);
@@ -33,7 +36,7 @@ function WorkoutCard({ entry }: { entry: HistoryEntry }) {
   return <article className="border-border bg-card flex gap-4 rounded-xl border p-4 sm:p-5">
     <div className="bg-secondary text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg"><Icon className="size-5" aria-hidden="true" /></div>
     <div className="min-w-0 flex-1">
-      <h3 className="font-semibold">{entry.title}</h3>
+      <h3 className="font-semibold">{titleOf(entry)}</h3>
       <p className="text-muted-foreground mt-1 text-sm">{dateLabel(entry.date)}{time ? ` · ${time}` : ""}</p>
       {entry.historyTitle && entry.historyTitle !== entry.title && <p className="text-muted-foreground mt-1 text-sm">{entry.historyTitle}</p>}
       {entry.focus && <p className="text-muted-foreground mt-1 text-sm">{entry.focus}</p>}
@@ -46,7 +49,7 @@ function WorkoutCard({ entry }: { entry: HistoryEntry }) {
   </article>;
 }
 
-export function WorkoutHistory({ result, filters }: { result: { entries: HistoryEntry[]; years: number[]; page: number; hasNext: boolean }; filters: HistoryFilters }) {
+export function WorkoutHistory({ result, filters }: { result: { entries: HistoryEntry[]; years: number[]; page: number; hasNext: boolean; totals: Record<string, MonthTotals> }; filters: HistoryFilters }) {
   const groups = new Map<string, HistoryEntry[]>();
   for (const entry of result.entries) { const key = entry.date.slice(0, 7); groups.set(key, [...(groups.get(key) || []), entry]); }
   return <div className="flex flex-col gap-6">
@@ -59,7 +62,11 @@ export function WorkoutHistory({ result, filters }: { result: { entries: History
     </form>
     {result.entries.length === 0 ? <div className="border-border rounded-xl border border-dashed p-8 text-center"><p className="font-medium">No workouts found</p><p className="text-muted-foreground mt-1 text-sm">Try different filters, or sync your activities to see them here.</p></div> : Array.from(groups, ([key, entries]) => {
       const [year, month] = key.split("-");
-      return <section key={key} className="flex flex-col gap-3"><h2 className="text-lg font-bold">{months[Number(month) - 1]} {year}</h2>{entries.map((entry) => <WorkoutCard key={entry.id} entry={entry} />)}</section>;
+      const total = result.totals[key];
+      return <section key={key} className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-4"><h2 className="text-lg font-bold">{months[Number(month) - 1]} {year}</h2>{total && total.distanceM > 0 && <span className="text-muted-foreground text-sm font-medium">{(total.distanceM / 1000).toFixed(1)} km</span>}</div>
+        {total && <p className="text-muted-foreground -mt-1 text-sm">{total.count} {total.count === 1 ? "activity" : "activities"}{total.movingTimeSec > 0 ? ` · ${duration(total.movingTimeSec)}` : ""}</p>}
+        {entries.map((entry) => <WorkoutCard key={entry.id} entry={entry} />)}</section>;
     })}
     {(result.page > 1 || result.hasNext) && <nav aria-label="Workout history pages" className="flex items-center justify-between gap-4 text-sm"><div>{result.page > 1 && <Link className="underline underline-offset-4" href={pageUrl(filters, result.page - 1)}>Previous</Link>}</div><span className="text-muted-foreground">Page {result.page}</span><div>{result.hasNext && <Link className="underline underline-offset-4" href={pageUrl(filters, result.page + 1)}>Next</Link>}</div></nav>}
   </div>;

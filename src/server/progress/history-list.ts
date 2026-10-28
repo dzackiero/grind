@@ -3,6 +3,7 @@ import type { DB } from "../db/client";
 
 export type HistoryFilters = { type?: string; year?: number; month?: number; page?: number };
 export type HistoryEntry = { id: string; date: string; startLocal: string | null; type: string; kind: string; title: string; historyTitle: string | null; focus: string | null; distanceM: number | null; movingTimeSec: number | null };
+export type MonthTotals = { count: number; distanceM: number; movingTimeSec: number };
 const PAGE_SIZE = 50;
 
 /** Returns at most one page of the viewer's history, without loading activity payloads. */
@@ -28,11 +29,15 @@ export async function listWorkoutHistory(db: DB, userId: string, filters: Histor
       SELECT 1 FROM workout_activity wa WHERE wa.user_id = h.user_id AND wa.history_id = h.id
     )`;
   const condition = sql`WHERE 1=1 ${type ? sql`AND kind = ${type}` : sql``} ${year ? sql`AND EXTRACT(YEAR FROM date) = ${year}` : sql``} ${month ? sql`AND EXTRACT(MONTH FROM date) = ${month}` : sql``}`;
-  const [result, yearsResult] = await Promise.all([
+  const [result, yearsResult, totalsResult] = await Promise.all([
     db.execute(sql`SELECT id, to_char(date, 'YYYY-MM-DD') AS date, "startLocal", type, kind, title, "historyTitle", focus, "distanceM", "movingTimeSec" FROM (${source}) entries ${condition} ORDER BY date DESC, "startLocal" DESC NULLS LAST, id DESC LIMIT ${PAGE_SIZE + 1} OFFSET ${(page - 1) * PAGE_SIZE}`),
     db.execute(sql`SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM (${source}) entries ORDER BY year DESC`),
+    // Month totals cover every matching entry, not only the current page
+    db.execute(sql`SELECT to_char(date, 'YYYY-MM') AS month, COUNT(*)::integer AS count, COALESCE(SUM("distanceM"), 0)::float AS "distanceM", COALESCE(SUM("movingTimeSec"), 0)::float AS "movingTimeSec" FROM (${source}) entries ${condition} GROUP BY 1`),
   ]);
   const rows = (result as { rows: HistoryEntry[] }).rows;
-  return { entries: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE, page, years: (yearsResult as { rows: { year: number }[] }).rows.map((r) => r.year) };
+  const totals: Record<string, MonthTotals> = {};
+  for (const r of (totalsResult as { rows: (MonthTotals & { month: string })[] }).rows) totals[r.month] = { count: r.count, distanceM: r.distanceM, movingTimeSec: r.movingTimeSec };
+  return { entries: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE, page, years: (yearsResult as { rows: { year: number }[] }).rows.map((r) => r.year), totals };
 }
 
