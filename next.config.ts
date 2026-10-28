@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   turbopack: { root: __dirname },
   // PGlite ships WebAssembly; keep it out of the bundle
   serverExternalPackages: ["@electric-sql/pglite"],
+  experimental: {
+    // Pages are rendered per request (they read the signed-in athlete), and Next 15 keeps none of them in the
+    // browser's router cache by default, so every tap waited on the server. Keeping a visited or prefetched page
+    // for 30 s makes switching tabs instant. Saving a change, syncing or router.refresh() clears the cache, so
+    // the athlete's own edits show at once; an edit made elsewhere (Claude over MCP) shows within 30 s.
+    staleTimes: { dynamic: 30, static: 30 },
+  },
   async headers() {
     return [
       {
