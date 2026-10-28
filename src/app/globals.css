@@ -228,6 +228,92 @@
   }
 }
 
+/* Brand loader: the rim turns, the hub beats. Each part rotates or scales around its own centre. */
+@keyframes brand-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes brand-beat {
+  0%,
+  100% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+@keyframes brand-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes brand-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.brand-loader-rim {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-spin 1.6s linear infinite;
+}
+.brand-loader-hub {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-beat 1.6s ease-in-out infinite;
+}
+/* For page loads: stay invisible for a moment so a quick load never flashes the animation */
+.brand-loader-delayed {
+  opacity: 0;
+  animation: brand-appear 0.2s ease-out 0.3s forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-loader-rim,
+  .brand-loader-hub {
+    animation: none;
+  }
+  .brand-loader-delayed {
+    animation-duration: 0.01s;
+  }
+}
+
+/* Opening screen of the installed app. Hidden unless the inline script in the root layout switched it on
+   before the first paint (see lib/launch-splash.ts), so the page never shows first and then gets covered. */
+#launch-splash {
+  display: none;
+}
+html[data-splash] #launch-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  /* Same dark as the app icon and the system splash, whichever theme the app uses */
+  background: #0d0f0c;
+  transition: opacity 0.3s ease;
+}
+html[data-splash] #launch-splash .brand-loader {
+  animation: brand-pop 0.5s ease-out both;
+}
+html[data-splash="out"] #launch-splash {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-splash] #launch-splash .brand-loader {
+    animation: none;
+  }
+}
+
 @layer utilities {
   /* Big numbers and titles: Archivo, slightly expanded, tabular digits */
   .font-display {

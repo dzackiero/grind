@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { LaunchSplash } from "@/components/kilo/launch-splash";
 import { PwaRegister } from "@/components/kilo/pwa-register";
+import { LAUNCH_SPLASH_SCRIPT } from "@/lib/launch-splash";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -28,7 +30,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Decides before the first paint whether the installed app shows its opening animation */}
+        <script dangerouslySetInnerHTML={{ __html: LAUNCH_SPLASH_SCRIPT }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${archivo.variable} font-sans`}>
+        <LaunchSplash />
         {/* Dark first; users can switch to light or follow the system */}
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
