@@ -6,7 +6,7 @@
  * It never stores pages, API responses or anything else from the signed-in app: those hold a person's private
  * training data and must always come from the server. Bump VERSION to drop everything this worker cached.
  */
-const VERSION = "kilo-v2";
+const VERSION = "grind-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 
@@ -23,7 +23,8 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("kilo-") && key !== STATIC_CACHE).map((key) => caches.delete(key))))
+      // The app was called Kilo before Grind: caches from either name, other than the current one, are obsolete
+      .then((keys) => Promise.all(keys.filter((key) => /^(kilo|grind)-/.test(key) && key !== STATIC_CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });

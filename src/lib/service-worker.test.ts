@@ -40,12 +40,13 @@ function worker(options: { keys?: string[]; offline?: Response; storageFails?: b
 }
 
 describe("service worker", () => {
-  it("only deletes obsolete Grind caches", async () => {
-    const w = worker({ keys: ["kilo-v0-static", "another-app-cache"] });
+  it("only deletes obsolete Grind caches, including the ones from when the app was called Kilo", async () => {
+    const w = worker({ keys: ["kilo-v2-static", "grind-v1-static", "grind-v2-static", "another-app-cache"] });
     let work: Promise<unknown> = Promise.resolve();
     w.handlers.activate({ waitUntil: (promise: Promise<unknown>) => { work = promise; } });
     await work;
-    expect(w.deleted).toEqual(["kilo-v0-static"]);
+    // The current cache (grind-v2-static) stays, and so does anything that isn't ours
+    expect(w.deleted).toEqual(["kilo-v2-static", "grind-v1-static"]);
   });
 
   it("serves a fetched asset even when cache storage is full", async () => {

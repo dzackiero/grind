@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..900&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap");
 
-/* Kilo components. Every colour comes from tokens.css. Prefix: k- */
+/* Grind components. Every colour comes from tokens.css. Prefix: k- */
 
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 22px; -webkit-font-smoothing: antialiased; }
 .k-pad { padding: var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-start; }

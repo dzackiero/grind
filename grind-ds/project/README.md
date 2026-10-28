@@ -1,6 +1,6 @@
-# Kilo
+# Grind
 
-Kilo is a training app for hybrid athletes: one plan for running and strength, built on data synced from intervals.icu, with Claude as an optional coach through an MCP connector. The name covers both halves: kilometers and kilograms.
+Grind is a training app for hybrid athletes: one plan for running and strength, built on data synced from intervals.icu, with Claude as an optional coach through an MCP connector. The name is the daily grind: showing up for the work, one session at a time. It is also a coffee word, since Grind is one of the CUP (Coffee Unite People) apps. The mark is a lime weight plate with a coffee bean on it.
 
 This system is the single source for every screen. Build with the tokens and `k-` component classes here; do not introduce new colours, radii or type sizes.
 
@@ -69,7 +69,7 @@ Lucide-style outline icons, 1.75 stroke, rounded caps, 22px in navigation and 18
 
 ## Coach (Claude via MCP)
 
-Plans are built by Kilo's engine and shaped by Claude. Any change Claude makes appears as a PlanChange card with a one-line reason, and the athlete accepts or keeps their plan. Coach copy follows the voice above and always cites the data it used (HRV, last week's km, a missed session).
+Plans are built by Grind's engine and shaped by Claude. Any change Claude makes appears as a PlanChange card with a one-line reason, and the athlete accepts or keeps their plan. Coach copy follows the voice above and always cites the data it used (HRV, last week's km, a missed session).
 
 ## Accessibility
 

@@ -8,7 +8,7 @@ One training plan for running and strength. Grind builds a plan for a 5K, 10K, h
 
 ## Stack
 
-Next.js 15 (App Router), TypeScript, Tailwind and shadcn/ui, Postgres on Neon with Drizzle, Better Auth (email sign-in and the OAuth server for MCP), the official MCP TypeScript SDK. The design system lives in [`kilo-ds/`](kilo-ds).
+Next.js 15 (App Router), TypeScript, Tailwind and shadcn/ui, Postgres on Neon with Drizzle, Better Auth (email sign-in and the OAuth server for MCP), the official MCP TypeScript SDK. The design system lives in [`grind-ds/`](grind-ds).
 
 ## Run it locally
 
