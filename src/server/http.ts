@@ -1,5 +1,6 @@
 import "server-only";
 import { ZodError } from "zod";
+import { PlanEditError } from "@/lib/plan";
 import { UnauthorizedError } from "./auth";
 import { IntervalsError } from "./intervals/client";
 import { PlanValidationError } from "./plans/service";
@@ -12,6 +13,7 @@ export function errorResponse(error: unknown): Response {
       { error: "Some fields are invalid.", issues: error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) },
       { status: 400 },
     );
+  if (error instanceof PlanEditError) return Response.json({ error: error.message }, { status: 409 });
   if (error instanceof PlanValidationError)
     return Response.json(
       { error: "The plan didn't pass its safety checks.", errors: error.result.errors, warnings: error.result.warnings },

@@ -1,11 +1,29 @@
+import { cimd } from "@better-auth/cimd";
+import { fetchClientMetadataResource } from "@better-auth/cimd/node";
+import { mcp } from "@better-auth/mcp";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { jwt } from "better-auth/plugins";
 import type { DB } from "../db/client";
-import { account, session, user, verification } from "../db/schema";
+import * as schema from "../db/schema";
+
+/** Where this app is served. Used as the OAuth issuer and to build the MCP resource URL. */
+export function appUrl() {
+  return (process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+}
+
+/** The protected resource identifier Claude's tokens are bound to. */
+export function mcpResource() {
+  return `${appUrl()}/api/mcp`;
+}
 
 /**
- * Better Auth instance for a database. Email + password always; Google when its keys are set.
- * The MCP OAuth plugin gets added here later.
+ * Better Auth for a database: email + password, optional Google, and Kilo as an OAuth server for MCP.
+ *
+ * Following Better Auth's MCP docs:
+ *  - jwt()  signs access tokens and serves /jwks
+ *  - mcp()  is the OAuth 2.1 provider (sign-in page, consent page, tokens, discovery)
+ *  - cimd() lets clients like Claude identify themselves with a metadata URL instead of pre-registering
  */
 export function createAuth(db: DB, plugins: BetterAuthPlugin[] = []) {
   const google =
@@ -14,11 +32,25 @@ export function createAuth(db: DB, plugins: BetterAuthPlugin[] = []) {
       : undefined;
 
   return betterAuth({
-    database: drizzleAdapter(db, { provider: "pg", schema: { user, session, account, verification } }),
+    database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true, minPasswordLength: 8 },
     socialProviders: google,
     session: { expiresIn: 60 * 60 * 24 * 30 },
-    plugins,
+    plugins: [
+      jwt(),
+      mcp({
+        loginPage: "/sign-in",
+        consentPage: "/consent",
+        resource: mcpResource(),
+        scopes: ["openid", "profile", "email", "offline_access", "plan:read", "plan:write"],
+        // Claude can identify itself by metadata URL (cimd below) or register itself the older way.
+        // Registration only creates a client record: nothing is shared until the user approves it on /consent.
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+      }),
+      cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" }),
+      ...plugins,
+    ],
   });
 }
 

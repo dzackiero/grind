@@ -200,6 +200,24 @@ export async function getActivities(db: DB, userId: string, ids: string[]) {
     .where(and(eq(activity.userId, userId), inArray(activity.id, ids)));
 }
 
+/** Synced activities between two dates (inclusive), newest first. */
+export async function listActivitiesBetween(db: DB, userId: string, from: string, to: string) {
+  return db
+    .select()
+    .from(activity)
+    .where(and(eq(activity.userId, userId), gte(activity.date, from), lte(activity.date, to)))
+    .orderBy(desc(activity.startLocal));
+}
+
+/** Daily wellness between two dates (inclusive), newest first. */
+export async function listWellnessBetween(db: DB, userId: string, from: string, to: string) {
+  return db
+    .select()
+    .from(wellness)
+    .where(and(eq(wellness.userId, userId), gte(wellness.date, from), lte(wellness.date, to)))
+    .orderBy(desc(wellness.date));
+}
+
 /** Latest wellness up to a date, plus the 7-day HRV and resting HR averages before it for context. */
 export async function getWellnessSummary(db: DB, userId: string, today: string) {
   const rows = await db

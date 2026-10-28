@@ -28,7 +28,7 @@ export const PlanInputSchema = z
     /** First day the athlete can train. Defaults to today. */
     startDate: isoDate,
     experience: ExperienceSchema,
-    currentWeeklyKm: z.number().min(0).max(250),
+    currentWeeklyKm: z.number().min(0, "Weekly distance can't be negative.").max(250, "Weekly distance must be 250 km or less."),
     /** Recent race or time trial, used for paces. Leave out to estimate from experience. */
     recentRace: z
       .object({
@@ -36,11 +36,11 @@ export const PlanInputSchema = z
         timeSec: z.number().min(150).max(8 * 3600),
       })
       .optional(),
-    runDays: z.array(WeekdaySchema).min(3).max(6),
+    runDays: z.array(WeekdaySchema).min(3, "Pick at least 3 run days.").max(6, "Pick at most 6 run days."),
     longRunDay: WeekdaySchema,
     strength: z.object({
-      sessionsPerWeek: z.number().int().min(0).max(5),
-      days: z.array(WeekdaySchema).max(5),
+      sessionsPerWeek: z.number().int().min(0).max(5, "Pick at most 5 strength sessions a week."),
+      days: z.array(WeekdaySchema).max(5, "Pick at most 5 strength days."),
       equipment: z.enum(["gym", "bodyweight"]),
     }),
     intensity: IntensitySchema,

@@ -35,7 +35,7 @@ export const IntervalsActivitySchema = z
     total_elevation_gain: num,
     source: z.string().nullish(),
   })
-  .passthrough();
+  .loose();
 export type IntervalsActivity = z.infer<typeof IntervalsActivitySchema>;
 
 export const IntervalsWellnessSchema = z
@@ -50,7 +50,7 @@ export const IntervalsWellnessSchema = z
     ctl: num,
     atl: num,
   })
-  .passthrough();
+  .loose();
 export type IntervalsWellness = z.infer<typeof IntervalsWellnessSchema>;
 
 export interface IntervalsAthlete {

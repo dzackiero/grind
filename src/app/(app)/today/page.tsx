@@ -8,20 +8,22 @@ import { WeekStrip } from "@/components/kilo/week-strip";
 import { WorkoutCard } from "@/components/kilo/workout-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDuration } from "@/lib/plan";
+import { PlanChangeCard } from "@/components/kilo/plan-change-card";
 import { RecoveryCard } from "@/components/kilo/recovery-card";
 import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
-import { getViewerActuals, getViewerIntervals, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
+import { getViewerActuals, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Today · Kilo" };
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const [{ plan, progress }, today, { date }, actuals, wellness, intervals] = await Promise.all([
+  const [{ plan, progress }, today, { date }, actuals, wellness, intervals, suggestions] = await Promise.all([
     requireViewerPlan(),
     getViewerToday(),
     searchParams,
     getViewerActuals(),
     getViewerWellness(),
     getViewerIntervals(),
+    getViewerPendingChanges(),
   ]);
   const selected = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
   const week = weekFor(plan, selected);
@@ -34,6 +36,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   return (
     <div className="flex flex-col gap-6">
       <WeekStrip week={week} totalWeeks={plan.weeks.length} progress={progress} today={today} selected={selected} />
+
+      {suggestions[0] && <PlanChangeCard change={suggestions[0]} />}
 
       <section className="flex flex-col gap-3" aria-label={selected === today ? "Today's workouts" : `Workouts on ${longDate(selected)}`}>
         {selected !== today && (

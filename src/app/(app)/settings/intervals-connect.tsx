@@ -138,7 +138,7 @@ export function IntervalsConnect({ status, counts }: { status: IntervalsStatus; 
             <AlertDialogFooter>
               <AlertDialogCancel>Keep connected</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-destructive hover:bg-destructive/90 text-white"
+                variant="destructive"
                 onClick={() =>
                   run(async () => {
                     await call("DELETE", "/api/intervals");

@@ -5,6 +5,8 @@ import { getCurrentUser } from "./auth";
 import { getDb } from "./db";
 import { getActivities, getIntervalsStatus, getWellnessSummary } from "./intervals/sync";
 import type { Actuals } from "@/lib/plan-view";
+import { describeChanges } from "@/lib/plan";
+import { listPendingChanges } from "./plans/changes";
 import { getActivePlan } from "./plans/service";
 import { getTimezone, todayIn } from "./profile/service";
 
@@ -64,6 +66,13 @@ export const getViewerActuals = cache(async (): Promise<Actuals> => {
 export const getViewerWellness = cache(async () => {
   const user = await requireViewer();
   return getWellnessSummary(await getDb(), user.id, await getViewerToday());
+});
+
+/** Coach suggestions waiting for an answer, ready to show. */
+export const getViewerPendingChanges = cache(async () => {
+  const user = await requireViewer();
+  const pending = await listPendingChanges(await getDb(), user.id);
+  return pending.map((c) => ({ id: c.id, summary: c.summary, lines: describeChanges(c.changes) }));
 });
 
 export const getViewerIntervals = cache(async () => {

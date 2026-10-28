@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { authClient } from "@/lib/auth-client";
+import { authClient, inOAuthFlow } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -34,6 +34,8 @@ export function AuthForm({ initialMode, googleEnabled }: { initialMode: Mode; go
         );
         return;
       }
+      // When Claude sent the user here, Better Auth continues the authorization (consent) by itself
+      if (inOAuthFlow()) return;
       // New accounts go to onboarding; the app layout sends people without a plan there too
       router.push(mode === "sign-up" ? "/onboarding" : "/today");
       router.refresh();

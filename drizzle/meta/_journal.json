@@ -15,6 +15,13 @@
       "when": 1793113200311,
       "tag": "0001_intervals_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793115228128,
+      "tag": "0002_mcp_oauth",
+      "breakpoints": true
     }
   ]
 }
