@@ -4,6 +4,9 @@ import { OnboardingForm } from "./onboarding-form";
 
 export const metadata = { title: "Build your plan · Kilo" };
 
+// These pages read the signed-in athlete, so they are rendered per request and never during the build.
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage() {
   const user = await requireViewer();
   const existing = await getViewerPlan();

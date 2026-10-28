@@ -22,6 +22,9 @@ const SCOPE_LABELS: Record<string, { title: string; detail: string }> = {
   email: { title: "Know who you are", detail: "Your name and email, to link this to your account." },
 };
 
+// These pages read the signed-in athlete, so they are rendered per request and never during the build.
+export const dynamic = "force-dynamic";
+
 export default async function ConsentPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const query = new URLSearchParams();

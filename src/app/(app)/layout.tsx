@@ -6,6 +6,9 @@ import { getIntervalsStatus } from "@/server/intervals/sync";
 import { requireViewer, requireViewerPlan } from "@/server/queries";
 
 /** Signed-in app with a plan: header, page, bottom tabs. */
+// These pages read the signed-in athlete, so they are rendered per request and never during the build.
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireViewer();
   await requireViewerPlan();

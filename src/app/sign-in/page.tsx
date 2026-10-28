@@ -5,6 +5,9 @@ import { AuthForm } from "./auth-form";
 
 export const metadata = { title: "Sign in · Kilo" };
 
+// These pages read the signed-in athlete, so they are rendered per request and never during the build.
+export const dynamic = "force-dynamic";
+
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ mode?: string; sig?: string }> }) {
   const { mode, sig } = await searchParams;
   // Someone arriving from Claude has a signed query; keep them here so the flow can continue after sign-in
