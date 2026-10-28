@@ -1,13 +1,14 @@
 import "server-only";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
+import { waitUntil } from "@vercel/functions";
 import { getDb } from "../db";
 import { createAuth, type Auth } from "./create-auth";
 
 const globalForAuth = globalThis as unknown as { kiloAuth?: Promise<Auth> };
 
 export function getAuth(): Promise<Auth> {
-  globalForAuth.kiloAuth ??= getDb().then((db) => createAuth(db, [nextCookies()]));
+  globalForAuth.kiloAuth ??= getDb().then((db) => createAuth(db, [nextCookies()], (task) => waitUntil(task)));
   return globalForAuth.kiloAuth;
 }
 

@@ -5,6 +5,10 @@ import { countSynced, getIntervalsStatus } from "@/server/intervals/sync";
 import { listConnectedApps } from "@/server/mcp/connections";
 import { requireViewer } from "@/server/queries";
 import { ClaudeConnect } from "./claude-connect";
+import { EmailSettings } from "./email-settings";
+import { getEmailPreferences } from "@/server/email/preferences";
+import { emailConfigured } from "@/server/email/transport";
+import { getTimezone } from "@/server/profile/service";
 import { InstallApp } from "./install-app";
 import { IntervalsConnect } from "./intervals-connect";
 
@@ -14,6 +18,7 @@ export default async function SettingsPage() {
   const user = await requireViewer();
   const db = await getDb();
   const [status, counts, apps] = await Promise.all([getIntervalsStatus(db, user.id), countSynced(db, user.id), listConnectedApps(db, user.id)]);
+  const [preferences, timezone] = await Promise.all([getEmailPreferences(db, user.id), getTimezone(db, user.id)]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,6 +57,9 @@ export default async function SettingsPage() {
             Signed in as <b className="text-foreground">{user.email}</b>
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <EmailSettings preferences={preferences} timezone={timezone} verified={user.emailVerified} email={user.email} enabled={emailConfigured()} />
+        </CardContent>
       </Card>
     </div>
   );

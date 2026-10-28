@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { authClient, inOAuthFlow } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up";
 
-export function AuthForm({ initialMode, googleEnabled }: { initialMode: Mode; googleEnabled: boolean }) {
+export function AuthForm({ initialMode, googleEnabled, emailEnabled = false }: { initialMode: Mode; googleEnabled: boolean; emailEnabled?: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +26,21 @@ export function AuthForm({ initialMode, googleEnabled }: { initialMode: Mode; go
     const name = String(form.get("name") ?? "").trim();
     startTransition(async () => {
       const result =
-        mode === "sign-up" ? await authClient.signUp.email({ name, email, password }) : await authClient.signIn.email({ email, password });
+        mode === "sign-up" ? await authClient.signUp.email({ name, email, password, callbackURL: `/sign-in${window.location.search}` }) : await authClient.signIn.email({ email, password });
       if (result.error) {
+        if (result.error.code === "EMAIL_NOT_VERIFIED") {
+          router.push(`/verify-email?${new URLSearchParams({ email, returnTo: `/sign-in${window.location.search}` })}`);
+          return;
+        }
         setError(
           result.error.status === 401
             ? "That email and password don't match. Check them and try again."
             : (result.error.message ?? "Couldn't sign you in. Try again."),
         );
+        return;
+      }
+      if (mode === "sign-up" && emailEnabled) {
+        router.push(`/verify-email?${new URLSearchParams({ email, returnTo: `/sign-in${window.location.search}` })}`);
         return;
       }
       // When Claude sent the user here, Better Auth continues the authorization (consent) by itself
@@ -80,6 +89,7 @@ export function AuthForm({ initialMode, googleEnabled }: { initialMode: Mode; go
         <Button type="submit" size="lg" disabled={pending}>
           {pending ? "One moment…" : mode === "sign-up" ? "Create account" : "Sign in"}
         </Button>
+        {mode === "sign-in" && emailEnabled && <Link href="/forgot-password" className="text-muted-foreground text-center text-sm underline">Forgot password?</Link>}
       </form>
 
       {googleEnabled && (

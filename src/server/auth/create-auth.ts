@@ -6,6 +6,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { jwt } from "better-auth/plugins";
 import type { DB } from "../db/client";
 import * as schema from "../db/schema";
+import { authEmailOptions, type BackgroundTask } from "../email/auth";
 
 /** Where this app is served. Used as the OAuth issuer and to build the MCP resource URL. */
 export function appUrl() {
@@ -25,7 +26,7 @@ export function mcpResource() {
  *  - mcp()  is the OAuth 2.1 provider (sign-in page, consent page, tokens, discovery)
  *  - cimd() lets clients like Claude identify themselves with a metadata URL instead of pre-registering
  */
-export function createAuth(db: DB, plugins: BetterAuthPlugin[] = []) {
+export function createAuth(db: DB, plugins: BetterAuthPlugin[] = [], background?: BackgroundTask) {
   const google =
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? { google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET } }
@@ -34,6 +35,14 @@ export function createAuth(db: DB, plugins: BetterAuthPlugin[] = []) {
   return betterAuth({
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true, minPasswordLength: 8 },
+    ...authEmailOptions(db, appUrl(), background),
+    rateLimit: {
+      enabled: true,
+      customRules: {
+        "/request-password-reset": { window: 60, max: 3 },
+        "/send-verification-email": { window: 60, max: 3 },
+      },
+    },
     socialProviders: google,
     session: { expiresIn: 60 * 60 * 24 * 30 },
     plugins: [

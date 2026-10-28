@@ -1,0 +1,10 @@
+# Neon email trigger
+
+User approved Neon Functions + scheduled Function Trigger, with Vercel Hobby hosting the existing app and Resend delivering emails. No external scheduler and no Vercel plan upgrade.
+
+The Neon function accepts only authentic Neon scheduled trigger deliveries, then calls a configured HTTPS Vercel origin at `/api/cron/email` with the shared CRON_SECRET. Never follow redirects with the secret or forward upstream response bodies. Use a timeout longer than the endpoint's 240-second batch budget. The existing outbox owns retry and deduplication; timezone decisions stay in the app. Keep the schedule disabled until the deployed endpoint and matching secret have been verified. Do not send production email through the dev database or enable preview schedules implicitly.
+
+- [x] Add real handler tests for trigger authentication, method/path restrictions, public HTTPS target validation, secret handling, redirects, failed requests and successful forwarding.
+- [x] Add the Neon function and `neon.ts` declaration, with an explicit schedule enable flag defaulting to off. Reuse the linked Neon project and preserve existing branch policy.
+- [x] Discover the existing production Vercel URL and Neon branch through connected CLI access. Production is `grind.coffee-unite-people.fun`, Vercel project `grind-cup`, Neon branch `production`. Store scheduler-only configuration in the gitignored `.env.neon-email`. Deploy the function, reject a forged public trigger with HTTP 401, configure Vercel production email env and apply the additive database migration, deploy the app, and pass its authenticated readiness probe.
+- [x] Full suite: 621 tests passed. Typecheck, changed-file lint and independent review passed. Vercel production build and deployment succeeded. Real Neon scheduled invocation at 2026-10-28T10:18:00Z completed successfully at 10:18:01Z (17:18 Jakarta time). Restore the final 15-minute schedule through `neon.ts` with explicit production enablement; dev remains disabled.

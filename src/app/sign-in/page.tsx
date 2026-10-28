@@ -1,15 +1,17 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Logo } from "@/components/kilo/logo";
 import { getCurrentUser } from "@/server/auth";
 import { AuthForm } from "./auth-form";
+import { emailConfigured } from "@/server/email/transport";
 
 export const metadata = { title: "Sign in · Grind" };
 
 // These pages read the signed-in athlete, so they are rendered per request and never during the build.
 export const dynamic = "force-dynamic";
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ mode?: string; sig?: string }> }) {
-  const { mode, sig } = await searchParams;
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ mode?: string; sig?: string; error?: string }> }) {
+  const { mode, sig, error } = await searchParams;
   // Someone arriving from Claude has a signed query; keep them here so the flow can continue after sign-in
   const fromClaude = !!sig;
   if (!fromClaude && (await getCurrentUser())) redirect("/today");
@@ -22,7 +24,10 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           {fromClaude ? "Sign in to your Grind account. Next you'll choose what Claude can see and change." : "Your runs, lifts and habits in one plan. Ground fresh from your watch data."}
         </p>
       </div>
-      <AuthForm initialMode={mode === "sign-up" ? "sign-up" : "sign-in"} googleEnabled={!!process.env.GOOGLE_CLIENT_ID} />
+      {error && ["TOKEN_EXPIRED", "INVALID_TOKEN", "USER_NOT_FOUND"].includes(error.toUpperCase()) && (
+        <p role="alert" className="text-destructive text-sm">This verification link is invalid or expired. <Link href="/verify-email" className="underline">Request another link</Link>.</p>
+      )}
+      <AuthForm initialMode={mode === "sign-up" ? "sign-up" : "sign-in"} googleEnabled={!!process.env.GOOGLE_CLIENT_ID} emailEnabled={emailConfigured()} />
     </main>
   );
 }
