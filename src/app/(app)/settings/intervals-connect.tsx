@@ -105,7 +105,7 @@ export function IntervalsConnect({ status, counts }: { status: IntervalsStatus; 
         <Stat label="Matched" value={counts.matched} />
         <Stat label="Wellness" value={counts.wellnessDays} unit="days" />
       </div>
-      <p className="text-muted-foreground text-sm">{status.lastSyncedAt ? `Last synced ${timeAgo(status.lastSyncedAt)}.` : "Not synced yet."} Kilo syncs the last 60 days when you open the app.</p>
+      <p className="text-muted-foreground text-sm">{status.lastSyncedAt ? `Last synced ${timeAgo(status.lastSyncedAt)}.` : "Not synced yet."} Kilo imports one year of activities and 60 days of wellness. It checks for updates when you open or return to the app, reconnect, and every five minutes while the app is visible and online.</p>
       {(error ?? status.lastSyncError) && (
         <Alert variant="destructive">
           <AlertDescription>{error ?? status.lastSyncError}</AlertDescription>

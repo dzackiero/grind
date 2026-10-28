@@ -14,13 +14,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   await requireViewerPlan();
   const intervals = await getIntervalsStatus(await getDb(), user.id);
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-28">
-      <header className="bg-background sticky top-0 z-10 flex h-14 items-center justify-between">
+    <div className="isolate mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
+      <header className="bg-background sticky top-0 z-30 -mx-4 flex h-14 shrink-0 items-center justify-between border-b px-4">
         <AccountMenu name={user.name} email={user.email} />
         <span className="font-display text-lg font-extrabold">Kilo</span>
         <span className="size-11" aria-hidden />
       </header>
-      {children}
+      <main className="relative z-0 min-w-0 flex-1">{children}</main>
       <TabBar />
       <AutoSync connected={intervals.connected} lastSyncedAt={intervals.lastSyncedAt} />
     </div>

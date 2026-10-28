@@ -16,7 +16,7 @@ const TABS = [
 export function TabBar() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Main" className="bg-card fixed inset-x-0 bottom-0 z-20 border-t pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="Main" className="bg-card fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)]">
       <ul className="mx-auto grid max-w-md grid-cols-4 px-2 pt-2 pb-2.5">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);

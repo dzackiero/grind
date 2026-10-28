@@ -1,4 +1,5 @@
-import { formatPace, type Workout } from "@/lib/plan";
+import { formatPace } from "@/lib/plan/paces";
+import type { Workout } from "@/lib/plan/schema";
 
 const DAY_MS = 86_400_000;
 
