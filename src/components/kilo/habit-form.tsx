@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,10 +30,12 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
   const [name, setName] = useState(habit?.name ?? "");
   const [icon, setIcon] = useState<string>(habit?.icon ?? "check");
   const [days, setDays] = useState<Weekday[]>(habit?.days ?? [...WEEKDAYS]);
+  const [ideasOpen, setIdeasOpen] = useState(false);
   const [saving, startTransition] = useTransition();
   const editing = !!habit?.id;
 
   const reset = () => {
+    setIdeasOpen(false);
     setName(habit?.name ?? "");
     setIcon(habit?.icon ?? "check");
     setDays(habit?.days ?? [...WEEKDAYS]);
@@ -71,9 +75,16 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
         </DialogHeader>
 
         {!editing && (
-          <div className="flex flex-col gap-2">
-            <span className="kilo-label">Ideas</span>
-            <div className="flex flex-wrap gap-2">
+          <Collapsible open={ideasOpen} onOpenChange={setIdeasOpen} className="flex flex-col gap-2">
+            <CollapsibleTrigger asChild>
+              <Button type="button" variant="outline" className="group h-11 justify-between">
+                <span className="flex items-center gap-2">
+                  <Lightbulb /> Need ideas?
+                </span>
+                <ChevronDown className="transition-transform group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="flex flex-wrap gap-2 pt-1">
               {HABIT_SUGGESTIONS.map((s) => (
                 <Button
                   key={s.name}
@@ -85,13 +96,14 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
                     setName(s.name);
                     setIcon(s.icon);
                     setDays(s.days);
+                    setIdeasOpen(false);
                   }}
                 >
                   <HabitIconView icon={s.icon} className="size-4" /> {s.name}
                 </Button>
               ))}
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         <div className="flex flex-col gap-2">
