@@ -9,7 +9,9 @@ config({ path: [".env.local", ".env"], quiet: true });
 const base = (process.argv[2] ?? "http://localhost:3000").replace(/\/$/, "");
 const email = `mcp-smoke-${Date.now()}@kilo.test`;
 const password = randomBytes(12).toString("base64url");
-const REDIRECT = "http://127.0.0.1:8976/callback";
+// Against a real https site the test client uses an https callback, like Claude; locally a loopback one
+const HTTPS = base.startsWith("https://");
+const REDIRECT = HTTPS ? "https://example.com/oauth/callback" : "http://127.0.0.1:8976/callback";
 let failures = 0;
 let cookie = "";
 /** Deletes this run's athlete (cascades to plans and tokens) and the OAuth clients it registered. Safe to call twice. */
@@ -86,7 +88,7 @@ async function connect(scope: string, name: string) {
     client_name: name,
     redirect_uris: [REDIRECT],
     token_endpoint_auth_method: "none",
-    application_type: "native",
+    application_type: HTTPS ? "web" : "native",
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
     scope,
@@ -152,12 +154,12 @@ check("Athlete has a plan", plan.status === 201, `status ${plan.status}`);
 const FULL = "openid offline_access plan:read plan:write";
 const a = await connect(FULL, "Kilo smoke test");
 check("Client registers itself", a.regStatus === 200 || a.regStatus === 201, `status ${a.regStatus}`);
-check("Authorize sends the signed-in athlete to the consent page", a.consentUrl.pathname === "/consent" && a.consentUrl.searchParams.has("sig"), `status ${a.authStatus} location "${a.location.slice(0, 120)}" ${a.authBody}`);
+check("Authorize sends the signed-in athlete to the consent page", a.consentUrl.pathname === "/consent" && a.consentUrl.searchParams.has("sig"), `status ${a.authStatus} location "${decodeURIComponent(a.location).slice(0, 400)}"`);
 
 const page = await fetch(a.consentUrl, { headers: { cookie } });
 // React puts <!-- --> between adjacent text nodes; ignore them when reading the page
 const html = (await page.text()).replace(/<!-- -->/g, "");
-const wanted = ["Connect Kilo smoke test to Kilo?", "See your training", "Suggest changes to your plan", "127.0.0.1:8976"];
+const wanted = ["Connect Kilo smoke test to Kilo?", "See your training", "Suggest changes to your plan", new URL(REDIRECT).host];
 const missingText = wanted.filter((t) => !html.includes(t));
 check("Consent page shows who is asking and what for", page.status === 200 && !missingText.length, `status ${page.status}, missing: ${missingText.join(" | ") || "nothing"}`);
 const tampered = new URL(a.consentUrl);
