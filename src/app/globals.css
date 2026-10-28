@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Kilo design system → shadcn theme.
- * shadcn's semantic variables carry the Kilo palette; Kilo-only tokens (workout types, plates, tiers)
+ * Grind design system → shadcn theme.
+ * shadcn's semantic variables carry the Grind palette; Grind-only tokens (workout types, plates, tiers)
  * are added beside them. Source of truth: kilo-ds/project/tokens.json.
  */
 
@@ -47,7 +47,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Kilo extras */
+  /* Grind extras */
   --color-subtle: var(--ink-subtle);
   --color-line-strong: var(--line-strong);
   --color-accent-ink: var(--accent-ink);

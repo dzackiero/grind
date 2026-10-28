@@ -26,7 +26,7 @@ export function ConsentForm({ clientName, redirectHost, userName, items }: { cli
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-2xl font-extrabold">Connect {clientName} to Kilo?</CardTitle>
+        <CardTitle className="font-display text-2xl font-extrabold">Connect {clientName} to Grind?</CardTitle>
         <CardDescription>
           Signed in as {userName}.{redirectHost ? <> After you choose, you&apos;ll return to <b className="text-foreground">{redirectHost}</b>.</> : null}
         </CardDescription>
@@ -58,7 +58,7 @@ export function ConsentForm({ clientName, redirectHost, userName, items }: { cli
             Don&apos;t allow
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">You can disconnect {clientName} any time in Kilo → Settings.</p>
+        <p className="text-muted-foreground text-xs">You can disconnect {clientName} any time in Grind → Settings.</p>
       </CardContent>
     </Card>
   );

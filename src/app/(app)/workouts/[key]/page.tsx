@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ key: stri
   const { key } = await params;
   const { plan } = await requireViewerPlan();
   const found = findWorkout(plan, decodeURIComponent(key));
-  return { title: found ? `${found.workout.title} · Kilo` : "Workout · Kilo" };
+  return { title: found ? `${found.workout.title} · Grind` : "Workout · Grind" };
 }
 
 export default async function WorkoutPage({ params }: { params: Promise<{ key: string }> }) {

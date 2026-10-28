@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { pwaInstall } from "@/lib/pwa-install";
 
 /**
- * Registers the service worker (public/sw.js) so Kilo can be installed and shows an offline page.
+ * Registers the service worker (public/sw.js) so Grind can be installed and shows an offline page.
  * Production only: in development a worker would keep serving old files and make changes look broken.
  */
 export function PwaRegister() {

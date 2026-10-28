@@ -82,7 +82,7 @@ export function createIntervalsClient(apiKey: string, athleteId = "0", fetchImpl
     let res: Response;
     try {
       res = await fetchImpl(`${INTERVALS_BASE}${path}`, {
-        headers: { authorization: auth, accept: "application/json", "user-agent": "Kilo/0.1 (+https://github.com)" },
+        headers: { authorization: auth, accept: "application/json", "user-agent": "Grind/0.1 (+https://github.com)" },
         signal: AbortSignal.timeout(20_000),
         cache: "no-store",
       });

@@ -15,7 +15,7 @@ export function registerHabitTools(server: McpServer, { db, userId, scopes }: Mc
     {
       title: "Get habits",
       description:
-        "The small daily habits the athlete tracks (stretching, sleep, water and so on): the days each is scheduled, how many were ticked this week, the current streak in days, and how well the last days went. Use it to see how they look after themselves between sessions, for example when recovery is poor or before adding load. You can read habits but not tick them off; the athlete does that in Kilo.",
+        "The small daily habits the athlete tracks (stretching, sleep, water and so on): the days each is scheduled, how many were ticked this week, the current streak in days, and how well the last days went. Use it to see how they look after themselves between sessions, for example when recovery is poor or before adding load. You can read habits but not tick them off; the athlete does that in Grind.",
       inputSchema: z.object({ days: z.number().int().min(7).max(60).default(28).describe("How many days back to judge adherence, up to 60") }),
       annotations: { readOnlyHint: true },
     },

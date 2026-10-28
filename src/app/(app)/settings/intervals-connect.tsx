@@ -105,7 +105,7 @@ export function IntervalsConnect({ status, counts }: { status: IntervalsStatus; 
         <Stat label="Matched" value={counts.matched} />
         <Stat label="Wellness" value={counts.wellnessDays} unit="days" />
       </div>
-      <p className="text-muted-foreground text-sm">{status.lastSyncedAt ? `Last synced ${timeAgo(status.lastSyncedAt)}.` : "Not synced yet."} Kilo imports one year of activities and 60 days of wellness. It checks for updates when you open or return to the app, reconnect, and every five minutes while the app is visible and online.</p>
+      <p className="text-muted-foreground text-sm">{status.lastSyncedAt ? `Last synced ${timeAgo(status.lastSyncedAt)}.` : "Not synced yet."} Grind imports one year of activities and 60 days of wellness. It checks for updates when you open or return to the app, reconnect, and every five minutes while the app is visible and online.</p>
       {(error ?? status.lastSyncError) && (
         <Alert variant="destructive">
           <AlertDescription>{error ?? status.lastSyncError}</AlertDescription>
@@ -133,7 +133,7 @@ export function IntervalsConnect({ status, counts }: { status: IntervalsStatus; 
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Disconnect intervals.icu?</AlertDialogTitle>
-              <AlertDialogDescription>Kilo forgets your API key and deletes the synced activities and wellness. Workouts you completed stay completed.</AlertDialogDescription>
+              <AlertDialogDescription>Grind forgets your API key and deletes the synced activities and wellness. Workouts you completed stay completed.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep connected</AlertDialogCancel>

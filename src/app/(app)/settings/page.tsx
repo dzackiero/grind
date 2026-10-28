@@ -8,7 +8,7 @@ import { ClaudeConnect } from "./claude-connect";
 import { InstallApp } from "./install-app";
 import { IntervalsConnect } from "./intervals-connect";
 
-export const metadata = { title: "Settings · Kilo" };
+export const metadata = { title: "Settings · Grind" };
 
 export default async function SettingsPage() {
   const user = await requireViewer();
@@ -21,7 +21,7 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-semibold">intervals.icu</CardTitle>
-          <CardDescription>Your Huawei watch syncs to intervals.icu. Kilo reads your runs, strength sessions, HRV, resting heart rate and sleep from there.</CardDescription>
+          <CardDescription>Your Huawei watch syncs to intervals.icu. Grind reads your runs, strength sessions, HRV, resting heart rate and sleep from there.</CardDescription>
         </CardHeader>
         <CardContent>
           <IntervalsConnect status={status} counts={counts} />
@@ -30,7 +30,7 @@ export default async function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-semibold">Claude</CardTitle>
-          <CardDescription>Let Claude be your coach. It can read your plan and training, and suggest changes that you accept or decline in Kilo.</CardDescription>
+          <CardDescription>Let Claude be your coach. It can read your plan and training, and suggest changes that you accept or decline in Grind.</CardDescription>
         </CardHeader>
         <CardContent>
           <ClaudeConnect mcpUrl={mcpResource()} isLocal={/^https?:\/\/(localhost|127\.|\[::1\])/.test(mcpResource())} apps={apps} />
@@ -38,8 +38,8 @@ export default async function SettingsPage() {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Install Kilo</CardTitle>
-          <CardDescription>Add Kilo to your home screen. It opens full screen like an app.</CardDescription>
+          <CardTitle className="text-base font-semibold">Install Grind</CardTitle>
+          <CardDescription>Add Grind to your home screen. It opens full screen like an app.</CardDescription>
         </CardHeader>
         <CardContent>
           <InstallApp />

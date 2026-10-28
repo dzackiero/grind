@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { actualKm, statusOf, weekFor, weekStats } from "@/lib/plan-view";
 import { getViewerActuals, getViewerToday, requireViewerPlan } from "@/server/queries";
 
-export const metadata = { title: "Calendar · Kilo" };
+export const metadata = { title: "Calendar · Grind" };
 
 export default async function CalendarPage() {
   const [{ plan, progress }, today, actuals] = await Promise.all([requireViewerPlan(), getViewerToday(), getViewerActuals()]);

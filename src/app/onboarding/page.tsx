@@ -2,7 +2,7 @@ import { Logo } from "@/components/kilo/logo";
 import { getViewerPlan, requireViewer } from "@/server/queries";
 import { OnboardingForm } from "./onboarding-form";
 
-export const metadata = { title: "Build your plan · Kilo" };
+export const metadata = { title: "Build your plan · Grind" };
 
 // These pages read the signed-in athlete, so they are rendered per request and never during the build.
 export const dynamic = "force-dynamic";

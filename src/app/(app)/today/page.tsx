@@ -14,7 +14,7 @@ import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from 
 import { HabitsCard } from "@/components/kilo/habits-card";
 import { getViewerActuals, getViewerHabits, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
 
-export const metadata = { title: "Today · Kilo" };
+export const metadata = { title: "Today · Grind" };
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const [{ plan, progress }, today, { date }, actuals, wellness, intervals, suggestions, habits] = await Promise.all([

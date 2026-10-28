@@ -8,14 +8,14 @@ import { getAuth } from "@/server/auth";
 import { getViewer } from "@/server/queries";
 import { ConsentForm } from "./consent-form";
 
-export const metadata = { title: "Connect to Kilo" };
+export const metadata = { title: "Connect to Grind" };
 
 type Params = Record<string, string | string[] | undefined>;
 
 /** Plain-language meaning of each scope an app can ask for. */
 const SCOPE_LABELS: Record<string, { title: string; detail: string }> = {
   "plan:read": { title: "See your training", detail: "Your plan, workouts, recorded activities, recovery, coaching preferences and any limitations you have shared." },
-  "plan:write": { title: "Suggest changes to your plan", detail: "It can propose workout edits for your approval in Kilo or chat, and save coaching preferences and notes when you ask." },
+  "plan:write": { title: "Suggest changes to your plan", detail: "It can propose workout edits for your approval in Grind or chat, and save coaching preferences and notes when you ask." },
   offline_access: { title: "Stay connected", detail: "So you don't have to approve it again each time." },
   openid: { title: "Know who you are", detail: "Your name and email, to link this to your account." },
   profile: { title: "Know who you are", detail: "Your name and email, to link this to your account." },
@@ -43,10 +43,10 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
         <Logo />
         <Alert variant="destructive">
           <AlertTitle>This link isn&apos;t valid</AlertTitle>
-          <AlertDescription>Go back to Claude and start connecting Kilo again.</AlertDescription>
+          <AlertDescription>Go back to Claude and start connecting Grind again.</AlertDescription>
         </Alert>
         <Button variant="outline" asChild>
-          <a href="/today">Open Kilo</a>
+          <a href="/today">Open Grind</a>
         </Button>
       </main>
     );

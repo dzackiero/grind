@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- this script reads arbitrary JSON from HTTP and MCP responses */
-// End-to-end check of Kilo's OAuth + MCP, playing the part of an MCP client such as Claude.
+// End-to-end check of Grind's OAuth + MCP, playing the part of an MCP client such as Claude.
 // Run the app (pnpm dev or pnpm start), then: pnpm mcp:smoke [baseUrl]
 // Creates a throwaway user and OAuth clients in the database, and deletes them at the end.
 import { createHash, randomBytes } from "node:crypto";
@@ -21,8 +21,8 @@ async function cleanup() {
   await db.connect();
   try {
     await db.query(`delete from "user" where email = $1`, [email]);
-    await db.query(`delete from oauth_client where name like 'Kilo smoke test%'`);
-    const r = await db.query(`select (select count(*) from oauth_client where name like 'Kilo smoke test%')::int as clients, (select count(*) from "user" where email = $1)::int as users`, [email]);
+    await db.query(`delete from oauth_client where name like 'Grind smoke test%'`);
+    const r = await db.query(`select (select count(*) from oauth_client where name like 'Grind smoke test%')::int as clients, (select count(*) from "user" where email = $1)::int as users`, [email]);
     return r.rows[0] as { clients: number; users: number };
   } finally {
     await db.end();
@@ -152,14 +152,14 @@ check("Athlete has a plan", plan.status === 201, `status ${plan.status}`);
 
 // ---- full access client ----
 const FULL = "openid offline_access plan:read plan:write";
-const a = await connect(FULL, "Kilo smoke test");
+const a = await connect(FULL, "Grind smoke test");
 check("Client registers itself", a.regStatus === 200 || a.regStatus === 201, `status ${a.regStatus}`);
 check("Authorize sends the signed-in athlete to the consent page", a.consentUrl.pathname === "/consent" && a.consentUrl.searchParams.has("sig"), `status ${a.authStatus} location "${decodeURIComponent(a.location).slice(0, 400)}"`);
 
 const page = await fetch(a.consentUrl, { headers: { cookie } });
 // React puts <!-- --> between adjacent text nodes; ignore them when reading the page
 const html = (await page.text()).replace(/<!-- -->/g, "");
-const wanted = ["Connect Kilo smoke test to Kilo?", "See your training", "Suggest changes to your plan", new URL(REDIRECT).host];
+const wanted = ["Connect Grind smoke test to Grind?", "See your training", "Suggest changes to your plan", new URL(REDIRECT).host];
 const missingText = wanted.filter((t) => !html.includes(t));
 check("Consent page shows who is asking and what for", page.status === 200 && !missingText.length, `status ${page.status}, missing: ${missingText.join(" | ") || "nothing"}`);
 const tampered = new URL(a.consentUrl);
@@ -176,7 +176,7 @@ check("Token is bound to the MCP address and this athlete", claims.aud === `${ba
 
 // ---- MCP with the token ----
 const init = await rpc(access, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "smoke", version: "1" } }, 1);
-check("MCP initialize works and carries the coaching instructions", init.status === 200 && init.body?.result?.serverInfo?.name === "kilo" && /coach/i.test(init.body?.result?.instructions ?? ""), `status ${init.status}`);
+check("MCP initialize works and carries the coaching instructions", init.status === 200 && init.body?.result?.serverInfo?.name === "grind" && /coach/i.test(init.body?.result?.instructions ?? ""), `status ${init.status}`);
 const list = await rpc(access, "tools/list", {}, 2);
 const names: string[] = (list.body?.result?.tools ?? []).map((t: { name: string }) => t.name);
 const expected = ["get_plan", "get_week", "get_workout", "get_recent_activities", "get_recovery", "propose_plan_changes", "apply_plan_changes", "discard_plan_changes", "write_coach_notes", "get_athlete_context", "validate_plan", "get_plan_diff", "update_workout", "bulk_update_workouts", "set_coaching_preferences", "get_training_summary", "get_workout_compliance", "get_habits"];
@@ -271,13 +271,13 @@ const refreshed = (await refresh.json().catch(() => ({}))) as Record<string, str
 check("A refresh token gives a new access token that works", refresh.status === 200 && !!refreshed.access_token && (await tool(refreshed.access_token, "get_plan")).json?.goal === "half", `status ${refresh.status}`);
 
 // ---- read-only client ----
-const r = await connect("openid plan:read", "Kilo smoke test read-only");
+const r = await connect("openid plan:read", "Grind smoke test read-only");
 const rDone = await finish(r);
 const rTools = ((await rpc(rDone.tokens.access_token, "tools/list", {}, 3)).body?.result?.tools ?? []).map((t: { name: string }) => t.name);
 check("A read-only token sees read tools and no write tools", rTools.includes("get_athlete_context") && rTools.includes("validate_plan") && !["propose_plan_changes", "write_coach_notes", "update_workout", "bulk_update_workouts", "set_coaching_preferences"].some(name => rTools.includes(name)), rTools.join(", "));
 
 // ---- a token with no plan access ----
-const n = await connect("openid", "Kilo smoke test no-plan");
+const n = await connect("openid", "Grind smoke test no-plan");
 const nDone = await finish(n);
 const nRes = await fetch(`${base}/api/mcp`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream", authorization: `Bearer ${nDone.tokens.access_token}` }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) });
 check("A token without plan access is told to ask for more scope", nRes.status === 403 && /insufficient_scope/.test(nRes.headers.get("www-authenticate") ?? ""), `status ${nRes.status}`);

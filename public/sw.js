@@ -1,5 +1,5 @@
 /*
- * Kilo's service worker. It does two small things:
+ * Grind's service worker. It does two small things:
  *   1. Keeps the build's static files (scripts, styles, fonts, icons) on the device so the app opens fast.
  *   2. Shows a friendly offline page when a page can't be loaded because there is no connection.
  *

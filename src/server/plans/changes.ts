@@ -156,7 +156,7 @@ export async function setCoachNotes(db: DB, userId: string, notes: { workoutId: 
   return db.transaction(async (tx) => {
   await lockContext(tx as unknown as DB, userId);
   const saved = await getActivePlan(tx as unknown as DB, userId);
-  if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Kilo first.");
+  if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Grind first.");
   const ids = new Set(saved.plan.weeks.flatMap((w) => w.workouts).map((w) => w.id));
   const missing = notes.filter((n) => !ids.has(n.workoutId)).map((n) => n.workoutId);
   if (missing.length) throw new PlanEditError(`No workout with id: ${missing.join(", ")}. Use get_week to see the ids.`);

@@ -12,11 +12,11 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: ["wdth"] });
 
 export const metadata: Metadata = {
-  title: "Kilo",
+  title: "Grind",
   description: "One plan for running and strength.",
-  applicationName: "Kilo",
+  applicationName: "Grind",
   // iOS home-screen app: opens full screen with a black status bar above the page (no safe-area handling needed)
-  appleWebApp: { capable: true, title: "Kilo", statusBarStyle: "black" },
+  appleWebApp: { capable: true, title: "Grind", statusBarStyle: "black" },
   formatDetection: { telephone: false },
 };
 

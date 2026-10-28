@@ -13,13 +13,13 @@ const TIER_COLOR: Record<TierKey, { fill: string; bar: string }> = {
   lime: { fill: "fill-tier-lime", bar: "[&>[data-slot=progress-indicator]]:bg-tier-lime" },
 };
 
-/** Octagon medal in the tier's colour with the Kilo K. */
+/** Octagon medal in the tier's colour with the Grind K. */
 export function TierMedal({ tier, className }: { tier: TierKey; className?: string }) {
   return (
     <svg viewBox="0 0 56 56" className={cn("size-14 shrink-0", className)} aria-hidden>
       <path d="M20 2h16l14 14v24L36 54H20L6 40V16z" className={TIER_COLOR[tier].fill} />
       <text x="28" y="36" textAnchor="middle" className="fill-on-type font-display text-[22px] font-black">
-        K
+        G
       </text>
     </svg>
   );

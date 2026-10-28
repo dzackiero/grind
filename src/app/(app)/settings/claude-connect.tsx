@@ -61,17 +61,17 @@ export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLoc
           In Claude, open <b className="text-foreground">Settings → Connectors → Add custom connector</b>
         </li>
         <li>Paste this address and connect</li>
-        <li>Sign in to Kilo and choose what Claude can do</li>
+        <li>Sign in to Grind and choose what Claude can do</li>
       </ol>
       <div className="flex gap-2">
-        <Input readOnly value={mcpUrl} aria-label="Kilo connector address" className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+        <Input readOnly value={mcpUrl} aria-label="Grind connector address" className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
         <Button variant="outline" size="icon" onClick={copy} aria-label="Copy address">
           {copied ? <Check /> : <Copy />}
         </Button>
       </div>
       {isLocal && (
         <Alert>
-          <AlertDescription>This address only works on your computer. Claude needs a public https address, so connect it after Kilo is deployed.</AlertDescription>
+          <AlertDescription>This address only works on your computer. Claude needs a public https address, so connect it after Grind is deployed.</AlertDescription>
         </Alert>
       )}
 

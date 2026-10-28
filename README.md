@@ -1,6 +1,6 @@
-# Kilo
+# Grind
 
-One training plan for running and strength. Kilo builds a plan for a 5K, 10K, half marathon or marathon, syncs what your watch recorded from [intervals.icu](https://intervals.icu), ticks off workouts automatically, and lets Claude act as your coach through an MCP connector.
+One training plan for running and strength. Grind builds a plan for a 5K, 10K, half marathon or marathon, syncs what your watch recorded from [intervals.icu](https://intervals.icu), ticks off workouts automatically, and lets Claude act as your coach through an MCP connector.
 
 - **Plans:** rule-based templates (paces from a recent race, phases, long-run progression, hard days spaced apart) with Runna-style strength sessions, checked by a validator.
 - **intervals.icu:** reads runs, strength sessions, resting heart rate, HRV and sleep. Runs are matched to planned workouts.
@@ -42,9 +42,9 @@ Without `DATABASE_URL` the app uses an embedded local Postgres (PGlite) stored i
 
 ## Connect Claude
 
-1. Deploy Kilo and set `BETTER_AUTH_URL` to its public https address.
+1. Deploy Grind and set `BETTER_AUTH_URL` to its public https address.
 2. In Claude, open **Settings → Connectors → Add custom connector** and paste `<your address>/api/mcp`.
-3. Sign in to Kilo and choose what Claude can do. You can disconnect it any time in Kilo → Settings.
+3. Sign in to Grind and choose what Claude can do. You can disconnect it any time in Grind → Settings.
 
 Claude can read your plan, workouts, activities and recovery, and suggest changes. Suggestions only apply after you accept them.
 
@@ -65,10 +65,10 @@ New plans use saved coaching rules to personalize generated session types, day-s
 
 ## Install as an app
 
-Kilo includes a web app manifest, home-screen icons, and an install section in **Settings**. Chrome and Edge offer an install button when eligible; on iPhone and iPad, use Safari → Share → Add to Home Screen.
+Grind includes a web app manifest, home-screen icons, and an install section in **Settings**. Chrome and Edge offer an install button when eligible; on iPhone and iPad, use Safari → Share → Add to Home Screen.
 
 The service worker runs in production only, over HTTPS (or localhost). It caches static assets and a public offline page. Plans, signed-in pages, and API responses always use the network; viewing or editing training offline is not supported.
 
 To check locally, run `pnpm build` followed by `pnpm start`. In browser DevTools, check Application → Manifest and Service Workers, open Settings to try installation, then enable offline mode and reload a page to check the fallback. Disable offline mode and use **Try again** to return. Mobile home-screen installation still needs a check on a real iOS or Android device.
 
-Worker changes keep the `/sw.js` URL and revalidate on registration. Bump `VERSION` in `public/sw.js` when replacing precached content; activation removes obsolete Kilo caches.
+Worker changes keep the `/sw.js` URL and revalidate on registration. Bump `VERSION` in `public/sw.js` when replacing precached content; activation removes obsolete Grind caches.

@@ -40,7 +40,7 @@ export function validateWithCoaching(plan: Plan, profile: Parameters<typeof vali
 /** Read-only preview, shared by MCP validation and persisted proposals. */
 export async function previewPlanChanges(db: DB, userId: string, ops: EditOp[], today: string, expectedRevision?: number) {
   const saved = await getActivePlan(db, userId);
-  if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Kilo first.");
+  if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Grind first.");
   if (expectedRevision !== undefined && saved.revision !== expectedRevision)
     throw new PlanEditError(`Plan revision changed (expected ${expectedRevision}, current ${saved.revision}). Read the plan and propose again.`);
   const coaching = await getCoachingProfile(db, userId);

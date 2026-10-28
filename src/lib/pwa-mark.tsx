@@ -1,5 +1,5 @@
 /**
- * The Kilo mark for app icons: the lime plate with its rim and hub (same drawing as the Logo component),
+ * The Grind mark for app icons: the lime plate with its rim and hub (same drawing as the Logo component),
  * on the dark app background. The plate fills 60% of the icon, inside the safe zone that maskable icons
  * need, so Android can crop the icon to a circle or a squircle without clipping it.
  * Rendered to PNG by next/og, which supports a limited CSS subset: flex layout, borders and radii.

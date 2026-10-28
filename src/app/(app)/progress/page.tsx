@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { HabitsPanel } from "@/components/kilo/habits-panel";
 import { getViewerHabits, getViewerIntervals, getViewerProgress, getViewerToday, requireViewerPlan } from "@/server/queries";
 
-export const metadata = { title: "Progress · Kilo" };
+export const metadata = { title: "Progress · Grind" };
 
 export default async function ProgressPage({ searchParams }: { searchParams: Promise<{ tab?: string; type?: string; year?: string; month?: string; page?: string }> }) {
   const params = await searchParams;

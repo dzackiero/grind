@@ -1,6 +1,6 @@
 import { cn } from "cn";
 
-/** Kilo wordmark with the plate mark (a lime plate with its rim and hub). */
+/** Grind wordmark with the plate mark (a lime plate with its rim and hub). */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
@@ -9,7 +9,7 @@ export function Logo({ className }: { className?: string }) {
         <circle cx="16" cy="16" r="10" fill="none" strokeWidth="3" className="stroke-primary-foreground/25" />
         <circle cx="16" cy="16" r="4" className="fill-primary-foreground" />
       </svg>
-      <span className="font-display text-2xl font-extrabold tracking-tight">Kilo</span>
+      <span className="font-display text-2xl font-extrabold tracking-tight">Grind</span>
     </span>
   );
 }

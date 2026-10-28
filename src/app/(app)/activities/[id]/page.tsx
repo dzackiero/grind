@@ -16,7 +16,7 @@ import { getDb } from "@/server/db";
 import { getActivityDetail } from "@/server/intervals/activity-detail";
 import { requireViewer } from "@/server/queries";
 
-export const metadata = { title: "Activity · Kilo" };
+export const metadata = { title: "Activity · Grind" };
 
 /** "Oct 27, 2026 at 4:33 PM" from the watch's local start time, which has no zone to convert. */
 function startLabel(startLocal: string) {

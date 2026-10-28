@@ -40,7 +40,7 @@ function worker(options: { keys?: string[]; offline?: Response; storageFails?: b
 }
 
 describe("service worker", () => {
-  it("only deletes obsolete Kilo caches", async () => {
+  it("only deletes obsolete Grind caches", async () => {
     const w = worker({ keys: ["kilo-v0-static", "another-app-cache"] });
     let work: Promise<unknown> = Promise.resolve();
     w.handlers.activate({ waitUntil: (promise: Promise<unknown>) => { work = promise; } });

@@ -18,7 +18,7 @@ export function mcpResource() {
 }
 
 /**
- * Better Auth for a database: email + password, optional Google, and Kilo as an OAuth server for MCP.
+ * Better Auth for a database: email + password, optional Google, and Grind as an OAuth server for MCP.
  *
  * Following Better Auth's MCP docs:
  *  - jwt()  signs access tokens and serves /jwks

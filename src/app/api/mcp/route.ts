@@ -21,7 +21,7 @@ function reauthorize(message: string) {
 }
 
 /**
- * Kilo's MCP endpoint. requireMcpAuth checks the OAuth access token (signature, issuer, audience, expiry)
+ * Grind's MCP endpoint. requireMcpAuth checks the OAuth access token (signature, issuer, audience, expiry)
  * and answers unauthenticated requests with the 401 challenge that starts the sign-in flow. We also check the
  * athlete hasn't disconnected the app, then build a server for them with only the tools their scopes allow.
  *
@@ -37,7 +37,7 @@ async function handler(request: Request) {
       if (typeof userId !== "string" || !clientId) return reauthorize("The token is missing its user or app.");
 
       const db = await getDb();
-      if (!(await isGrantActive(db, userId, clientId, Number(claims.iat ?? 0)))) return reauthorize("Access was disconnected. Connect Kilo again.");
+      if (!(await isGrantActive(db, userId, clientId, Number(claims.iat ?? 0)))) return reauthorize("Access was disconnected. Connect Grind again.");
 
       const scopes = new Set(String(claims.scope ?? "").split(" ").filter(Boolean));
       const mcp = createMcpHandler(() => buildMcpServer({ db, userId, scopes }), { onerror: (e) => console.error("[mcp]", e.message) });

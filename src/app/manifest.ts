@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 
-/** Web app manifest: what the browser needs to offer "Install Kilo" and to open it like an app. */
+/** Web app manifest: what the browser needs to offer "Install Grind" and to open it like an app. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Kilo",
-    short_name: "Kilo",
+    name: "Grind",
+    short_name: "Grind",
     description: "One training plan for running and strength, with Claude as your coach.",
     start_url: "/today",
     scope: "/",

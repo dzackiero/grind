@@ -26,7 +26,7 @@ import { registerHabitTools } from "./habit-tools";
 import { mcpText as text, mcpFail as fail, mcpGuard as guard } from "./result";
 
 /*
- * Kilo's MCP server: what Claude can read and change. One server is built per request for the signed-in
+ * Grind's MCP server: what Claude can read and change. One server is built per request for the signed-in
  * athlete, and only with the tools their token's scopes allow:
  *   plan:read  → look at the plan, workouts, runs and recovery
  *   plan:write → suggest changes (applied only after the athlete accepts) and write coach notes
@@ -38,16 +38,16 @@ export interface McpContext {
   scopes: ReadonlySet<string>;
 }
 
-const INSTRUCTIONS = `Kilo is a training app that combines running and strength in one plan. You are the athlete's coach.
+const INSTRUCTIONS = `Grind is a training app that combines running and strength in one plan. You are the athlete's coach.
 
 How to work:
 - Start with get_plan to see today's date, the race, the current week and any waiting suggestions. Use get_week for workout ids.
 - Read get_athlete_context for structured coaching preferences, mandatory constraints and supported strength focuses. Preferences can be negotiated; constraints must not be weakened without explicit athlete approval.
 - Look at the data before advising: get_recent_activities for what they actually ran, get_recovery for resting heart rate and training load.
 - get_habits shows the small habits the athlete tracks (stretching, sleep, water) and how consistent they are. Take it into account when recovery is poor, but don't nag: habits are theirs to tick off, you can only read them.
-- Use the athlete's plan pace zones. Propose changes with propose_plan_changes, update_workout or bulk_update_workouts. Granular custom steps must contain distance or duration and valid pace/effort targets. Kilo recalculates derived totals and validates the entire result.
+- Use the athlete's plan pace zones. Propose changes with propose_plan_changes, update_workout or bulk_update_workouts. Granular custom steps must contain distance or duration and valid pace/effort targets. Grind recalculates derived totals and validates the entire result.
 - get_plan, get_week and get_workout expose planRevision. Use expectedRevision on edits. validate_plan previews without saving; get_plan_diff inspects a stored suggestion. Read the diff and structured warnings before asking for approval.
-- A suggestion changes nothing by itself. Tell the athlete what you suggested and why. They accept it in the Kilo app, or if they agree in this chat, call apply_plan_changes.
+- A suggestion changes nothing by itself. Tell the athlete what you suggested and why. They accept it in the Grind app, or if they agree in this chat, call apply_plan_changes.
 - Never call apply_plan_changes unless the athlete has clearly said yes in this conversation.
 - Use write_coach_notes to explain why a session is in the plan or how to run it. Keep notes to a few sentences.
 - Completed workouts can't be changed. Race day can't be moved.
@@ -57,7 +57,7 @@ const paceRange = (p: { minSecPerKm: number; maxSecPerKm: number }) => `${format
 const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(n * 10) / 10);
 
 export function buildMcpServer({ db, userId, scopes }: McpContext) {
-  const server = new McpServer({ name: "kilo", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "grind", version: "0.1.0" }, { instructions: INSTRUCTIONS });
   registerCoachingTools(server, { db, userId, scopes });
   registerHabitTools(server, { db, userId, scopes });
 
@@ -106,7 +106,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       async () =>
         guard(async () => {
           const { saved, today } = await load();
-          if (!saved) return fail("The athlete has no active plan yet. They need to build one in the Kilo app first.");
+          if (!saved) return fail("The athlete has no active plan yet. They need to build one in the Grind app first.");
           const { plan, progress } = saved;
           const actuals = await actualsFor();
           const real = actualKm(Object.fromEntries(Object.entries(actuals).map(([k, a]) => [k, { activityId: a.id, name: a.name, distanceM: a.distanceM, movingTimeSec: a.movingTimeSec, avgHr: a.avgHr, maxHr: a.maxHr, trainingLoad: a.trainingLoad, elevationGainM: a.elevationGainM }])));
@@ -202,7 +202,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const rows = await listActivitiesBetween(db, userId, from, today);
           if (!rows.length) {
             const status = await getIntervalsStatus(db, userId);
-            return text(status.connected ? `No activities in the last ${days} days.` : "intervals.icu isn't connected, so there's no activity data. The athlete can connect it in Kilo → Settings.");
+            return text(status.connected ? `No activities in the last ${days} days.` : "intervals.icu isn't connected, so there's no activity data. The athlete can connect it in Grind → Settings.");
           }
           return text({
             from,
@@ -262,7 +262,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       {
         title: "Suggest changes to the plan",
         description:
-          "Suggest edits to the plan: move or swap workouts, remove one, turn a run into an easier or different run, or add a run or strength session. Kilo builds the sessions at the athlete's own paces and checks the result against its safety rules; if a rule is broken you get the reason back so you can adjust. Nothing changes yet: the athlete accepts the suggestion in the Kilo app, or you call apply_plan_changes after they agree in chat. A new suggestion replaces any older one still waiting.",
+          "Suggest edits to the plan: move or swap workouts, remove one, turn a run into an easier or different run, or add a run or strength session. Grind builds the sessions at the athlete's own paces and checks the result against its safety rules; if a rule is broken you get the reason back so you can adjust. Nothing changes yet: the athlete accepts the suggestion in the Grind app, or you call apply_plan_changes after they agree in chat. A new suggestion replaces any older one still waiting.",
         inputSchema: z.object({
           summary: z.string().min(5).max(280).describe("One or two plain sentences for the athlete: what changes and why. It is shown on their Today screen."),
           changes: z.array(EditOpSchema).min(1).max(200),
@@ -284,7 +284,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
             diff: result.diff,
             planRevision: result.planRevision,
             coachingRevision: result.coachingRevision,
-            next: "Tell the athlete what you suggested and why. They can accept it on the Today screen in Kilo. If they agree in this chat, call apply_plan_changes with this changeId. Do not apply it before they say yes.",
+            next: "Tell the athlete what you suggested and why. They can accept it on the Today screen in Grind. If they agree in this chat, call apply_plan_changes with this changeId. Do not apply it before they say yes.",
           });
         }),
     );

@@ -11,7 +11,7 @@ import { formatDuration, formatPace } from "@/lib/plan";
 import { actualKm, weekFor, weekStats } from "@/lib/plan-view";
 import { getViewerActuals, getViewerToday, requireViewerPlan } from "@/server/queries";
 
-export const metadata = { title: "Plan · Kilo" };
+export const metadata = { title: "Plan · Grind" };
 
 const ZONES = [
   { key: "E", label: "Easy" },
