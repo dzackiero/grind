@@ -228,19 +228,10 @@
   }
 }
 
-/* Brand loader: the rim turns, the hub beats. Each part rotates or scales around its own centre. */
+/* Brand loader: the rim turns around the plate's centre, the bean stays still. */
 @keyframes brand-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-@keyframes brand-beat {
-  0%,
-  100% {
-    transform: scale(0.8);
-  }
-  50% {
-    transform: scale(1.25);
   }
 }
 @keyframes brand-pop {
@@ -258,14 +249,8 @@
   transform-origin: center;
   animation: brand-spin 1.6s linear infinite;
 }
-.brand-loader-bean {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: brand-beat 1.6s ease-in-out infinite;
-}
 @media (prefers-reduced-motion: reduce) {
-  .brand-loader-rim,
-  .brand-loader-bean {
+  .brand-loader-rim {
     animation: none;
   }
 }
