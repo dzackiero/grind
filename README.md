@@ -55,6 +55,7 @@ The MCP connector also supports structured coaching:
 - `validate_plan` previews without saving; `get_plan_diff` returns the saved before/after and weekly volume changes. The app's suggestion card also shows detailed changes.
 - `set_coaching_preferences` replaces the complete profile using `expectedCoachingRevision`. Preferences produce warnings; constraints block changes. Saving rules does not rewrite existing workouts.
 - `get_training_summary` and `get_workout_compliance` compare recorded training with the active plan, including activities that did not match a planned workout.
+- `get_habits` shows the habits you track (schedule, this week, streak, recent adherence). Claude can read them but not tick them off.
 
 Machine-readable MCP results use `structuredContent` with `success`, `data`, `warnings`, `errors` and, when applicable, `planRevision`. Existing text results and tool names remain available. Workout details include the raw `workout` object alongside readable steps and exercises. Distances use km at workout level and metres in steps; pace is seconds/km, step and rest durations are seconds. Strength exercises support optional numeric `rir` (0–5).
 

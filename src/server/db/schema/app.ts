@@ -191,6 +191,37 @@ export const workoutActivity = pgTable("workout_activity", {
   index("workout_activity_history").on(t.historyId),
 ]);
 
+/** A small daily habit the athlete ticks off, scheduled on some weekdays. Archived habits keep their history. */
+export const habit = pgTable(
+  "habit",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userId(),
+    name: text("name").notNull(),
+    /** A key from HABIT_ICONS in lib/habits.ts */
+    icon: text("icon").notNull().default("check"),
+    /** Weekdays it is scheduled on, "mon" … "sun". The weekly target is how many there are. */
+    days: text("days").array().notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [index("habit_user").on(t.userId)],
+);
+
+/** One tick: the habit was done on this day. Unticking deletes the row. */
+export const habitLog = pgTable(
+  "habit_log",
+  {
+    habitId: uuid("habit_id")
+      .notNull()
+      .references(() => habit.id, { onDelete: "cascade" }),
+    userId: userId(),
+    date: date("date", { mode: "string" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.habitId, t.date] }), index("habit_log_user_date").on(t.userId, t.date)],
+);
+
 /** A change to a plan, proposed by the coach (Claude via MCP) or made by the user. Shown as a PlanChange card. */
 export const planChange = pgTable(
   "plan_change",

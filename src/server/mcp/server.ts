@@ -22,6 +22,7 @@ import { getTimezone, todayIn } from "../profile/service";
 import { getCoachingProfile } from "../profile/coaching";
 import { STRENGTH_FOCUS_LABELS } from "@/lib/plan/strength-focus";
 import { registerCoachingTools } from "./coaching-tools";
+import { registerHabitTools } from "./habit-tools";
 import { mcpText as text, mcpFail as fail, mcpGuard as guard } from "./result";
 
 /*
@@ -43,6 +44,7 @@ How to work:
 - Start with get_plan to see today's date, the race, the current week and any waiting suggestions. Use get_week for workout ids.
 - Read get_athlete_context for structured coaching preferences, mandatory constraints and supported strength focuses. Preferences can be negotiated; constraints must not be weakened without explicit athlete approval.
 - Look at the data before advising: get_recent_activities for what they actually ran, get_recovery for resting heart rate and training load.
+- get_habits shows the small habits the athlete tracks (stretching, sleep, water) and how consistent they are. Take it into account when recovery is poor, but don't nag: habits are theirs to tick off, you can only read them.
 - Use the athlete's plan pace zones. Propose changes with propose_plan_changes, update_workout or bulk_update_workouts. Granular custom steps must contain distance or duration and valid pace/effort targets. Kilo recalculates derived totals and validates the entire result.
 - get_plan, get_week and get_workout expose planRevision. Use expectedRevision on edits. validate_plan previews without saving; get_plan_diff inspects a stored suggestion. Read the diff and structured warnings before asking for approval.
 - A suggestion changes nothing by itself. Tell the athlete what you suggested and why. They accept it in the Kilo app, or if they agree in this chat, call apply_plan_changes.
@@ -57,6 +59,7 @@ const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(
 export function buildMcpServer({ db, userId, scopes }: McpContext) {
   const server = new McpServer({ name: "kilo", version: "0.1.0" }, { instructions: INSTRUCTIONS });
   registerCoachingTools(server, { db, userId, scopes });
+  registerHabitTools(server, { db, userId, scopes });
 
   const load = async () => {
     const [saved, tz] = await Promise.all([getActivePlan(db, userId), getTimezone(db, userId)]);

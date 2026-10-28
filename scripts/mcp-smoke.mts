@@ -179,7 +179,7 @@ const init = await rpc(access, "initialize", { protocolVersion: "2025-06-18", ca
 check("MCP initialize works and carries the coaching instructions", init.status === 200 && init.body?.result?.serverInfo?.name === "kilo" && /coach/i.test(init.body?.result?.instructions ?? ""), `status ${init.status}`);
 const list = await rpc(access, "tools/list", {}, 2);
 const names: string[] = (list.body?.result?.tools ?? []).map((t: { name: string }) => t.name);
-const expected = ["get_plan", "get_week", "get_workout", "get_recent_activities", "get_recovery", "propose_plan_changes", "apply_plan_changes", "discard_plan_changes", "write_coach_notes", "get_athlete_context", "validate_plan", "get_plan_diff", "update_workout", "bulk_update_workouts", "set_coaching_preferences", "get_training_summary", "get_workout_compliance"];
+const expected = ["get_plan", "get_week", "get_workout", "get_recent_activities", "get_recovery", "propose_plan_changes", "apply_plan_changes", "discard_plan_changes", "write_coach_notes", "get_athlete_context", "validate_plan", "get_plan_diff", "update_workout", "bulk_update_workouts", "set_coaching_preferences", "get_training_summary", "get_workout_compliance", "get_habits"];
 check("Full-access token sees all tools", expected.every((n) => names.includes(n)), names.join(", "));
 
 const overview = await tool(access, "get_plan");

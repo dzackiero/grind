@@ -50,6 +50,13 @@
       "when": 1793161595426,
       "tag": "0006_cheerful_unicorn",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793170577717,
+      "tag": "0007_remarkable_tarot",
+      "breakpoints": true
     }
   ]
 }

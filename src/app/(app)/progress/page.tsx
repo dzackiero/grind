@@ -9,18 +9,23 @@ import { TierCard } from "@/components/kilo/tier-card";
 import { WeeklyVolume } from "@/components/kilo/weekly-volume";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getViewerIntervals, getViewerProgress, requireViewerPlan } from "@/server/queries";
+import { HabitsPanel } from "@/components/kilo/habits-panel";
+import { getViewerHabits, getViewerIntervals, getViewerProgress, getViewerToday, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Progress · Kilo" };
 
 export default async function ProgressPage({ searchParams }: { searchParams: Promise<{ tab?: string; type?: string; year?: string; month?: string; page?: string }> }) {
   const params = await searchParams;
-  const performance = params.tab === "performance";
+  const tab: ProgressTab = params.tab === "performance" ? "performance" : params.tab === "habits" ? "habits" : "workouts";
   const filters = { type: params.type, year: Number(params.year) || undefined, month: Number(params.month) || undefined, page: Number(params.page) || undefined };
-  if (!performance) {
+  if (tab === "habits") {
+    const [habits, today] = await Promise.all([getViewerHabits(), getViewerToday()]);
+    return <div className="flex flex-col gap-6"><h1 className="font-display text-3xl font-extrabold">Progress</h1><ProgressNavigation tab={tab} /><HabitsPanel habits={habits} today={today} /></div>;
+  }
+  if (tab === "workouts") {
     const user = await requireViewer();
     const result = await listWorkoutHistory(await getDb(), user.id, filters);
-    return <div className="flex flex-col gap-6"><h1 className="font-display text-3xl font-extrabold">Progress</h1><ProgressNavigation performance={false} /><WorkoutHistory result={result} filters={filters} /></div>;
+    return <div className="flex flex-col gap-6"><h1 className="font-display text-3xl font-extrabold">Progress</h1><ProgressNavigation tab={tab} /><WorkoutHistory result={result} filters={filters} /></div>;
   }
   const [{ plan }, progress, intervals] = await Promise.all([requireViewerPlan(), getViewerProgress(), getViewerIntervals()]);
   const hasActivity = progress.weeks.some((w) => w.runs > 0 || w.strength > 0);
@@ -28,7 +33,7 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-display text-3xl font-extrabold">Progress</h1>
-      <ProgressNavigation performance />
+      <ProgressNavigation tab={tab} />
 
       <TierCard status={progress.points} />
 
@@ -75,9 +80,15 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
   );
 }
 
-function ProgressNavigation({ performance }: { performance: boolean }) {
+type ProgressTab = "workouts" | "habits" | "performance";
+const PROGRESS_TABS: { tab: ProgressTab; label: string; href: string }[] = [
+  { tab: "workouts", label: "Workouts", href: "/progress" },
+  { tab: "habits", label: "Habits", href: "/progress?tab=habits" },
+  { tab: "performance", label: "Performance", href: "/progress?tab=performance" },
+];
+
+function ProgressNavigation({ tab }: { tab: ProgressTab }) {
   return <nav aria-label="Progress sections" className="border-border flex gap-6 border-b text-sm font-medium">
-    <Link href="/progress" aria-current={!performance ? "page" : undefined} className={`border-b-2 px-1 pb-3 ${!performance ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}>Workouts</Link>
-    <Link href="/progress?tab=performance" aria-current={performance ? "page" : undefined} className={`border-b-2 px-1 pb-3 ${performance ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}>Performance</Link>
+    {PROGRESS_TABS.map((t) => <Link key={t.tab} href={t.href} aria-current={t.tab === tab ? "page" : undefined} className={`border-b-2 px-1 py-3 ${t.tab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}>{t.label}</Link>)}
   </nav>;
 }

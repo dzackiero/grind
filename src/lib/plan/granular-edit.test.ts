@@ -77,6 +77,18 @@ describe("granular workout edits", () => {
       { op: "move", workoutId: run.id, toDate: "2026-11-18" },
     ]) expect(() => changes([op], pastContext)).toThrow(/past/);
   });
+  it("can add a run or strength session on an earlier day of the current week, but not in a past week", () => {
+    const week = weekOfDate(plan, ctx.today)!;
+    const earlier = week.startDate < ctx.today ? week.startDate : null;
+    // Wednesday 28 Oct, in the week that starts Monday 26 Oct: Monday and Tuesday are still open
+    expect(earlier).toBe("2026-10-26");
+    for (const date of ["2026-10-26", "2026-10-27"]) {
+      expect(() => changes([{ op: "add_run", date, distanceKm: 5 }])).not.toThrow();
+      expect(() => changes([{ op: "add_strength", date, focus: "push" }])).not.toThrow();
+    }
+    expect(() => changes([{ op: "add_run", date: "2026-10-25", distanceKm: 5 }])).toThrow(/past week|outside the plan/);
+    expect(() => changes([{ op: "add_run", date: "2026-11-04", distanceKm: 5 }], { ...ctx, today: "2026-11-11" })).toThrow(/past week/);
+  });
   it("still allows editing earlier days of the current week", () => {
     const week = weekOfDate(plan, run.date)!;
     const lastDay = addDays(week.startDate, 6);

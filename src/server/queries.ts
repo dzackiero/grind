@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getCurrentUser } from "./auth";
 import { getDb } from "./db";
+import { STREAK_LOOKBACK_DAYS } from "@/lib/habits";
+import { addDays } from "@/lib/plan/dates";
+import { listHabits } from "./habits/service";
 import { getIntervalsStatus, getWellnessSummary } from "./intervals/sync";
 import { getWorkoutActuals } from "./intervals/workout-activities";
 import type { Actuals } from "@/lib/plan-view";
@@ -90,6 +93,13 @@ export const getViewerProgress = cache(async () => {
     countRunsToCheck(db, user.id),
   ]);
   return { points, records, weeks, toCheck };
+});
+
+/** Active habits with their ticks for the streak window, so Today and Progress share one query. */
+export const getViewerHabits = cache(async () => {
+  const user = await requireViewer();
+  const today = await getViewerToday();
+  return listHabits(await getDb(), user.id, { from: addDays(today, -STREAK_LOOKBACK_DAYS), to: today });
 });
 
 export const getViewerIntervals = cache(async () => {

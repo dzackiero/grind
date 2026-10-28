@@ -11,12 +11,13 @@ import { formatDuration } from "@/lib/plan";
 import { PlanChangeCard } from "@/components/kilo/plan-change-card";
 import { RecoveryCard } from "@/components/kilo/recovery-card";
 import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
-import { getViewerActuals, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
+import { HabitsCard } from "@/components/kilo/habits-card";
+import { getViewerActuals, getViewerHabits, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Today · Kilo" };
 
 export default async function TodayPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const [{ plan, progress }, today, { date }, actuals, wellness, intervals, suggestions] = await Promise.all([
+  const [{ plan, progress }, today, { date }, actuals, wellness, intervals, suggestions, habits] = await Promise.all([
     requireViewerPlan(),
     getViewerToday(),
     searchParams,
@@ -24,6 +25,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     getViewerWellness(),
     getViewerIntervals(),
     getViewerPendingChanges(),
+    getViewerHabits(),
   ]);
   const selected = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
   const week = weekFor(plan, selected);
@@ -66,6 +68,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           </Card>
         )}
       </section>
+
+      <HabitsCard habits={habits} date={selected} today={today} />
 
       <Link href="/plan" className="group">
         <Card className="group-hover:border-line-strong">
