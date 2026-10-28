@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Activity, Dumbbell, Footprints } from "lucide-react";
+import { activityTitle } from "@/lib/activity-detail";
 import { formatPace } from "@/lib/plan";
 import type { HistoryEntry, HistoryFilters, MonthTotals } from "@/server/progress/history-list";
 
@@ -26,14 +27,12 @@ function pageUrl(filters: HistoryFilters, page: number) {
   params.set("page", String(page));
   return `/progress?${params}`;
 }
-const GENERIC_TITLES: Record<string, string> = { Run: "Outdoor run", TrailRun: "Trail run", VirtualRun: "Indoor run", Treadmill: "Indoor run" };
-/** An unnamed watch recording is shown as "Outdoor run" / "Indoor run" instead of the raw type. */
-function titleOf(entry: HistoryEntry) { return entry.title === entry.type ? GENERIC_TITLES[entry.type] ?? entry.title : entry.title; }
+function titleOf(entry: HistoryEntry) { return activityTitle(entry.type, entry.title); }
 function WorkoutCard({ entry }: { entry: HistoryEntry }) {
   const Icon = entry.kind === "run" ? Footprints : entry.kind === "strength" ? Dumbbell : Activity;
   const time = localTime(entry.startLocal);
   const pace = entry.distanceM && entry.distanceM > 0 && entry.movingTimeSec && entry.movingTimeSec > 0 ? formatPace(entry.movingTimeSec / (entry.distanceM / 1000)) : null;
-  return <article className="border-border bg-card flex gap-4 rounded-xl border p-4 sm:p-5">
+  const card = <article className="border-border bg-card flex gap-4 rounded-xl border p-4 sm:p-5">
     <div className="bg-secondary text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg"><Icon className="size-5" aria-hidden="true" /></div>
     <div className="min-w-0 flex-1">
       <h3 className="font-semibold">{titleOf(entry)}</h3>
@@ -47,6 +46,8 @@ function WorkoutCard({ entry }: { entry: HistoryEntry }) {
       </dl>}
     </div>
   </article>;
+  // Synced activities open their detail page; sessions recorded by hand have none
+  return entry.id.startsWith("activity:") ? <Link href={`/activities/${encodeURIComponent(entry.id.slice("activity:".length))}`} className="focus-visible:ring-ring block rounded-xl outline-none focus-visible:ring-2">{card}</Link> : card;
 }
 
 export function WorkoutHistory({ result, filters }: { result: { entries: HistoryEntry[]; years: number[]; page: number; hasNext: boolean; totals: Record<string, MonthTotals> }; filters: HistoryFilters }) {

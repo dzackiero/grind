@@ -18,6 +18,9 @@ const streamCalls: string[] = [];
 
 // Fake intervals.icu: one easy run that matches the plan, an indoor run, a walk and a strength session.
 const fakeApi = (key: string): IntervalsApi => ({
+  async getActivityDetailStreams() {
+    return null;
+  },
   async getActivityStreams(id) {
     streamCalls.push(id);
     // The outdoor run: 3.1 km at a steady 6:45 per km, one sample per second

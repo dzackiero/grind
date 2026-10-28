@@ -84,6 +84,9 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
                 </>
               )}
             </CardDescription>
+            <Button asChild variant="outline" size="sm" className="mt-2 self-start">
+              <Link href={`/activities/${encodeURIComponent(actual.activityId)}`}>See map, splits and charts</Link>
+            </Button>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-4">
             {actual.distanceM != null && <Stat label="Distance" value={km(Math.round(actual.distanceM / 100) / 10)} />}

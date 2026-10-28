@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { DetailStreams } from "@/lib/activity-detail";
 
 /*
  * Minimal intervals.icu API client.
@@ -66,6 +67,8 @@ export interface IntervalsStreams {
 
 export interface IntervalsApi {
   getAthlete(): Promise<IntervalsAthlete>;
+  /** Every stream the activity page draws from. Null when there is no usable time and distance. */
+  getActivityDetailStreams(activityId: string): Promise<DetailStreams | null>;
   listActivities(oldest: string, newest: string): Promise<IntervalsActivity[]>;
   listWellness(oldest: string, newest: string): Promise<IntervalsWellness[]>;
   /** Null when the activity has no usable time and distance streams (for example it was entered by hand). */
@@ -114,6 +117,21 @@ export function createIntervalsClient(apiKey: string, athleteId = "0", fetchImpl
         const p = IntervalsWellnessSchema.safeParse(r);
         return p.success ? [p.data] : [];
       });
+    },
+    async getActivityDetailStreams(activityId) {
+      const types = "time,distance,latlng,altitude,fixed_altitude,heartrate,cadence,grade_smooth";
+      const streams = await get<{ type?: string; data?: unknown; data2?: unknown }[]>(`/activity/${encodeURIComponent(activityId)}/streams?types=${types}`);
+      const find = (type: string) => streams.find((s) => s.type === type);
+      const toSeries = (data: unknown) => (Array.isArray(data) ? (data as unknown[]).map((v) => (typeof v === "number" && Number.isFinite(v) ? v : null)) : null);
+      const series = (type: string) => toSeries(find(type)?.data);
+      const time = series("time");
+      const distance = series("distance");
+      if (!time || !distance || time.length < 2) return null;
+      // latlng arrives as two arrays: latitudes in data, longitudes in data2
+      const lat = toSeries(find("latlng")?.data);
+      const lng = toSeries(find("latlng")?.data2);
+      const latlng = lat && lng ? lat.map((v, i) => (v != null && lng[i] != null ? ([v, lng[i]!] as const) : null)) : null;
+      return { time, distance, latlng, altitude: series("fixed_altitude") ?? series("altitude"), heartrate: series("heartrate"), cadence: series("cadence"), grade: series("grade_smooth") };
     },
     async getActivityStreams(activityId) {
       const streams = await get<{ type?: string; data?: unknown }[]>(`/activity/${encodeURIComponent(activityId)}/streams?types=time,distance`);
