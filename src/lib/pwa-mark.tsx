@@ -1,19 +1,23 @@
+import { ICON_PLATE_SHARE, MARK } from "./brand-mark";
+
 /**
- * The Grind mark for app icons: the lime plate with its rim and hub (same drawing as the Logo component),
- * on the dark app background. The plate fills 60% of the icon, inside the safe zone that maskable icons
- * need, so Android can crop the icon to a circle or a squircle without clipping it.
- * Rendered to PNG by next/og, which supports a limited CSS subset: flex layout, borders and radii.
+ * The Grind mark for app icons, on the dark app background. The plate fills 60% of the icon, inside the safe
+ * zone that maskable icons need, so Android can crop the icon to a circle or a squircle without clipping it.
+ * Rendered to PNG by next/og; the mark itself is an inline SVG, which it draws as-is.
  */
-export function PlateMark({ size }: { size: number }) {
-  const plate = size * 0.6;
-  const u = plate / 32; // the Logo is drawn on a 32-unit grid
+export function AppIcon({ size }: { size: number }) {
+  const plate = Math.round(size * ICON_PLATE_SHARE);
+  const c = MARK.size / 2;
   return (
-    <div style={{ width: size, height: size, background: "#0d0f0c", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: plate, height: plate, borderRadius: plate, background: "#c8f135", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 23 * u, height: 23 * u, borderRadius: 23 * u, border: `${3 * u}px solid rgba(18, 20, 16, 0.25)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ width: 8 * u, height: 8 * u, borderRadius: 8 * u, background: "#121410" }} />
-        </div>
-      </div>
+    <div style={{ width: size, height: size, background: MARK.dark, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <svg xmlns="http://www.w3.org/2000/svg" width={plate} height={plate} viewBox={`0 0 ${MARK.size} ${MARK.size}`}>
+        <circle cx={c} cy={c} r={MARK.plateRadius} fill={MARK.lime} />
+        <circle cx={c} cy={c} r={MARK.ringRadius} fill="none" stroke={MARK.ink} strokeOpacity={0.25} strokeWidth={MARK.ringWidth} />
+        <g transform={`rotate(${MARK.beanAngle} ${c} ${c})`}>
+          <ellipse cx={c} cy={c} rx={MARK.beanRx} ry={MARK.beanRy} fill={MARK.ink} />
+          <path d={MARK.creasePath} fill="none" stroke={MARK.lime} strokeWidth={MARK.creaseWidth} strokeLinecap="round" />
+        </g>
+      </svg>
     </div>
   );
 }

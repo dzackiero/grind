@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { PlateMark } from "@/lib/pwa-mark";
+import { AppIcon } from "@/lib/pwa-mark";
 
 // Built once at deploy time; the manifest points at these two sizes
 export const dynamic = "force-static";
@@ -14,5 +14,5 @@ export function generateStaticParams() {
 export async function GET(_request: Request, { params }: { params: Promise<{ size: string }> }) {
   const size = Number((await params).size);
   if (!SIZES.includes(size)) return new Response("Not found", { status: 404 });
-  return new ImageResponse(<PlateMark size={size} />, { width: size, height: size });
+  return new ImageResponse(<AppIcon size={size} />, { width: size, height: size });
 }
