@@ -5,6 +5,7 @@ import { UnauthorizedError } from "./auth";
 import { HabitError } from "./habits/service";
 import { IntervalsError } from "./intervals/client";
 import { PlanValidationError } from "./plans/service";
+import { StrengthLogError } from "./strength/service";
 
 /** Turns known errors into JSON responses with a clear message. */
 export function errorResponse(error: unknown): Response {
@@ -14,6 +15,7 @@ export function errorResponse(error: unknown): Response {
       { error: "Some fields are invalid.", issues: error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) },
       { status: 400 },
     );
+  if (error instanceof StrengthLogError) return Response.json({ error: error.message }, { status: error.status });
   if (error instanceof HabitError) return Response.json({ error: error.message }, { status: error.status });
   if (error instanceof PlanEditError) return Response.json({ error: error.message }, { status: 409 });
   if (error instanceof PlanValidationError)

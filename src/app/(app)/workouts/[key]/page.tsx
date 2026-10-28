@@ -12,7 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { distanceScore, findWorkout, statusOf } from "@/lib/plan-view";
-import { getViewerActuals, requireViewerPlan } from "@/server/queries";
+import { StrengthLog } from "@/components/kilo/strength-log";
+import { getDb } from "@/server/db";
+import { getViewerActuals, getViewerToday, requireViewer, requireViewerPlan } from "@/server/queries";
+import { lastPerformance, listWorkoutSets } from "@/server/strength/service";
 
 export async function generateMetadata({ params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
@@ -32,6 +35,15 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
   const actual = actuals[workout.id];
   const actualPace = actual ? paceFrom(actual.distanceM, actual.movingTimeSec) : null;
   const score = actual && workout.kind === "run" ? distanceScore(workout.distanceKm, actual.distanceM) : null;
+
+  // Strength sessions can log sets once the day has come: what was saved, and what was lifted last time
+  const [today, user] = await Promise.all([getViewerToday(), requireViewer()]);
+  const canLog = workout.kind === "strength" && workout.date <= today;
+  const db = await getDb();
+  const [logged, last] =
+    workout.kind === "strength" && canLog
+      ? await Promise.all([listWorkoutSets(db, user.id, workout.id), lastPerformance(db, user.id, workout.exercises.map((e) => e.name), workout.date)])
+      : [[], {}];
 
   return (
     <div className="flex flex-col gap-5">
@@ -113,7 +125,7 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
           <CardTitle className="text-base font-semibold">{workout.kind === "run" ? "Steps" : "Exercises"}</CardTitle>
           {workout.kind === "run" && <CardDescription>Set these up in your watch&apos;s workout editor, in this order.</CardDescription>}
         </CardHeader>
-        <CardContent>{workout.kind === "run" ? <StepList workout={workout} /> : <ExerciseList workout={workout} />}</CardContent>
+        <CardContent>{workout.kind === "run" ? <StepList workout={workout} /> : canLog ? <StrengthLog workout={workout} initial={logged} last={last} /> : <ExerciseList workout={workout} />}</CardContent>
       </Card>
 
       <DoneButton workoutKey={workout.id} status={status} />

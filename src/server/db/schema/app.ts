@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { PaceZones, Plan, PlanInput, Workout } from "@/lib/plan";
 import type { CoachingProfile } from "@/lib/coaching";
 import { user } from "./auth";
@@ -220,6 +220,38 @@ export const habitLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.habitId, t.date] }), index("habit_log_user_date").on(t.userId, t.date)],
+);
+
+/**
+ * One logged set of a strength exercise: how much, how many, and whether it was done. Optional on purpose: a
+ * workout can still just be marked done. The exercise name is kept on the row so history survives edits to the plan.
+ */
+export const strengthSet = pgTable(
+  "strength_set",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userId(),
+    plannedWorkoutId: uuid("planned_workout_id")
+      .notNull()
+      .references(() => plannedWorkout.id, { onDelete: "cascade" }),
+    /** The exercise's id inside the workout, or "custom-…" for one the athlete added */
+    exerciseId: text("exercise_id").notNull(),
+    exerciseName: text("exercise_name").notNull(),
+    /** 1, 2, 3 … within the exercise */
+    position: integer("position").notNull(),
+    reps: integer("reps"),
+    weightKg: real("weight_kg"),
+    /** For exercises held for time, like a plank */
+    seconds: integer("seconds"),
+    done: boolean("done").notNull().default(false),
+    /** The workout's date, copied so history can be read without joining */
+    date: date("date", { mode: "string" }).notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("strength_set_position").on(t.plannedWorkoutId, t.exerciseId, t.position),
+    index("strength_set_history").on(t.userId, t.exerciseName, t.date),
+  ],
 );
 
 /** A change to a plan, proposed by the coach (Claude via MCP) or made by the user. Shown as a PlanChange card. */
