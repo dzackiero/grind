@@ -1,6 +1,6 @@
 # Grind
 
-Grind is a training app for hybrid athletes: one plan for running and strength, built on data synced from intervals.icu, with Claude as an optional coach through an MCP connector. The name is the daily grind: showing up for the work, one session at a time. It is also a coffee word, since Grind is one of the CUP (Coffee Unite People) apps. The mark is a lime weight plate with a coffee bean on it.
+Grind is a training app for hybrid athletes: one plan for running and strength, built on data synced from intervals.icu, with Claude as an optional coach through an MCP connector. The name is the daily grind: showing up for the work, one session at a time. It is also a coffee word, since Grind is one of the CUP (Coffee Unite People) apps. The mark is a lime disc with teeth on its rim and a hole in the middle, like the burr of a coffee grinder (it is also a weight plate). Its motion is a ratchet: the groove draws, the hole opens, and the teeth click round one tooth at a time.
 
 This system is the single source for every screen. Build with the tokens and `k-` component classes here; do not introduce new colours, radii or type sizes.
 

@@ -1,40 +1,61 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { MARK } from "./brand-mark";
+import { ICON_PLATE_SHARE, MARK } from "./brand-mark";
 
 const read = (file: string) => readFileSync(path.resolve(__dirname, "../..", file), "utf8");
+const c = MARK.size / 2;
 
 /** The static files can't import the numbers, so this keeps them honest: change the mark in one place, fail here until all agree. */
 describe("static logo files match the mark", () => {
   const colourFiles = ["public/brand/grind-mark.svg", "public/brand/grind-icon.svg", "src/app/icon.svg"];
 
-  it.each(colourFiles)("%s draws the same plate, ring, bean and crease", (file) => {
+  it.each(colourFiles)("%s draws the same disc, teeth, groove and hub", (file) => {
     const svg = read(file);
-    expect(svg).toContain(`r="${MARK.plateRadius}"`);
-    expect(svg).toContain(`r="${MARK.ringRadius}"`);
-    expect(svg).toContain(`stroke-width="${MARK.ringWidth}"`);
-    expect(svg).toContain(`rx="${MARK.beanRx}" ry="${MARK.beanRy}"`);
-    expect(svg).toContain(`rotate(${MARK.beanAngle} ${MARK.size / 2} ${MARK.size / 2})`);
-    expect(svg).toContain(`d="${MARK.creasePath}"`);
-    expect(svg).toContain(`stroke-width="${MARK.creaseWidth}"`);
+    expect(svg).toContain(`r="${MARK.discRadius}"`);
+    expect(svg).toContain(`r="${MARK.teethRadius}"`);
+    expect(svg).toContain(`stroke-width="${MARK.teethWidth}"`);
+    expect(svg).toContain(`stroke-dasharray="${MARK.teethDash}"`);
+    expect(svg).not.toContain("pathLength"); // renderers and design tools ignore it
+    expect(svg).toContain(`rotate(${MARK.teethOffsetAngle} ${c} ${c})`);
+    expect(svg).toContain(`r="${MARK.innerRingRadius}"`);
+    expect(svg).toContain(`stroke-width="${MARK.innerRingWidth}"`);
+    expect(svg).toContain(`stroke-opacity="${MARK.innerRingOpacity}"`);
+    expect(svg).toContain(`r="${MARK.hubRadius}"`);
     expect(svg).toContain(MARK.lime);
     expect(svg).toContain(MARK.ink);
   });
 
-  it("the one-colour version cuts the same bean out of the same plate", () => {
+  it("the one-colour version cuts the same hole and groove out of the same toothed disc", () => {
     const svg = read("public/brand/grind-mark-mono.svg");
-    expect(svg).toContain(`r="${MARK.plateRadius}"`);
-    expect(svg).toContain(`rx="${MARK.beanRx}" ry="${MARK.beanRy}"`);
-    expect(svg).toContain(`d="${MARK.creasePath}"`);
+    expect(svg).toContain(`r="${MARK.discRadius}"`);
+    expect(svg).toContain(`r="${MARK.teethRadius}"`);
+    expect(svg).toContain(`stroke-width="${MARK.teethWidth}"`);
+    expect(svg).toContain(`stroke-dasharray="${MARK.teethDash}"`);
+    expect(svg).not.toContain("pathLength");
+    expect(svg).toContain(`r="${MARK.innerRingRadius}"`);
+    expect(svg).toContain(`r="${MARK.hubRadius}"`);
     expect(svg).toContain(MARK.ink);
     expect(svg).not.toContain(MARK.lime);
   });
 
-  it("the app icon sits on the dark background with the plate at 60% (4.8 × 64 units on a 512 grid)", () => {
+  it("the app icon sits on the dark background with the mark at the agreed share of the icon", () => {
     const svg = read("public/brand/grind-icon.svg");
+    const scale = (512 * ICON_PLATE_SHARE) / MARK.size;
+    const offset = (512 - 512 * ICON_PLATE_SHARE) / 2;
     expect(svg).toContain(`fill="${MARK.dark}"`);
-    expect(svg).toContain("translate(102.4 102.4) scale(4.8)");
+    expect(svg).toContain(`translate(${offset} ${offset}) scale(${scale})`);
+  });
+
+  it("the teeth fit inside the 64-unit drawing, so nothing is clipped", () => {
+    expect(MARK.teethRadius + MARK.teethWidth / 2).toBeLessThanOrEqual(MARK.size / 2);
+    // A whole number of teeth, so the pattern closes on itself and a click of one tooth ends where it started
+    expect(Number.isInteger(MARK.teethCount)).toBe(true);
+    // One dash and one gap are one tooth: 24 of them are exactly the ring's circumference
+    const [dash, gap] = MARK.teethDash.split(" ").map(Number);
+    const ring = 2 * Math.PI * MARK.teethRadius;
+    expect((dash + gap) * MARK.teethCount).toBeCloseTo(ring, 2);
+    expect(dash).toBeGreaterThan(gap);
   });
 });
 

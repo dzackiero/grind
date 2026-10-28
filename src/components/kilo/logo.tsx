@@ -1,7 +1,7 @@
 import { cn } from "cn";
 import { GrindMark } from "./grind-mark";
 
-/** Grind wordmark with the mark: a lime plate with a coffee bean on it. */
+/** Grind wordmark with the mark: a lime disc with teeth, like a coffee grinder's burr. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>

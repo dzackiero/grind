@@ -1,7 +1,7 @@
 /*
  * The opening screen of the installed app. The system's own splash (the icon on a dark background, from the
  * web manifest on Android and the home screen icon on iOS) can't be animated, so once the app starts it shows
- * its own, moving, for about a second. It appears once per launch, only in the installed app, never in a
+ * its own, moving, for about a second and a half. It appears once per launch, only in the installed app, never in a
  * browser tab, and not at all for people who ask for reduced motion.
  *
  * The decision is made by a tiny script that runs before the first paint, so the page never shows first and
@@ -10,8 +10,11 @@
  */
 
 export const LAUNCH_SPLASH_KEY = "launch-splash";
-/** The splash stays at least this long once the app is running, so the animation is seen, not flashed. */
-export const LAUNCH_SPLASH_MIN_MS = 900;
+/**
+ * The splash stays at least this long once the app is running, so the animation is seen, not flashed. The mark pops
+ * in, its groove draws, the hole opens and the teeth click once (see brand-loader in globals.css): about 1.2 seconds.
+ */
+export const LAUNCH_SPLASH_MIN_MS = 1400;
 /** If the app never starts, the splash is removed after this long so it can't cover a broken page forever. */
 export const LAUNCH_SPLASH_FAILSAFE_MS = 5000;
 

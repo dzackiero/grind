@@ -228,10 +228,36 @@
   }
 }
 
-/* Brand loader: the rim turns around the plate's centre, the bean stays still. */
-@keyframes brand-spin {
+/*
+  Brand loader: the burr's groove draws itself, the hole opens, and the teeth click round one tooth at a time, like a
+  grinder being cranked. The 24 teeth repeat every 15 degrees, so each click ends exactly where the next one starts.
+*/
+@keyframes brand-tick {
+  0% {
+    transform: rotate(0deg);
+  }
+  38%,
+  100% {
+    transform: rotate(15deg);
+  }
+}
+/* The dash pattern only exists while the groove draws; a finished ring is one unbroken line, with no seam */
+@keyframes brand-draw {
+  from {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
   to {
-    transform: rotate(360deg);
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes brand-hub {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
   }
 }
 @keyframes brand-pop {
@@ -244,13 +270,24 @@
     transform: scale(1);
   }
 }
-.brand-loader-rim {
+.brand-loader-teeth {
   transform-box: fill-box;
   transform-origin: center;
-  animation: brand-spin 1.6s linear infinite;
+  /* The overshoot in the curve makes each click spring back a little, like a ratchet */
+  animation: brand-tick 0.9s cubic-bezier(0.3, 1.6, 0.5, 1) 0.85s infinite;
+}
+.brand-loader-ring {
+  animation: brand-draw 0.45s ease-out 0.15s backwards;
+}
+.brand-loader-hub {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-hub 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) 0.5s backwards;
 }
 @media (prefers-reduced-motion: reduce) {
-  .brand-loader-rim {
+  .brand-loader-teeth,
+  .brand-loader-ring,
+  .brand-loader-hub {
     animation: none;
   }
 }
