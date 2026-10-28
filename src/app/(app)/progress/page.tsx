@@ -28,6 +28,7 @@ export default async function ProgressPage({ searchParams }: { searchParams: Pro
   return (
     <div className="flex flex-col gap-6">
       <h1 className="font-display text-3xl font-extrabold">Progress</h1>
+      <ProgressNavigation performance />
 
       <TierCard status={progress.points} />
 
