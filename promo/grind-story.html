@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grind · Instagram story</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Geist:wght@400..800&display=swap" rel="stylesheet">
+<style>
+  /*
+    Grind promo for an Instagram story: 1080 x 1920, 15 seconds, 30 fps.
+    Everything is drawn from one function, render(t), so any moment can be shown or exported exactly:
+      open this file          plays and loops (space pauses)
+      ?t=4.5                  shows that moment
+      ?export=1&t=4.5         same, at 1:1 scale for capture (see render-story.mjs)
+    Instagram covers about the top 250 px and the bottom 340 px with its own buttons, so the content stays between.
+  */
+  :root { --bg:#0d0f0c; --card:#161914; --line:#2a2e26; --lime:#c8f135; --ink:#121410; --text:#f2f4ec; --muted:#9aa093; --good:#4ade80; --bad:#ff7a7a; }
+  html, body { margin:0; height:100%; background:#000; overflow:hidden; }
+  #stage { position:absolute; left:0; top:0; width:1080px; height:1920px; background:var(--bg); overflow:hidden; transform-origin:0 0; color:var(--text); font-family:'Geist','Segoe UI',Arial,sans-serif; }
+  .display { font-family:'Archivo','Arial Black',Arial,sans-serif; font-stretch:112%; font-weight:800; letter-spacing:-0.02em; }
+  .scene { position:absolute; inset:0; opacity:0; will-change:opacity, transform; }
+  .head { position:absolute; left:80px; right:80px; top:300px; font-size:176px; line-height:1; color:var(--lime); }
+  .card { position:absolute; left:80px; width:920px; background:var(--card); border:2px solid var(--line); border-radius:48px; box-sizing:border-box; padding:48px; }
+  .muted { color:var(--muted); }
+  .label { color:var(--muted); font-size:30px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .row { display:flex; align-items:center; gap:28px; }
+  .title { font-size:50px; font-weight:700; }
+  .sub { font-size:34px; color:var(--muted); margin-top:6px; }
+  .num { font-size:76px; line-height:1; font-weight:800; font-variant-numeric:tabular-nums; }
+  .unit { font-size:32px; color:var(--muted); font-weight:600; margin-left:8px; }
+  .bar { height:84px; border-radius:20px; background:var(--lime); color:var(--ink); display:flex; align-items:center; padding-left:28px; font-size:40px; font-weight:700; white-space:nowrap; overflow:hidden; }
+  .box { height:96px; border-radius:24px; border:2px solid var(--line); background:#1d211a; display:flex; align-items:center; justify-content:center; font-size:48px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .pill { display:inline-block; background:var(--lime); color:var(--ink); border-radius:999px; font-weight:800; }
+  svg { display:block; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- decoration: a big dashed plate rim turning slowly in the corner -->
+  <svg id="deco" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0">
+    <circle id="rimA" cx="940" cy="1560" r="560" fill="none" stroke="#c8f135" stroke-opacity=".07" stroke-width="4" stroke-dasharray="14 30"/>
+    <circle id="rimB" cx="940" cy="1560" r="390" fill="none" stroke="#c8f135" stroke-opacity=".05" stroke-width="4" stroke-dasharray="6 26"/>
+  </svg>
+
+  <!-- 0 · logo -->
+  <div id="s0" class="scene">
+    <div id="s0mark" style="position:absolute;left:340px;top:560px;width:400px;height:400px"></div>
+    <div id="s0word" class="display" style="position:absolute;left:0;right:0;top:1010px;text-align:center;font-size:230px;line-height:1">Grind</div>
+    <div id="s0tag" style="position:absolute;left:0;right:0;top:1290px;text-align:center;font-size:58px;font-weight:600;color:var(--muted)">Run it. Lift it. <span style="color:var(--lime)">Grind it out.</span></div>
+  </div>
+
+  <!-- 1 · run -->
+  <div id="s1" class="scene">
+    <div class="head display">Run it.</div>
+    <div class="card" style="top:600px;height:850px">
+      <div class="row">
+        <div id="s1icon" style="width:96px;height:96px"></div>
+        <div><div class="title">Outdoor run</div><div class="sub">Today · 7:02 AM</div></div>
+      </div>
+      <div class="row" style="margin-top:46px;gap:40px;align-items:flex-end">
+        <div><div class="label">Distance</div><div style="margin-top:10px"><span class="num" id="s1dist">0.00</span><span class="unit">km</span></div></div>
+        <div><div class="label">Time</div><div style="margin-top:10px"><span class="num" id="s1time">0:00</span></div></div>
+        <div id="s1pacewrap"><div class="label">Avg pace</div><div style="margin-top:10px"><span class="num">8:12</span><span class="unit">/km</span></div></div>
+      </div>
+      <div id="s1splits" style="margin-top:50px"></div>
+    </div>
+  </div>
+
+  <!-- 2 · lift -->
+  <div id="s2" class="scene">
+    <div class="head display">Lift it.</div>
+    <div class="card" style="top:600px;height:775px">
+      <div class="row">
+        <div class="display" style="width:96px;height:96px;border-radius:24px;background:#222820;color:#6eb6ff;display:flex;align-items:center;justify-content:center;font-size:42px">A1</div>
+        <div><div class="title">Dumbbell bench press</div><div class="sub">3 × 8 · rest 1 min</div></div>
+      </div>
+      <div class="row" style="margin-top:36px;justify-content:space-between;font-size:38px;color:var(--muted)">
+        <div>Sets done <b id="s2sets" style="color:var(--text)">0/3</b> · <b id="s2kg" style="color:var(--text)">0 kg</b> lifted</div>
+      </div>
+      <div id="s2head" style="display:grid;grid-template-columns:90px 190px 1fr 1fr 110px;gap:18px;margin-top:40px;text-align:center" class="label"><span>Set</span><span>Last</span><span>Kg</span><span>Reps</span><span></span></div>
+      <div id="s2rows" style="margin-top:18px"></div>
+    </div>
+  </div>
+
+  <!-- 3 · habits -->
+  <div id="s3" class="scene">
+    <div class="head display" style="font-size:124px;white-space:nowrap">Grind it out.</div>
+    <div class="card" style="top:600px;height:920px">
+      <div class="row" style="justify-content:space-between">
+        <div class="title">Habits</div>
+        <div class="row" style="gap:14px;color:var(--lime);font-size:46px;font-weight:800">
+          <svg width="46" height="56" viewBox="0 0 48 58"><path d="M24 2 C27 14 40 19 40 33 A16 16 0 0 1 8 33 C8 26 12 22 15 16 C17 21 20 23 23 23 C25 17 24 9 24 2 Z" fill="#c8f135"/></svg>
+          <span><span id="s3streak">0</span> day streak</span>
+        </div>
+      </div>
+      <div id="s3rows" style="margin-top:34px"></div>
+    </div>
+  </div>
+
+  <!-- 4 · call to action -->
+  <div id="s4" class="scene">
+    <div id="s4mark" style="position:absolute;left:400px;top:330px;width:280px;height:280px"></div>
+    <div class="display" style="position:absolute;left:0;right:0;top:640px;text-align:center;font-size:200px;line-height:1">Grind</div>
+    <div style="position:absolute;left:110px;right:110px;top:900px;text-align:center;font-size:62px;line-height:1.25;font-weight:600">Your runs, lifts and habits in one plan. <span style="color:var(--lime)">Ground fresh</span> from your data.</div>
+    <div style="position:absolute;left:0;right:0;top:1230px;text-align:center"><span id="s4url" class="pill" style="font-size:46px;padding:30px 54px">grind.coffee-unite-people.fun</span></div>
+    <div style="position:absolute;left:0;right:0;top:1390px;text-align:center;font-size:36px;color:var(--muted)">Connect to LLM via MCP · A Coffee Unite People App</div>
+  </div>
+</div>
+
+<script>
+const DURATION = 15, FPS = 30;
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+const easeInOut = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const easeBack = (p) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+/* The Grind mark, drawn from the same numbers as src/lib/brand-mark.ts (64-unit grid) */
+const TEETH = 'stroke-width="4.5" stroke-dasharray="4.6163 2.8293"';
+function markSVG(prefix) {
+  return `<svg viewBox="0 0 64 64" width="100%" height="100%">
+    <circle cx="32" cy="32" r="26.6" fill="#c8f135"/>
+    <circle id="${prefix}teeth" cx="32" cy="32" r="28.44" fill="none" stroke="#c8f135" ${TEETH} transform="rotate(-4 32 32)"/>
+    <circle id="${prefix}ring" cx="32" cy="32" r="18.9" fill="none" stroke="#121410" stroke-opacity=".25" stroke-width="2.7" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/>
+    <circle id="${prefix}hub" cx="32" cy="32" r="8.1" fill="#121410"/>
+  </svg>`;
+}
+$('s0mark').innerHTML = markSVG('a');
+$('s4mark').innerHTML = markSVG('b');
+$('s1icon').innerHTML = `<svg viewBox="0 0 64 64" width="96" height="96"><circle cx="32" cy="32" r="26.6" fill="#c8f135"/><circle cx="32" cy="32" r="28.44" fill="none" stroke="#c8f135" ${TEETH} transform="rotate(-4 32 32)"/><circle cx="32" cy="32" r="18.9" fill="none" stroke="#121410" stroke-opacity=".25" stroke-width="2.7"/><circle cx="32" cy="32" r="8.1" fill="#121410"/></svg>`;
+
+/* The mark in motion: the groove draws, the hole opens with a spring, the teeth click round one tooth at a time.
+   24 teeth repeat every 15 degrees, so a click that resets to 0 looks exactly like it carried on. */
+const TICK_SECONDS = 0.9;
+function teethAngle(since) {
+  if (since < 0) return 0;
+  const p = (since % TICK_SECONDS) / TICK_SECONDS;
+  return 15 * easeBack(seg(p, 0, 0.38));
+}
+function markState(prefix, ring, hub, teethSince) {
+  // Once the groove is fully drawn it is one unbroken ring, with no dash seam
+  $(prefix + 'ring').setAttribute('stroke-dasharray', ring >= 1 ? 'none' : '100');
+  $(prefix + 'ring').setAttribute('stroke-dashoffset', String(100 - 100 * ring));
+  $(prefix + 'hub').setAttribute('transform', `translate(32 32) scale(${easeBack(hub)}) translate(-32 -32)`);
+  $(prefix + 'teeth').setAttribute('transform', `rotate(${-4 + teethAngle(teethSince)} 32 32)`);
+}
+
+/* Run: splits as bars, a longer bar is a faster kilometre */
+const SPLITS = [{ km: 1, pace: 564 }, { km: 2, pace: 483 }, { km: 3, pace: 495 }, { km: 4, pace: 482 }];
+const fastest = Math.min(...SPLITS.map((s) => s.pace));
+$('s1splits').innerHTML = SPLITS.map((s, i) => {
+  const gain = i ? SPLITS[i - 1].pace - s.pace : null;
+  const gainText = gain == null ? '' : `${gain >= 0 ? '+' : '−'}${mmss(Math.abs(gain))}`;
+  return `<div class="row" style="gap:22px;margin-bottom:22px">
+    <div class="muted" style="width:44px;font-size:38px;text-align:center">${s.km}</div>
+    <div style="flex:1"><div id="bar${i}" class="bar" style="width:0;opacity:1"><span id="bart${i}" style="opacity:0">${mmss(s.pace)}/km</span></div></div>
+    <div id="gain${i}" style="width:130px;text-align:right;font-size:38px;font-weight:700;color:${gain >= 0 ? 'var(--good)' : 'var(--bad)'};opacity:0">${gainText}</div>
+  </div>`;
+}).join('');
+
+/* Lift: three sets with the weight from last time beside them */
+const SETS = [{ last: '37.5 × 10', kg: 40, reps: 8 }, { last: '40 × 8', kg: 42.5, reps: 8 }, { last: '40 × 8', kg: 42.5, reps: 6 }];
+$('s2rows').innerHTML = SETS.map((s, i) => `<div style="display:grid;grid-template-columns:90px 190px 1fr 1fr 110px;gap:18px;align-items:center;margin-bottom:24px">
+    <div class="muted" style="text-align:center;font-size:44px">${i + 1}</div>
+    <div class="muted" style="text-align:center;font-size:36px">${s.last}</div>
+    <div class="box">${s.kg}</div><div class="box">${s.reps}</div>
+    <div style="display:flex;justify-content:center"><svg id="tick${i}" width="92" height="92" viewBox="0 0 92 92">
+      <rect id="tickbg${i}" x="4" y="4" width="84" height="84" rx="24" fill="#1d211a" stroke="#2a2e26" stroke-width="3"/>
+      <path id="tickp${i}" d="M26 47 L40 61 L66 32" fill="none" stroke="#121410" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
+    </svg></div></div>`).join('');
+
+/* Habits: seven days a week, filling in */
+const HABITS = [{ name: 'Stretch 10 min', done: 7 }, { name: 'Sleep 7+ hours', done: 6 }, { name: 'Drink 2 L water', done: 7 }];
+const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+$('s3rows').innerHTML = HABITS.map((h, i) => `<div style="margin-bottom:34px">
+    <div class="row" style="justify-content:space-between"><div style="font-size:46px;font-weight:700">${h.name}</div><div id="hcount${i}" class="muted" style="font-size:38px;font-variant-numeric:tabular-nums">0/7</div></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:16px;margin-top:20px">${DAYS.map((d, j) => `<div style="text-align:center"><div class="muted" style="font-size:28px;margin-bottom:8px">${d}</div><div id="hd${i}_${j}" style="height:92px;border-radius:999px;border:3px solid #2a2e26;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><svg width="48" height="48" viewBox="0 0 48 48"><path id="hc${i}_${j}" d="M12 25 L21 34 L37 15" fill="none" stroke="#121410" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg></div></div>`).join('')}</div>
+  </div>`).join('');
+
+/* scene windows (seconds) */
+const SCENES = [
+  { id: 's0', a: 0.0, b: 2.7 },
+  { id: 's1', a: 2.7, b: 5.9 },
+  { id: 's2', a: 5.9, b: 9.1 },
+  { id: 's3', a: 9.1, b: 12.3 },
+  { id: 's4', a: 12.3, b: DURATION, last: true },
+];
+
+function setScene(sc, t) {
+  const fin = easeOut(seg(t, sc.a, sc.a + 0.45));
+  const fout = sc.last ? 1 : 1 - easeInOut(seg(t, sc.b - 0.35, sc.b));
+  const el = $(sc.id);
+  el.style.opacity = String(fin * fout);
+  el.style.transform = `translateY(${(1 - fin) * 70 - (1 - fout) * 40}px)`;
+  el.style.visibility = fin * fout <= 0.001 ? 'hidden' : 'visible';
+}
+
+function render(t) {
+  for (const sc of SCENES) setScene(sc, t);
+  $('rimA').setAttribute('transform', `rotate(${t * 6} 940 1560)`);
+  $('rimB').setAttribute('transform', `rotate(${-t * 9} 940 1560)`);
+
+  /* 0 · logo: the disc pops in, the groove draws, the hole opens, the teeth start to click; then the name and the line */
+  const pop = easeBack(seg(t, 0.1, 0.8));
+  $('s0mark').style.transform = `scale(${0.15 + 0.85 * pop})`;
+  $('s0mark').style.opacity = String(seg(t, 0.1, 0.4));
+  markState('a', easeOut(seg(t, 0.4, 1.0)), seg(t, 0.85, 1.25), t - 1.2);
+  const w = easeOut(seg(t, 0.9, 1.5));
+  $('s0word').style.opacity = String(w); $('s0word').style.transform = `translateY(${(1 - w) * 40}px)`;
+  const g = easeOut(seg(t, 1.5, 2.1));
+  $('s0tag').style.opacity = String(g); $('s0tag').style.transform = `translateY(${(1 - g) * 30}px)`;
+
+  /* 1 · run */
+  const t1 = t - 2.7;
+  const d = easeOut(seg(t1, 0.7, 1.7));
+  $('s1dist').textContent = (5.02 * d).toFixed(2);
+  $('s1time').textContent = mmss(2472 * d);
+  $('s1pacewrap').style.opacity = String(easeOut(seg(t1, 1.4, 1.9)));
+  SPLITS.forEach((s, i) => {
+    const p = easeOut(seg(t1, 1.0 + i * 0.28, 1.6 + i * 0.28));
+    const max = 600, width = (0.45 + 0.55 * (fastest / s.pace)) * max * p;
+    $('bar' + i).style.width = `${width}px`;
+    $('bart' + i).style.opacity = String(seg(p, 0.5, 0.9));
+    $('gain' + i).style.opacity = String(seg(t1, 1.5 + i * 0.28, 1.9 + i * 0.28));
+  });
+
+  /* 2 · lift */
+  const t2 = t - 5.9;
+  let done = 0, kg = 0;
+  SETS.forEach((s, i) => {
+    const at = 1.0 + i * 0.5;
+    const p = seg(t2, at, at + 0.3);
+    const pop2 = easeBack(seg(t2, at, at + 0.35));
+    if (p >= 1) { done++; kg += s.kg * s.reps; }
+    $('tickbg' + i).setAttribute('fill', p > 0 ? '#c8f135' : '#1d211a');
+    $('tickbg' + i).setAttribute('stroke', p > 0 ? '#c8f135' : '#2a2e26');
+    $('tickbg' + i).setAttribute('transform', `translate(46 46) scale(${p > 0 ? 0.85 + 0.15 * pop2 : 1}) translate(-46 -46)`);
+    $('tickp' + i).setAttribute('stroke-dashoffset', String(100 - 100 * easeOut(seg(t2, at + 0.1, at + 0.4))));
+  });
+  $('s2sets').textContent = `${done}/3`;
+  $('s2kg').textContent = `${Math.round(kg).toLocaleString('en-US')} kg`;
+
+  /* 3 · habits */
+  const t3 = t - 9.1;
+  $('s3streak').textContent = String(Math.round(12 * easeOut(seg(t3, 0.8, 1.9))));
+  HABITS.forEach((h, i) => {
+    let count = 0;
+    for (let j = 0; j < 7; j++) {
+      const filled = j < h.done;
+      const at = 0.6 + i * 0.35 + j * 0.1;
+      const p = filled ? easeOut(seg(t3, at, at + 0.25)) : 0;
+      if (p >= 1) count++;
+      const dot = $(`hd${i}_${j}`);
+      dot.style.background = p > 0 ? '#c8f135' : 'transparent';
+      dot.style.borderColor = p > 0 ? '#c8f135' : (j === h.done ? '#c8f135' : '#2a2e26');
+      dot.style.transform = `scale(${p > 0 ? 0.85 + 0.15 * easeBack(seg(t3, at, at + 0.3)) : 1})`;
+      $(`hc${i}_${j}`).setAttribute('stroke-dashoffset', String(100 - 100 * p));
+    }
+    $('hcount' + i).textContent = `${count}/7`;
+  });
+
+  /* 4 · call to action */
+  const t4 = t - 12.3;
+  markState('b', 1, 1, t4);
+  const u = easeBack(seg(t4, 1.0, 1.6));
+  $('s4url').style.transform = `scale(${0.85 + 0.15 * u})`;
+  $('s4url').style.opacity = String(seg(t4, 1.0, 1.3));
+}
+
+/* fit the 1080 x 1920 stage to the window, unless exporting */
+const params = new URLSearchParams(location.search);
+function fit() {
+  const stage = $('stage');
+  if (params.has('export')) { stage.style.transform = 'none'; return; }
+  const s = Math.min(innerWidth / 1080, innerHeight / 1920);
+  stage.style.transform = `translate(${(innerWidth - 1080 * s) / 2}px, ${(innerHeight - 1920 * s) / 2}px) scale(${s})`;
+}
+addEventListener('resize', fit); fit();
+
+if (params.has('t')) {
+  render(parseFloat(params.get('t')));
+} else {
+  let paused = false, started = performance.now(), offset = 0;
+  addEventListener('keydown', (e) => { if (e.code === 'Space') { paused = !paused; if (!paused) started = performance.now() - offset * 1000; } });
+  (function loop(now) {
+    if (!paused) { offset = ((now - started) / 1000) % (DURATION + 0.6); render(Math.min(offset, DURATION - 0.001)); }
+    requestAnimationFrame(loop);
+  })(performance.now());
+}
+window.render = render; window.DURATION = DURATION; window.FPS = FPS;
+</script>
+</body>
+</html>

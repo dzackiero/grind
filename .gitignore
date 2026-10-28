@@ -45,3 +45,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .neon
+
+# rendered promo video, sound and test frames (made by promo/render-story.mjs and promo/make-sfx.mjs)
+promo/out/
