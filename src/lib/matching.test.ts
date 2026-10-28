@@ -32,8 +32,8 @@ describe("matchActivities", () => {
     expect(matchActivities([run("w1", "2026-10-28", 3)], [act("walk", "2026-10-28", "Walk", 3)]).size).toBe(0);
   });
 
-  it("accepts a run done one day early when that day had no run planned", () => {
-    expect(matchActivities([run("long", "2026-11-01", 9)], [act("a", "2026-10-31", "Run", 9.2)]).get("long")).toBe("a");
+  it.each(["2026-10-27", "2026-10-29"])("does not mark October 28 done from a run on %s", (date) => {
+    expect(matchActivities([run("w1", "2026-10-28", 5.6)], [act("a", date, "Run", 3.1)]).size).toBe(0);
   });
 
   it("doesn't let a nearby day steal a run planned on its own day", () => {
