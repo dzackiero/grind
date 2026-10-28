@@ -253,14 +253,6 @@
     transform: scale(1);
   }
 }
-@keyframes brand-appear {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 .brand-loader-rim {
   transform-box: fill-box;
   transform-origin: center;
@@ -271,18 +263,10 @@
   transform-origin: center;
   animation: brand-beat 1.6s ease-in-out infinite;
 }
-/* For page loads: stay invisible for a moment so a quick load never flashes the animation */
-.brand-loader-delayed {
-  opacity: 0;
-  animation: brand-appear 0.2s ease-out 0.3s forwards;
-}
 @media (prefers-reduced-motion: reduce) {
   .brand-loader-rim,
   .brand-loader-bean {
     animation: none;
-  }
-  .brand-loader-delayed {
-    animation-duration: 0.01s;
   }
 }
 
