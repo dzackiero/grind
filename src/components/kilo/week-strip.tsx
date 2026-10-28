@@ -24,7 +24,7 @@ function PlanRing({ value }: { value: number }) {
 }
 
 /** Header strip on Today: the plan week, seven days and one dot per workout. Days link to ?date=. */
-export function WeekStrip({ week, totalWeeks, progress, today, selected }: { week: Week; totalWeeks: number; progress: Progress; today: string; selected: string }) {
+export function WeekStrip({ week, totalWeeks, progress, today, selected, additionalCounts = {} }: { week: Week; totalWeeks: number; progress: Progress; today: string; selected: string; additionalCounts?: Record<string, number> }) {
   const router = useRouter();
   const gesture = useRef<{ x: number; y: number; vertical: boolean } | null>(null);
   const suppressClickUntil = useRef(0);
@@ -109,6 +109,7 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected }: { wee
                   {workouts.slice(0, 3).map((w) => (
                     <TypeDot key={w.id} type={w.type} />
                   ))}
+                  {additionalCounts[d] > 0 && <span role="img" aria-label={`${additionalCounts[d]} recorded outside plan`} title={`${additionalCounts[d]} recorded outside plan`} className="bg-success size-1.5 rounded-full" />}
                 </span>
               </Link>
             </li>

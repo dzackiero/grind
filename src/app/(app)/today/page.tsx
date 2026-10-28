@@ -6,13 +6,15 @@ import { Stat } from "@/components/kilo/stat";
 import { TypeTag } from "@/components/kilo/type-tag";
 import { WeekStrip } from "@/components/kilo/week-strip";
 import { WorkoutCard } from "@/components/kilo/workout-card";
+import { RecordedWorkoutCard } from "@/components/kilo/workout-history";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDuration } from "@/lib/plan";
 import { PlanChangeCard } from "@/components/kilo/plan-change-card";
 import { RecoveryCard } from "@/components/kilo/recovery-card";
 import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
 import { HabitsCard } from "@/components/kilo/habits-card";
-import { getViewerActuals, getViewerHabits, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
+import { isIsoDate } from "@/lib/habits";
+import { getViewerActuals, getViewerAdditionalTraining, getViewerHabits, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Today · Grind" };
 
@@ -27,8 +29,15 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     getViewerPendingChanges(),
     getViewerHabits(),
   ]);
-  const selected = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today;
+  const selected = date && isIsoDate(date) ? date : today;
   const week = weekFor(plan, selected);
+  const weekEnd = addDaysIso(week.startDate, 6);
+  const additional = await getViewerAdditionalTraining(week.startDate, weekEnd);
+  const recorded = selected < week.startDate || selected > weekEnd
+    ? await getViewerAdditionalTraining(selected, selected)
+    : additional.filter((entry) => entry.date === selected);
+  const additionalCounts: Record<string, number> = {};
+  for (const entry of additional) additionalCounts[entry.date] = (additionalCounts[entry.date] ?? 0) + 1;
   const workouts = workoutsOn(plan, selected);
   const stats = weekStats(week, progress, actualKm(actuals));
   const upNext = nextWorkout(plan, progress, selected);
@@ -37,7 +46,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="-mt-5 flex flex-col gap-6">
-      <WeekStrip week={week} totalWeeks={plan.weeks.length} progress={progress} today={today} selected={selected} />
+      <WeekStrip week={week} totalWeeks={plan.weeks.length} progress={progress} today={today} selected={selected} additionalCounts={additionalCounts} />
 
       {suggestions[0] && <PlanChangeCard change={suggestions[0]} />}
 
@@ -52,7 +61,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         )}
         {workouts.length ? (
           workouts.map((w) => <WorkoutCard key={w.id} workout={w} status={statusOf(progress, w)} actual={actuals[w.id]} />)
-        ) : (
+        ) : !recorded.length ? (
           <Card>
             <CardHeader>
               <div className="text-muted-foreground flex items-center gap-2 text-[13px] font-semibold">
@@ -66,7 +75,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               </CardDescription>
             </CardHeader>
           </Card>
-        )}
+        ) : null}
+        {recorded.map((entry) => <RecordedWorkoutCard key={entry.id} entry={entry} contextLabel="Outside plan" />)}
       </section>
 
       <HabitsCard habits={habits} date={selected} today={today} />
@@ -82,13 +92,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             <SegmentedProgress done={stats.done} total={stats.total} />
             <div className="text-muted-foreground flex justify-between text-[13px]">
               <span>
-                Workouts{" "}
+                Plan workouts{" "}
                 <b className="text-foreground">
                   {stats.done}/{stats.total}
                 </b>
               </span>
               <span>
-                Distance{" "}
+                Plan distance{" "}
                 <b className="text-foreground">
                   {stats.kmDone}/{km(stats.kmTarget)}
                 </b>

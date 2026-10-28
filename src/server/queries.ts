@@ -15,6 +15,12 @@ import { listPendingChanges } from "./plans/changes";
 import { getActivePlan } from "./plans/service";
 import { countRunsToCheck, getPoints, getRecords, getWeeklyTotals } from "./progress/service";
 import { getTimezone, todayIn } from "./profile/service";
+import { listAdditionalTraining } from "./progress/history-list";
+
+export const getViewerAdditionalTraining = cache(async (from: string, to: string) => {
+  const user = await requireViewer();
+  return listAdditionalTraining(await getDb(), user.id, from, to);
+});
 
 // Per-request cached reads for server components, so layout and page share one query.
 

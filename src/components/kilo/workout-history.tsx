@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Dumbbell, Footprints } from "lucide-react";
+import { Activity, Check, Dumbbell, Footprints } from "lucide-react";
 import { activityTitle } from "@/lib/activity-detail";
 import { formatPace } from "@/lib/plan";
 import type { HistoryEntry, HistoryFilters, MonthTotals } from "@/server/progress/history-list";
@@ -28,13 +28,25 @@ function pageUrl(filters: HistoryFilters, page: number) {
   return `/progress?${params}`;
 }
 function titleOf(entry: HistoryEntry) { return activityTitle(entry.type, entry.title); }
-function WorkoutCard({ entry }: { entry: HistoryEntry }) {
-  const Icon = entry.kind === "run" ? Footprints : entry.kind === "strength" ? Dumbbell : Activity;
+export function RecordedWorkoutCard({ entry, compact = false, contextLabel }: { entry: HistoryEntry; compact?: boolean; contextLabel?: string }) {
+  const Icon = entry.kind === "run" || ["Walk", "Hike"].includes(entry.type) ? Footprints : entry.kind === "strength" ? Dumbbell : Activity;
   const time = localTime(entry.startLocal);
   const pace = entry.distanceM && entry.distanceM > 0 && entry.movingTimeSec && entry.movingTimeSec > 0 ? formatPace(entry.movingTimeSec / (entry.distanceM / 1000)) : null;
-  const card = <article className="border-border bg-card flex gap-4 rounded-xl border p-4 sm:p-5">
+  const card = compact ? <article className="bg-secondary flex items-center gap-3 rounded-md px-3 py-2">
+    <Icon className="text-success size-4 shrink-0" aria-hidden="true" />
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-semibold">{titleOf(entry)}</p>
+      <p className="text-muted-foreground text-xs">{[
+        contextLabel, time,
+        entry.distanceM != null ? `${(entry.distanceM / 1000).toFixed(2)} km` : null,
+        entry.movingTimeSec != null ? duration(entry.movingTimeSec) : null,
+      ].filter(Boolean).join(" · ")}</p>
+    </div>
+    <Check className="text-success size-4 shrink-0" aria-label="Recorded activity" />
+  </article> : <article className="border-border bg-card flex gap-4 rounded-xl border p-4 sm:p-5">
     <div className="bg-secondary text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg"><Icon className="size-5" aria-hidden="true" /></div>
     <div className="min-w-0 flex-1">
+      {contextLabel && <p className="text-success mb-1 text-xs font-semibold">Recorded · {contextLabel}</p>}
       <h3 className="font-semibold">{titleOf(entry)}</h3>
       <p className="text-muted-foreground mt-1 text-sm">{dateLabel(entry.date)}{time ? ` · ${time}` : ""}</p>
       {entry.historyTitle && entry.historyTitle !== entry.title && <p className="text-muted-foreground mt-1 text-sm">{entry.historyTitle}</p>}
@@ -47,7 +59,7 @@ function WorkoutCard({ entry }: { entry: HistoryEntry }) {
     </div>
   </article>;
   // Synced activities open their detail page; sessions recorded by hand have none
-  return entry.id.startsWith("activity:") ? <Link href={`/activities/${encodeURIComponent(entry.id.slice("activity:".length))}`} className="focus-visible:ring-ring block rounded-xl outline-none focus-visible:ring-2">{card}</Link> : card;
+  return entry.id.startsWith("activity:") ? <Link href={`/activities/${encodeURIComponent(entry.id.slice("activity:".length))}`} aria-label={`${titleOf(entry)}, ${dateLabel(entry.date)}${contextLabel ? `, ${contextLabel}` : ""}`} className="focus-visible:ring-ring block rounded-xl outline-none focus-visible:ring-2">{card}</Link> : card;
 }
 
 export function WorkoutHistory({ result, filters }: { result: { entries: HistoryEntry[]; years: number[]; page: number; hasNext: boolean; totals: Record<string, MonthTotals> }; filters: HistoryFilters }) {
@@ -67,7 +79,7 @@ export function WorkoutHistory({ result, filters }: { result: { entries: History
       return <section key={key} className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-4"><h2 className="text-lg font-bold">{months[Number(month) - 1]} {year}</h2>{total && total.distanceM > 0 && <span className="text-muted-foreground text-sm font-medium">{(total.distanceM / 1000).toFixed(1)} km</span>}</div>
         {total && <p className="text-muted-foreground -mt-1 text-sm">{total.count} {total.count === 1 ? "activity" : "activities"}{total.movingTimeSec > 0 ? ` · ${duration(total.movingTimeSec)}` : ""}</p>}
-        {entries.map((entry) => <WorkoutCard key={entry.id} entry={entry} />)}</section>;
+        {entries.map((entry) => <RecordedWorkoutCard key={entry.id} entry={entry} />)}</section>;
     })}
     {(result.page > 1 || result.hasNext) && <nav aria-label="Workout history pages" className="flex items-center justify-between gap-4 text-sm"><div>{result.page > 1 && <Link className="underline underline-offset-4" href={pageUrl(filters, result.page - 1)}>Previous</Link>}</div><span className="text-muted-foreground">Page {result.page}</span><div>{result.hasNext && <Link className="underline underline-offset-4" href={pageUrl(filters, result.page + 1)}>Next</Link>}</div></nav>}
   </div>;

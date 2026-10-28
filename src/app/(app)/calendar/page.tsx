@@ -5,8 +5,9 @@ import { addDaysIso, dayOfMonth, km, shortDate, weekdayShort, workoutSummary } f
 import { TypeTag } from "@/components/kilo/type-tag";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { RecordedWorkoutCard } from "@/components/kilo/workout-history";
 import { actualKm, statusOf, weekFor, weekStats } from "@/lib/plan-view";
-import { getViewerActuals, getViewerToday, requireViewerPlan } from "@/server/queries";
+import { getViewerActuals, getViewerAdditionalTraining, getViewerToday, requireViewerPlan } from "@/server/queries";
 
 export const metadata = { title: "Calendar · Grind" };
 
@@ -14,6 +15,13 @@ export default async function CalendarPage() {
   const [{ plan, progress }, today, actuals] = await Promise.all([requireViewerPlan(), getViewerToday(), getViewerActuals()]);
   const real = actualKm(actuals);
   const current = weekFor(plan, today);
+  const additional = await getViewerAdditionalTraining(plan.weeks[0].startDate, addDaysIso(plan.weeks[plan.weeks.length - 1].startDate, 6));
+  const recordedByDate = new Map<string, typeof additional>();
+  for (const entry of additional) {
+    const entries = recordedByDate.get(entry.date) ?? [];
+    entries.push(entry);
+    recordedByDate.set(entry.date, entries);
+  }
   // Start at the current week; earlier weeks come after a "Show earlier weeks" link would add noise
   const weeks = plan.weeks.filter((w) => w.index >= current.index);
 
@@ -51,12 +59,13 @@ export default async function CalendarPage() {
             <Badge variant={week.index === current.index ? "default" : "secondary"}>Week {week.index}</Badge>
           </div>
           <span className="text-muted-foreground text-sm">
-            Total: <b className="text-foreground">{stats.kmDone} km</b> / {km(stats.kmTarget)}
+            Plan distance: <b className="text-foreground">{stats.kmDone} km</b> / {km(stats.kmTarget)}
           </span>
         </div>
         <ol>
           {days.map((d) => {
             const workouts = week.workouts.filter((w) => w.date === d);
+            const recorded = recordedByDate.get(d) ?? [];
             return (
               <li key={d} className="grid grid-cols-[48px_1fr] gap-3 border-t px-5 py-3">
                 <div className="flex flex-col items-center">
@@ -71,7 +80,7 @@ export default async function CalendarPage() {
                   </span>
                 </div>
                 <div className="flex min-w-0 flex-col gap-2">
-                  {workouts.length === 0 && <span className="text-subtle self-center py-1.5 text-sm">{d < plan.startDate ? "Before your plan" : "Rest"}</span>}
+                  {workouts.length === 0 && recorded.length === 0 && <span className="text-subtle self-center py-1.5 text-sm">{d < plan.startDate ? "Before your plan" : "Rest"}</span>}
                   {workouts.map((w) => {
                     const done = statusOf(progress, w) === "completed";
                     return (
@@ -87,6 +96,7 @@ export default async function CalendarPage() {
                       </Link>
                     );
                   })}
+                  {recorded.map((entry) => <RecordedWorkoutCard key={entry.id} entry={entry} compact contextLabel="Outside plan" />)}
                 </div>
               </li>
             );

@@ -4,6 +4,7 @@ One training plan for running and strength. Grind builds a plan for a 5K, 10K, h
 
 - **Plans:** rule-based templates (paces from a recent race, phases, long-run progression, hard days spaced apart) with Runna-style strength sessions, checked by a validator.
 - **intervals.icu:** reads runs, strength sessions, resting heart rate, HRV and sleep. Runs are matched to planned workouts.
+- **Daily training:** Today and Calendar show recorded activities and manual sessions on their recorded local dates, including training outside the active plan. Activities already represented by a same-day plan card are not repeated. Additional training never completes another planned workout; plan progress and distance remain labeled separately.
 - **Claude as coach:** an MCP server lets Claude read your training and propose validated workout changes, approved in the app or chat. It can also save coaching preferences and notes when asked.
 
 ## Stack
