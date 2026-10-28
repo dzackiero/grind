@@ -8,6 +8,7 @@ import type { Actuals } from "@/lib/plan-view";
 import { describeChanges } from "@/lib/plan";
 import { listPendingChanges } from "./plans/changes";
 import { getActivePlan } from "./plans/service";
+import { countRunsToCheck, getPoints, getRecords, getWeeklyTotals } from "./progress/service";
 import { getTimezone, todayIn } from "./profile/service";
 
 // Per-request cached reads for server components, so layout and page share one query.
@@ -73,6 +74,20 @@ export const getViewerPendingChanges = cache(async () => {
   const user = await requireViewer();
   const pending = await listPendingChanges(await getDb(), user.id);
   return pending.map((c) => ({ id: c.id, summary: c.summary, lines: describeChanges(c.changes) }));
+});
+
+/** Everything on the Progress page: points and tier, personal records, the last 12 weeks, and runs still to check. */
+export const getViewerProgress = cache(async () => {
+  const user = await requireViewer();
+  const db = await getDb();
+  const today = await getViewerToday();
+  const [points, records, weeks, toCheck] = await Promise.all([
+    getPoints(db, user.id, today),
+    getRecords(db, user.id),
+    getWeeklyTotals(db, user.id, today, 12),
+    countRunsToCheck(db, user.id),
+  ]);
+  return { points, records, weeks, toCheck };
 });
 
 export const getViewerIntervals = cache(async () => {

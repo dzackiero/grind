@@ -1,8 +1,9 @@
-import { and, desc, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { bestEfforts, RECORD_ACTIVITY_TYPES } from "@/lib/efforts";
 import { matchActivities } from "@/lib/matching";
 import { decryptSecret, encryptSecret } from "../crypto";
 import type { DB } from "../db/client";
-import { activity, athleteProfile, plan as planTable, plannedWorkout, wellness } from "../db/schema";
+import { activity, activityEffort, athleteProfile, plan as planTable, plannedWorkout, wellness } from "../db/schema";
 import { createIntervalsClient, IntervalsError, type IntervalsApi } from "./client";
 
 /*
@@ -15,6 +16,10 @@ const defaultFactory: ClientFactory = (key, id) => createIntervalsClient(key, id
 
 /** How far back each sync looks */
 export const SYNC_DAYS = 60;
+/** Activities go back a year, so personal records and weekly totals cover more than the current plan. */
+export const ACTIVITY_DAYS = 365;
+/** Runs whose streams are fetched per sync. Each is one request; the rest follow on later syncs. */
+export const EFFORT_BATCH = 25;
 
 export interface IntervalsStatus {
   connected: boolean;
@@ -71,6 +76,10 @@ export interface SyncResult {
   activities: number;
   wellnessDays: number;
   matched: number;
+  /** Runs whose personal-record candidates were worked out this time */
+  recordsChecked: number;
+  /** Runs still waiting for that; they are picked up by the next sync */
+  recordsPending: number;
   oldest: string;
   newest: string;
 }
@@ -86,11 +95,12 @@ export async function syncIntervals(db: DB, userId: string, today: string, facto
 
   const client = factory(decryptSecret(profile.intervalsApiKeyEnc), profile.intervalsAthleteId ?? "0");
   const oldest = shiftDate(today, -SYNC_DAYS);
+  const activityOldest = shiftDate(today, -ACTIVITY_DAYS);
   // Include tomorrow: intervals.icu dates are the athlete's local dates, which can be ahead of ours
   const newest = shiftDate(today, 1);
 
   try {
-    const [acts, well] = await Promise.all([client.listActivities(oldest, newest), client.listWellness(oldest, newest)]);
+    const [acts, well] = await Promise.all([client.listActivities(activityOldest, newest), client.listWellness(oldest, newest)]);
 
     await db.transaction(async (tx) => {
       for (const a of acts) {
@@ -134,12 +144,46 @@ export async function syncIntervals(db: DB, userId: string, today: string, facto
 
     const matched = await matchActivePlan(db, userId, oldest, newest);
     await db.update(athleteProfile).set({ lastSyncedAt: new Date(), lastSyncError: null }).where(eq(athleteProfile.userId, userId));
-    return { activities: acts.length, wellnessDays: well.length, matched, oldest, newest };
+    // Records come from run streams; a failure there must not fail the sync that already saved everything else
+    const efforts = await computeEfforts(db, userId, client).catch(() => ({ processed: 0, pending: 0 }));
+    return { activities: acts.length, wellnessDays: well.length, matched, oldest, newest, recordsChecked: efforts.processed, recordsPending: efforts.pending };
   } catch (error) {
     const message = error instanceof IntervalsError ? error.message : "Sync failed. Try again in a moment.";
     await db.update(athleteProfile).set({ lastSyncError: message }).where(eq(athleteProfile.userId, userId));
     throw error;
   }
+}
+
+/**
+ * Work out best efforts for runs that haven't been looked at yet, newest first, up to EFFORT_BATCH per call.
+ * Short runs and treadmill runs are skipped. If intervals.icu is busy (rate limit, outage) it stops and tries
+ * again next sync; a run with no usable stream is marked done so it isn't fetched forever.
+ */
+export async function computeEfforts(db: DB, userId: string, client: IntervalsApi, limit = EFFORT_BATCH) {
+  const eligible = and(eq(activity.userId, userId), isNull(activity.effortsAt), inArray(activity.type, [...RECORD_ACTIVITY_TYPES]), gte(activity.distanceM, 1000));
+  const batch = await db.select({ id: activity.id }).from(activity).where(eligible).orderBy(desc(activity.startLocal)).limit(limit);
+
+  let processed = 0;
+  for (const { id } of batch) {
+    try {
+      const streams = await client.getActivityStreams(id);
+      const efforts = streams ? bestEfforts(streams.time, streams.distance) : {};
+      await db.transaction(async (tx) => {
+        await tx.delete(activityEffort).where(and(eq(activityEffort.userId, userId), eq(activityEffort.activityId, id)));
+        const rows = Object.entries(efforts).map(([key, seconds]) => ({ userId, activityId: id, key, seconds }));
+        if (rows.length) await tx.insert(activityEffort).values(rows);
+        await tx.update(activity).set({ effortsAt: new Date() }).where(and(eq(activity.userId, userId), eq(activity.id, id)));
+      });
+      processed++;
+    } catch (error) {
+      const temporary = error instanceof IntervalsError && (error.status === 0 || error.status === 429 || error.status >= 500);
+      if (temporary) break;
+      await db.update(activity).set({ effortsAt: new Date() }).where(and(eq(activity.userId, userId), eq(activity.id, id)));
+    }
+  }
+
+  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(activity).where(eligible);
+  return { processed, pending: n };
 }
 
 /** Link activities to the active plan's workouts and mark them done. Returns how many new links were made. */

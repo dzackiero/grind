@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { PwaRegister } from "@/components/kilo/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -11,6 +12,10 @@ const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: 
 export const metadata: Metadata = {
   title: "Kilo",
   description: "One plan for running and strength.",
+  applicationName: "Kilo",
+  // iOS home-screen app: opens full screen with a black status bar above the page (no safe-area handling needed)
+  appleWebApp: { capable: true, title: "Kilo", statusBarStyle: "black" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -28,6 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
           <Toaster position="top-center" />
+          <PwaRegister />
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { date, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { PaceZones, Plan, PlanInput, Workout } from "@/lib/plan";
 import { user } from "./auth";
 
@@ -48,8 +48,27 @@ export const activity = pgTable(
     elevationGainM: real("elevation_gain_m"),
     raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
     syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+    /** When best efforts were calculated from this run's stream; null until then */
+    effortsAt: timestamp("efforts_at", { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.userId, t.id] }), index("activity_user_date").on(t.userId, t.date)],
+);
+
+/** Fastest time over a standard distance inside one run (see lib/efforts.ts). Personal records are the best per key. */
+export const activityEffort = pgTable(
+  "activity_effort",
+  {
+    userId: userId(),
+    activityId: text("activity_id").notNull(),
+    /** "1k", "1mi", "5k"… */
+    key: text("key").notNull(),
+    seconds: real("seconds").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.activityId, t.key] }),
+    foreignKey({ columns: [t.userId, t.activityId], foreignColumns: [activity.userId, activity.id] }).onDelete("cascade"),
+    index("activity_effort_best").on(t.userId, t.key, t.seconds),
+  ],
 );
 
 /** Daily wellness from intervals.icu (Huawei Health sends HRV, resting HR, sleep). */

@@ -5,6 +5,7 @@ import { countSynced, getIntervalsStatus } from "@/server/intervals/sync";
 import { listConnectedApps } from "@/server/mcp/connections";
 import { requireViewer } from "@/server/queries";
 import { ClaudeConnect } from "./claude-connect";
+import { InstallApp } from "./install-app";
 import { IntervalsConnect } from "./intervals-connect";
 
 export const metadata = { title: "Settings · Kilo" };
@@ -33,6 +34,15 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <ClaudeConnect mcpUrl={mcpResource()} isLocal={/^https?:\/\/(localhost|127\.|\[::1\])/.test(mcpResource())} apps={apps} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Install Kilo</CardTitle>
+          <CardDescription>Add Kilo to your home screen. It opens full screen like an app.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <InstallApp />
         </CardContent>
       </Card>
       <Card>

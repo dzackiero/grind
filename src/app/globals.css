@@ -76,6 +76,12 @@
   --color-plate-yellow: var(--plate-yellow);
   --color-plate-green: var(--plate-green);
   --color-plate-white: var(--plate-white);
+  --color-plate-rim: var(--plate-rim);
+  --color-tier-bronze: var(--tier-bronze);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-platinum: var(--tier-platinum);
+  --color-tier-lime: var(--primary);
 
   /* radius-md 12px rows, radius-xl 20px cards */
   --radius-sm: calc(var(--radius) - 6px);
@@ -148,6 +154,13 @@
   --plate-yellow: #f2c230;
   --plate-green: #22914a;
   --plate-white: #e6e8e3;
+  /* Outer rim of every plate, so light plates still read on a light background */
+  --plate-rim: #2a2e26;
+  /* Points tiers; the top tier (Lime) is the brand colour itself */
+  --tier-bronze: #c98a55;
+  --tier-silver: #bcc3cb;
+  --tier-gold: #e8bf45;
+  --tier-platinum: #bfe3de;
 }
 
 /* Dark theme (default) */
@@ -198,6 +211,7 @@
   --type-race-mark: #ff5c7a;
   --type-strength-mark: #6eb6ff;
   --type-recovery-mark: #4fd6cf;
+  --plate-rim: #0d0f0c;
 }
 
 @layer base {

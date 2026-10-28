@@ -58,10 +58,18 @@ export interface IntervalsAthlete {
   name: string | null;
 }
 
+/** Second-by-second time (seconds since start) and cumulative distance (metres) of a run. */
+export interface IntervalsStreams {
+  time: (number | null)[];
+  distance: (number | null)[];
+}
+
 export interface IntervalsApi {
   getAthlete(): Promise<IntervalsAthlete>;
   listActivities(oldest: string, newest: string): Promise<IntervalsActivity[]>;
   listWellness(oldest: string, newest: string): Promise<IntervalsWellness[]>;
+  /** Null when the activity has no usable time and distance streams (for example it was entered by hand). */
+  getActivityStreams(activityId: string): Promise<IntervalsStreams | null>;
 }
 
 export function createIntervalsClient(apiKey: string, athleteId = "0", fetchImpl: typeof fetch = fetch): IntervalsApi {
@@ -106,6 +114,16 @@ export function createIntervalsClient(apiKey: string, athleteId = "0", fetchImpl
         const p = IntervalsWellnessSchema.safeParse(r);
         return p.success ? [p.data] : [];
       });
+    },
+    async getActivityStreams(activityId) {
+      const streams = await get<{ type?: string; data?: unknown }[]>(`/activity/${encodeURIComponent(activityId)}/streams?types=time,distance`);
+      const series = (type: string) => {
+        const data = streams.find((s) => s.type === type)?.data;
+        return Array.isArray(data) ? (data as unknown[]).map((v) => (typeof v === "number" ? v : null)) : null;
+      };
+      const time = series("time");
+      const distance = series("distance");
+      return time && distance && time.length > 1 ? { time, distance } : null;
     },
   };
 }

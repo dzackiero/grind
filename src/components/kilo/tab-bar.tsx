@@ -3,20 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "cn";
-import { CalendarDays, ClipboardList, Sun } from "lucide-react";
+import { CalendarDays, ChartColumn, ClipboardList, Sun } from "lucide-react";
 
 const TABS = [
   { href: "/today", label: "Today", icon: Sun },
   { href: "/plan", label: "Plan", icon: ClipboardList },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/progress", label: "Progress", icon: ChartColumn },
 ];
 
-/** Bottom navigation. Progress and Coach tabs arrive with their features. */
+/** Bottom navigation. The Coach tab arrives with its feature. */
 export function TabBar() {
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="bg-card fixed inset-x-0 bottom-0 z-20 border-t pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto grid max-w-md grid-cols-3 px-2 pt-2 pb-2.5">
+      <ul className="mx-auto grid max-w-md grid-cols-4 px-2 pt-2 pb-2.5">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (

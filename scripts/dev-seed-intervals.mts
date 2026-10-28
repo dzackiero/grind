@@ -38,6 +38,8 @@ await createPlanFromInput(db, u.id, {
   intensity: "balanced",
 });
 const athlete = await connectIntervals(db, u.id, process.env.INTERVALS_DEV_API_KEY!);
-const result = await syncIntervals(db, u.id, todayIn(tz));
+let result = await syncIntervals(db, u.id, todayIn(tz));
+// Older runs are checked in batches; keep going so the dev account has all its records
+for (let i = 0; i < 8 && result.recordsPending > 0; i++) result = await syncIntervals(db, u.id, todayIn(tz));
 console.log(`Connected as ${athlete.name} (${athlete.id}).`, result);
 process.exit(0);
