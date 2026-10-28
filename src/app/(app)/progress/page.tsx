@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { WorkoutHistory } from "@/components/kilo/workout-history";
+import { getDb } from "@/server/db";
+import { listWorkoutHistory } from "@/server/progress/history-list";
+import { requireViewer } from "@/server/queries";
 import { CheckRunsButton } from "@/components/kilo/check-runs-button";
 import { RecordsGrid } from "@/components/kilo/records-grid";
 import { TierCard } from "@/components/kilo/tier-card";
@@ -9,7 +13,15 @@ import { getViewerIntervals, getViewerProgress, requireViewerPlan } from "@/serv
 
 export const metadata = { title: "Progress · Kilo" };
 
-export default async function ProgressPage() {
+export default async function ProgressPage({ searchParams }: { searchParams: Promise<{ tab?: string; type?: string; year?: string; month?: string; page?: string }> }) {
+  const params = await searchParams;
+  const performance = params.tab === "performance";
+  const filters = { type: params.type, year: Number(params.year) || undefined, month: Number(params.month) || undefined, page: Number(params.page) || undefined };
+  if (!performance) {
+    const user = await requireViewer();
+    const result = await listWorkoutHistory(await getDb(), user.id, filters);
+    return <div className="flex flex-col gap-6"><h1 className="font-display text-3xl font-extrabold">Progress</h1><ProgressNavigation performance={false} /><WorkoutHistory result={result} filters={filters} /></div>;
+  }
   const [{ plan }, progress, intervals] = await Promise.all([requireViewerPlan(), getViewerProgress(), getViewerIntervals()]);
   const hasActivity = progress.weeks.some((w) => w.runs > 0 || w.strength > 0);
 
@@ -60,4 +72,11 @@ export default async function ProgressPage() {
       </Card>
     </div>
   );
+}
+
+function ProgressNavigation({ performance }: { performance: boolean }) {
+  return <nav aria-label="Progress sections" className="border-border flex gap-6 border-b text-sm font-medium">
+    <Link href="/progress" aria-current={!performance ? "page" : undefined} className={`border-b-2 px-1 pb-3 ${!performance ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}>Workouts</Link>
+    <Link href="/progress?tab=performance" aria-current={performance ? "page" : undefined} className={`border-b-2 px-1 pb-3 ${performance ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}>Performance</Link>
+  </nav>;
 }

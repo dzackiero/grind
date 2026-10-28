@@ -6,6 +6,7 @@ import { activity, activityEffort, athleteProfile, user } from "../db/schema";
 import { createPlanFromInput, getActivePlan } from "../plans/service";
 import { IntervalsError, type IntervalsApi } from "./client";
 import { computeEfforts, connectIntervals, disconnectIntervals, getIntervalsStatus, getWellnessSummary, syncIntervals } from "./sync";
+import { recordHistoricalWorkout } from "../history/service";
 
 process.env.ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
 
@@ -131,6 +132,17 @@ describe("intervals.icu sync", () => {
     const broken = { ...fakeApi("good-key-123456"), getActivityStreams: async () => Promise.reject(new IntervalsError("not found", 404)) };
     expect(await computeEfforts(db, USER, broken)).toEqual({ processed: 0, pending: 0 });
     await db.delete(activity).where(eq(activity.id, "x-busy"));
+  });
+
+  it("does not auto-match an activity already assigned to a historical session", async () => {
+    await db.insert(activity).values({ userId: USER, id: "historic-run", date: "2026-10-28", startLocal: "2026-10-28T07:00:00", type: "Run", distanceM: 5000, raw: {} });
+    await recordHistoricalWorkout(db, USER, { requestKey: "history-28", date: "2026-10-28", kind: "run", title: "Extra run", activityIds: ["historic-run"] }, "2026-10-30");
+    const api = { ...fakeApi("good-key-123456"), getActivityStreams: async () => null,
+      listActivities: async () => [{ id: "historic-run", start_date_local: "2026-10-28T07:00:00", type: "Run", distance: 5000 }] };
+    await syncIntervals(db, USER, "2026-10-30", () => api);
+    const saved = await getActivePlan(db, USER);
+    const wed = saved!.plan.weeks.flatMap((w) => w.workouts).find((w) => w.date === "2026-10-28" && w.kind === "run")!;
+    expect(saved!.progress[wed.id]).toMatchObject({ status: "planned", activityId: null });
   });
 
   it("disconnects, deletes synced data and keeps workouts done", async () => {

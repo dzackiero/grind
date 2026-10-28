@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getCurrentUser } from "./auth";
 import { getDb } from "./db";
-import { getActivities, getIntervalsStatus, getWellnessSummary } from "./intervals/sync";
+import { getIntervalsStatus, getWellnessSummary } from "./intervals/sync";
+import { getWorkoutActuals } from "./intervals/workout-activities";
 import type { Actuals } from "@/lib/plan-view";
 import { describeChanges } from "@/lib/plan";
 import { describeWorkoutDetails } from "@/lib/plan/describe";
@@ -40,28 +41,19 @@ export const getViewerActuals = cache(async (): Promise<Actuals> => {
   const user = await requireViewer();
   const saved = await getViewerPlan();
   if (!saved) return {};
-  const links = Object.entries(saved.progress).filter(([, p]) => p.activityId) as [string, { activityId: string }][];
-  const rows = await getActivities(
-    await getDb(),
-    user.id,
-    links.map(([, p]) => p.activityId),
-  );
-  const byId = new Map(rows.map((r) => [r.id, r]));
+  const rows = await getWorkoutActuals(await getDb(), user.id, saved.id);
   const out: Actuals = {};
-  for (const [key, p] of links) {
-    const a = byId.get(p.activityId);
-    if (a)
-      out[key] = {
-        activityId: a.id,
-        name: a.name,
-        distanceM: a.distanceM,
-        movingTimeSec: a.movingTimeSec,
-        avgHr: a.avgHr,
-        maxHr: a.maxHr,
-        trainingLoad: a.trainingLoad,
-        elevationGainM: a.elevationGainM,
-      };
-  }
+  for (const [key, a] of Object.entries(rows))
+    out[key] = {
+      activityId: a.id,
+      name: a.name,
+      distanceM: a.distanceM,
+      movingTimeSec: a.movingTimeSec,
+      avgHr: a.avgHr,
+      maxHr: a.maxHr,
+      trainingLoad: a.trainingLoad,
+      elevationGainM: a.elevationGainM,
+    };
   return out;
 });
 

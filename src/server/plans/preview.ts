@@ -1,16 +1,17 @@
 import { and, eq } from "drizzle-orm";
 import { validateCoaching } from "@/lib/coaching";
-import { applyChanges, buildChanges, PlanEditError, staleReason, validatePlan, type EditOp, type Plan, type WorkoutChange } from "@/lib/plan";
+import { applyChanges, buildChanges, editableFrom, PlanEditError, staleReason, validatePlan, type EditOp, type Plan, type WorkoutChange } from "@/lib/plan";
 import type { DB } from "../db/client";
 import { planChange } from "../db/schema";
 import { getCoachingProfile } from "../profile/coaching";
 import { getActivePlan, type SavedPlan } from "./service";
 
 export function changeEligibilityReason(saved: SavedPlan, changes: WorkoutChange[], today: string): string | null {
+  const floor = editableFrom(saved.plan, today);
   for (const change of changes) {
     const progress = saved.progress[change.workoutKey];
     if (progress && progress.status !== "planned") return "A workout is already done or skipped. Ask for a new suggestion.";
-    if ((change.before && change.before.date < today) || (change.after && change.after.date < today))
+    if ((change.before && change.before.date < floor) || (change.after && change.after.date < floor))
       return "A workout in this suggestion is now in the past. Ask for a new suggestion.";
   }
   return null;

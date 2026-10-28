@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchActivities, type ActivityForMatch, type PlannedForMatch } from "./matching";
+import { extraRunsForLinked, matchActivities, matchActivityGroups, type ActivityForMatch, type PlannedForMatch } from "./matching";
 
 const run = (key: string, date: string, distanceKm: number, extra: Partial<PlannedForMatch> = {}): PlannedForMatch => ({
   key,
@@ -48,6 +48,16 @@ describe("matchActivities", () => {
       [act("a1", "2026-10-28", "Run", 6), act("a2", "2026-10-29", "Run", 5)],
     );
     expect(links.size).toBe(0);
+  });
+
+  it("combines separate runs recorded on the same day into one workout", () => {
+    const groups = matchActivityGroups([run("w1", "2026-10-27", 6)], [act("part2", "2026-10-27", "Run", 2.5), act("part1", "2026-10-27", "Run", 3.4), act("walk", "2026-10-27", "Walk", 1)]);
+    expect(groups.get("w1")).toEqual(["part1", "part2"]);
+  });
+
+  it("adds a later run to a workout that was already matched", () => {
+    const extras = extraRunsForLinked([run("w1", "2026-10-27", 6, { activityId: "a1", status: "completed" })], [act("a2", "2026-10-27", "Run", 2), act("other", "2026-10-28", "Run", 3)]);
+    expect([...extras]).toEqual([["w1", ["a2"]]]);
   });
 
   it("uses each activity once", () => {

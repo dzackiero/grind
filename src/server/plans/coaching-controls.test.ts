@@ -85,7 +85,7 @@ describe("coaching change controls", () => {
 
   it("marks a proposal stale when its workout date passes", async () => {
     const proposal = await proposeChanges(db, uid, [{ op: "update_workout", workoutId, patch: { title: "Changed" } }], "Change the title", TODAY);
-    const diff = await getPlanDiff(db, uid, proposal.id, "2026-11-01");
+    const diff = await getPlanDiff(db, uid, proposal.id, "2026-11-30");
     expect(diff.stale).toBe(true);
     expect(diff.staleReason).toMatch(/past/);
   });

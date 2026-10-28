@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { check, date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { PaceZones, Plan, PlanInput, Workout } from "@/lib/plan";
 import type { CoachingProfile } from "@/lib/coaching";
 import { user } from "./auth";
@@ -163,6 +163,33 @@ export const plannedWorkout = pgTable(
   },
   (t) => [uniqueIndex("planned_workout_plan_key").on(t.planId, t.workoutKey), index("planned_workout_user_date").on(t.userId, t.date)],
 );
+
+/** A session the athlete actually did, recorded independently of the training plan. */
+export const historicalWorkout = pgTable("historical_workout", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: userId(),
+  requestKey: text("request_key").notNull(),
+  date: date("date", { mode: "string" }).notNull(),
+  kind: text("kind", { enum: ["run", "strength", "other"] }).notNull(),
+  title: text("title").notNull(),
+  focus: text("focus"),
+  notes: text("notes"),
+  ...timestamps,
+}, (t) => [uniqueIndex("historical_workout_user_request").on(t.userId, t.requestKey), index("historical_workout_user_date").on(t.userId, t.date)]);
+
+/** One imported activity may belong to one planned workout or one historical session. */
+export const workoutActivity = pgTable("workout_activity", {
+  userId: userId(),
+  activityId: text("activity_id").notNull(),
+  plannedWorkoutId: uuid("planned_workout_id").references(() => plannedWorkout.id, { onDelete: "cascade" }),
+  historyId: uuid("history_id").references(() => historicalWorkout.id, { onDelete: "cascade" }),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.activityId] }),
+  foreignKey({ columns: [t.userId, t.activityId], foreignColumns: [activity.userId, activity.id] }).onDelete("cascade"),
+  check("workout_activity_one_target", sql`(${t.plannedWorkoutId} IS NOT NULL) <> (${t.historyId} IS NOT NULL)`),
+  index("workout_activity_planned").on(t.plannedWorkoutId),
+  index("workout_activity_history").on(t.historyId),
+]);
 
 /** A change to a plan, proposed by the coach (Claude via MCP) or made by the user. Shown as a PlanChange card. */
 export const planChange = pgTable(

@@ -14,7 +14,8 @@ import {
 } from "@/lib/plan";
 import { actualKm, weekFor, weekStats, type Progress } from "@/lib/plan-view";
 import type { DB } from "../db/client";
-import { getActivities, getIntervalsStatus, listActivitiesBetween, listWellnessBetween } from "../intervals/sync";
+import { getIntervalsStatus, listActivitiesBetween, listWellnessBetween } from "../intervals/sync";
+import { getWorkoutActuals } from "../intervals/workout-activities";
 import { listPendingChanges, proposeChanges, resolveChange, setCoachNotes } from "../plans/changes";
 import { getActivePlan } from "../plans/service";
 import { getTimezone, todayIn } from "../profile/service";
@@ -63,16 +64,9 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
   };
 
   /** The synced activity behind each completed workout, for "what they actually did". */
-  const actualsFor = async (progress: Progress) => {
-    const links = Object.entries(progress).filter(([, p]) => p.activityId) as [string, { activityId: string }][];
-    const rows = await getActivities(db, userId, links.map(([, p]) => p.activityId));
-    const byId = new Map(rows.map((r) => [r.id, r]));
-    return Object.fromEntries(
-      links.flatMap(([key, p]) => {
-        const a = byId.get(p.activityId);
-        return a ? [[key, a] as const] : [];
-      }),
-    );
+  const actualsFor = async (): Promise<Awaited<ReturnType<typeof getWorkoutActuals>>> => {
+    const saved = await getActivePlan(db, userId);
+    return saved ? getWorkoutActuals(db, userId, saved.id) : {};
   };
   const actualText = (a: Awaited<ReturnType<typeof actualsFor>>[string] | undefined) =>
     a
@@ -111,7 +105,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const { saved, today } = await load();
           if (!saved) return fail("The athlete has no active plan yet. They need to build one in the Kilo app first.");
           const { plan, progress } = saved;
-          const actuals = await actualsFor(progress);
+          const actuals = await actualsFor();
           const real = actualKm(Object.fromEntries(Object.entries(actuals).map(([k, a]) => [k, { activityId: a.id, name: a.name, distanceM: a.distanceM, movingTimeSec: a.movingTimeSec, avgHr: a.avgHr, maxHr: a.maxHr, trainingLoad: a.trainingLoad, elevationGainM: a.elevationGainM }])));
           const current = weekFor(plan, today);
           const pending = await listPendingChanges(db, userId);
@@ -158,7 +152,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const { plan, progress } = saved;
           const w = week ? plan.weeks[week - 1] : weekFor(plan, today);
           if (!w) return fail(`The plan has weeks 1 to ${plan.weeks.length}.`);
-          const actuals = await actualsFor(progress);
+          const actuals = await actualsFor();
           return text({ today, planRevision: saved.revision, week: w.index, starts: w.startDate, phase: w.phase, focus: w.focus, plannedKm: w.targetKm, workouts: w.workouts.map((x) => workoutRow(plan, x, progress, actuals)) });
         }),
     );
@@ -177,7 +171,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           if (!saved) return fail("The athlete has no active plan yet.");
           const w = saved.plan.weeks.flatMap((x) => x.workouts).find((x) => x.id === workoutId);
           if (!w) return fail(`No workout with id "${workoutId}". Use get_week to see the ids.`);
-          const actuals = await actualsFor(saved.progress);
+          const actuals = await actualsFor();
           return text({
             ...workoutRow(saved.plan, w, saved.progress, actuals),
             planRevision: saved.revision,

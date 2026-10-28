@@ -62,8 +62,15 @@ export function weekOfDate(plan: Plan, date: string): Week | undefined {
   return plan.weeks.find((w) => w.startDate <= date && date <= addDays(w.startDate, 6));
 }
 
+/** The earliest day that can still be edited: the first day of the week the athlete is in, so Monday and Tuesday stay open on Wednesday. */
+export function editableFrom(plan: Plan, today: string): string {
+  const week = weekOfDate(plan, today);
+  return week && week.startDate < today ? week.startDate : today;
+}
+
 export function buildChanges(plan: Plan, ops: EditOp[], ctx: EditContext): WorkoutChange[] {
   if (!ops.length) throw new PlanEditError("No changes given.");
+  const floor = editableFrom(plan, ctx.today);
   const original = new Map(plan.weeks.flatMap((w) => w.workouts).map((w) => [w.id, w]));
   const current = new Map<string, Workout | null>(original);
   const touched = new Set<string>();
@@ -73,12 +80,12 @@ export function buildChanges(plan: Plan, ops: EditOp[], ctx: EditContext): Worko
     if (!w) throw new PlanEditError(`There's no workout "${workoutId}" in the plan (or it was already removed). Use get_week to see the ids.`);
     if (ctx.lockedIds.has(workoutId)) throw new PlanEditError(`"${w.title}" on ${w.date} is already done or skipped, so it can't be changed.`);
     if (w.kind === "run" && w.type === "race") throw new PlanEditError(`Race day can't be changed here. Change the race date by building a new plan.`);
-    if (w.date < ctx.today) throw new PlanEditError(`"${w.title}" on ${w.date} is in the past and can't be changed.`);
+    if (w.date < floor) throw new PlanEditError(`"${w.title}" on ${w.date} is in a past week and can't be changed.`);
     return w;
   };
   const checkDate = (date: string) => {
     if (!WorkoutDateSchema.safeParse(date).success) throw new PlanEditError(`${date} is not a real YYYY-MM-DD date.`);
-    if (date < ctx.today) throw new PlanEditError(`${date} is in the past. Pick ${ctx.today} or later.`);
+    if (date < floor) throw new PlanEditError(`${date} is in a past week. Pick ${floor} or later.`);
     if (date > plan.raceDate) throw new PlanEditError(`${date} is after race day (${plan.raceDate}).`);
     if (!weekOfDate(plan, date)) throw new PlanEditError(`${date} is outside the plan (${plan.weeks[0].startDate} to ${addDays(plan.weeks.at(-1)!.startDate, 6)}).`);
   };

@@ -1,0 +1,38 @@
+import { sql } from "drizzle-orm";
+import type { DB } from "../db/client";
+
+export type HistoryFilters = { type?: string; year?: number; month?: number; page?: number };
+export type HistoryEntry = { id: string; date: string; startLocal: string | null; type: string; kind: string; title: string; historyTitle: string | null; focus: string | null; distanceM: number | null; movingTimeSec: number | null };
+const PAGE_SIZE = 50;
+
+/** Returns at most one page of the viewer's history, without loading activity payloads. */
+export async function listWorkoutHistory(db: DB, userId: string, filters: HistoryFilters) {
+  const page = Number.isFinite(filters.page) ? Math.min(10000, Math.max(1, Math.trunc(filters.page!))) : 1;
+  const type = ["run", "strength", "other"].includes(filters.type || "") ? filters.type : undefined;
+  const year = filters.year && filters.year >= 1900 && filters.year <= 9999 ? Math.trunc(filters.year) : undefined;
+  const month = filters.month && filters.month >= 1 && filters.month <= 12 ? Math.trunc(filters.month) : undefined;
+  const source = sql`
+    SELECT 'activity:' || a.id AS id, a.date, a.start_local AS "startLocal", a.type,
+      CASE WHEN a.type IN ('Run', 'TrailRun', 'VirtualRun', 'Treadmill') THEN 'run'
+           WHEN a.type IN ('WeightTraining', 'Workout', 'Crossfit', 'HighIntensityIntervalTraining') THEN 'strength' ELSE 'other' END AS kind,
+      COALESCE(NULLIF(a.name, ''), a.type) AS title, h.title AS "historyTitle", h.focus,
+      a.distance_m AS "distanceM", a.moving_time_sec AS "movingTimeSec"
+    FROM activity a
+    LEFT JOIN workout_activity wa ON wa.user_id = a.user_id AND wa.activity_id = a.id
+    LEFT JOIN historical_workout h ON h.id = wa.history_id AND h.user_id = a.user_id
+    WHERE a.user_id = ${userId}
+    UNION ALL
+    SELECT 'history:' || h.id::text, h.date, NULL::text, h.kind, h.kind, h.title, NULL::text, h.focus, NULL::real, NULL::integer
+    FROM historical_workout h
+    WHERE h.user_id = ${userId} AND NOT EXISTS (
+      SELECT 1 FROM workout_activity wa WHERE wa.user_id = h.user_id AND wa.history_id = h.id
+    )`;
+  const condition = sql`WHERE 1=1 ${type ? sql`AND kind = ${type}` : sql``} ${year ? sql`AND EXTRACT(YEAR FROM date) = ${year}` : sql``} ${month ? sql`AND EXTRACT(MONTH FROM date) = ${month}` : sql``}`;
+  const [result, yearsResult] = await Promise.all([
+    db.execute(sql`SELECT id, to_char(date, 'YYYY-MM-DD') AS date, "startLocal", type, kind, title, "historyTitle", focus, "distanceM", "movingTimeSec" FROM (${source}) entries ${condition} ORDER BY date DESC, "startLocal" DESC NULLS LAST, id DESC LIMIT ${PAGE_SIZE + 1} OFFSET ${(page - 1) * PAGE_SIZE}`),
+    db.execute(sql`SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM (${source}) entries ORDER BY year DESC`),
+  ]);
+  const rows = (result as { rows: HistoryEntry[] }).rows;
+  return { entries: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE, page, years: (yearsResult as { rows: { year: number }[] }).rows.map((r) => r.year) };
+}
+

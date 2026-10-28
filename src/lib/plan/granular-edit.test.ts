@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generatePlan } from "./index";
-import { applyChanges, buildChanges, EditOpSchema } from "./edit";
+import { addDays } from "./dates";
+import { applyChanges, buildChanges, EditOpSchema, weekOfDate } from "./edit";
 import type { PlanInput } from "./schema";
 
 const input: PlanInput = {
@@ -68,13 +69,18 @@ describe("granular workout edits", () => {
     expect(() => update(run.id, { date: "2026-10-20" })).toThrow(/past/);
     expect(() => update(run.id, { date: "2027-02-01" })).toThrow(/race/);
   });
-  it("refuses legacy mutations of a past planned workout", () => {
-    const pastContext = { ...ctx, today: "2026-11-01" };
+  it("refuses legacy mutations of a workout in a past week", () => {
+    const pastContext = { ...ctx, today: "2026-11-17" };
     for (const op of [
       { op: "remove", workoutId: run.id },
       { op: "replace_run", workoutId: run.id, as: "easy" },
-      { op: "move", workoutId: run.id, toDate: "2026-11-04" },
+      { op: "move", workoutId: run.id, toDate: "2026-11-18" },
     ]) expect(() => changes([op], pastContext)).toThrow(/past/);
+  });
+  it("still allows editing earlier days of the current week", () => {
+    const week = weekOfDate(plan, run.date)!;
+    const lastDay = addDays(week.startDate, 6);
+    expect(() => changes([{ op: "update_workout", workoutId: run.id, patch: { coachNote: "Done differently" } }], { ...ctx, today: lastDay })).not.toThrow();
   });
 });
 

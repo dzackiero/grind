@@ -20,7 +20,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <span className="font-display text-lg font-extrabold">Kilo</span>
         <span className="size-11" aria-hidden />
       </header>
-      <main className="relative z-0 min-w-0 flex-1">{children}</main>
+      <main className="relative z-0 min-w-0 flex-1 pt-5">{children}</main>
       <TabBar />
       <AutoSync connected={intervals.connected} lastSyncedAt={intervals.lastSyncedAt} />
     </div>

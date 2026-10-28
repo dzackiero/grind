@@ -1,9 +1,9 @@
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
 import { bestEfforts, RECORD_ACTIVITY_TYPES } from "@/lib/efforts";
-import { matchActivities } from "@/lib/matching";
+import { extraRunsForLinked, matchActivityGroups } from "@/lib/matching";
 import { decryptSecret, encryptSecret } from "../crypto";
 import type { DB } from "../db/client";
-import { activity, activityEffort, athleteProfile, plan as planTable, plannedWorkout, wellness } from "../db/schema";
+import { activity, activityEffort, athleteProfile, plan as planTable, plannedWorkout, wellness, workoutActivity } from "../db/schema";
 import { createIntervalsClient, IntervalsError, type IntervalsApi } from "./client";
 
 /*
@@ -205,26 +205,48 @@ export async function matchActivePlan(db: DB, userId: string, oldest: string, ne
     })
     .from(plannedWorkout)
     .where(and(eq(plannedWorkout.planId, active.id), gte(plannedWorkout.date, oldest), lte(plannedWorkout.date, newest)));
-  const acts = await db
+  const inRange = await db
     .select({ id: activity.id, date: activity.date, type: activity.type, distanceM: activity.distanceM, startLocal: activity.startLocal })
     .from(activity)
     .where(and(eq(activity.userId, userId), gte(activity.date, shiftDate(oldest, -1)), lte(activity.date, shiftDate(newest, 1))));
+  // Activities already assigned to a workout or a historical session are not available for matching
+  const claimed = inRange.length
+    ? await db
+        .select({ id: workoutActivity.activityId })
+        .from(workoutActivity)
+        .where(and(eq(workoutActivity.userId, userId), inArray(workoutActivity.activityId, inRange.map((a) => a.id))))
+    : [];
+  const taken = new Set(claimed.map((c) => c.id));
+  for (const p of planned) if (p.activityId) taken.add(p.activityId);
+  const acts = inRange.filter((a) => !taken.has(a.id));
 
-  const links = matchActivities(planned, acts);
-  for (const [key, activityId] of links) {
-    const a = acts.find((x) => x.id === activityId)!;
+  const targets = new Map(
+    (await db.select({ id: plannedWorkout.id, key: plannedWorkout.workoutKey }).from(plannedWorkout).where(eq(plannedWorkout.planId, active.id))).map((r) => [r.key, r.id]),
+  );
+  const link = async (key: string, ids: string[]) => {
+    const target = targets.get(key);
+    if (target) await db.insert(workoutActivity).values(ids.map((activityId) => ({ userId, activityId, plannedWorkoutId: target }))).onConflictDoNothing();
+  };
+
+  const groups = matchActivityGroups(planned, acts);
+  for (const [key, ids] of groups) {
+    const first = acts.find((x) => x.id === ids[0])!;
     const p = planned.find((x) => x.key === key)!;
+    await link(key, ids);
     await db
       .update(plannedWorkout)
       .set({
-        activityId,
-        // A manual "done" keeps its time; otherwise the activity's start is when it was done
-        ...(p.status === "planned" ? { status: "completed" as const, completedAt: new Date(a.startLocal) } : {}),
+        activityId: ids[0],
+        // A manual "done" keeps its time; otherwise the earliest activity's start is when it was done
+        ...(p.status === "planned" ? { status: "completed" as const, completedAt: new Date(ids.map((id) => acts.find((x) => x.id === id)!.startLocal).sort()[0] ?? first.startLocal) } : {}),
         updatedAt: new Date(),
       })
       .where(and(eq(plannedWorkout.planId, active.id), eq(plannedWorkout.workoutKey, key)));
   }
-  return links.size;
+  // A second run recorded after the first one was matched joins the same workout
+  const grouped = new Set([...groups.values()].flat());
+  for (const [key, ids] of extraRunsForLinked(planned, acts.filter((a) => !grouped.has(a.id)))) await link(key, ids);
+  return groups.size;
 }
 
 /** Synced activity details for a workout, if one is linked. */

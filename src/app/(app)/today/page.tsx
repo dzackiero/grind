@@ -34,7 +34,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const beforeStart = selected < plan.startDate;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="-mt-5 flex flex-col gap-6">
       <WeekStrip week={week} totalWeeks={plan.weeks.length} progress={progress} today={today} selected={selected} />
 
       {suggestions[0] && <PlanChangeCard change={suggestions[0]} />}
