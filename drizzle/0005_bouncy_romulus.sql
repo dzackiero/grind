@@ -1,0 +1,1 @@
+ALTER TABLE "plan_change" ADD COLUMN "diff" jsonb;

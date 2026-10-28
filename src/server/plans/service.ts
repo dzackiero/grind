@@ -10,6 +10,10 @@ import {
 } from "@/lib/plan";
 import type { DB } from "../db/client";
 import { plan as planTable, plannedWorkout, planWeek } from "../db/schema";
+import { athleteProfile } from "../db/schema";
+import { validateCoaching } from "@/lib/coaching";
+import { getCoachingProfile } from "../profile/coaching";
+import { personalizeGeneratedPlan } from "@/lib/plan/personalize";
 
 /*
  * Plans service: the only way plans reach the database. The web app and the MCP server both call it,
@@ -43,7 +47,8 @@ export interface SavedPlan {
 /** Build a plan from the onboarding form and make it the user's active plan. */
 export async function createPlanFromInput(db: DB, userId: string, rawInput: unknown): Promise<SavedPlan> {
   const input = PlanInputSchema.parse(rawInput);
-  return savePlan(db, userId, generatePlan(input));
+  const coaching = await getCoachingProfile(db, userId);
+  return savePlan(db, userId, personalizeGeneratedPlan(generatePlan(input), coaching.profile));
 }
 
 /** Validate and save a plan as the user's active plan. The previous active plan is archived. */
@@ -51,8 +56,15 @@ export async function savePlan(db: DB, userId: string, candidate: unknown): Prom
   const result = validatePlan(candidate);
   if (!result.ok) throw new PlanValidationError(result);
   const plan = PlanSchema.parse(candidate);
+  let coachingWarnings: PlanIssue[] = [];
 
   const planId = await db.transaction(async (tx) => {
+    await tx.insert(athleteProfile).values({ userId }).onConflictDoNothing({ target: athleteProfile.userId });
+    await tx.select({ id: athleteProfile.userId }).from(athleteProfile).where(eq(athleteProfile.userId, userId)).for("update");
+    const coaching = await getCoachingProfile(tx as unknown as DB, userId);
+    const rules = validateCoaching(plan, coaching.profile, plan.startDate);
+    if (!rules.ok) throw new PlanValidationError(rules);
+    coachingWarnings = rules.warnings;
     await tx
       .update(planTable)
       .set({ status: "archived", updatedAt: new Date() })
@@ -105,7 +117,7 @@ export async function savePlan(db: DB, userId: string, candidate: unknown): Prom
   });
 
   const saved = await getPlan(db, userId, planId);
-  return { ...saved!, warnings: result.warnings };
+  return { ...saved!, warnings: [...result.warnings, ...coachingWarnings] };
 }
 
 /** The user's active plan, or null if they have none. */

@@ -79,7 +79,7 @@ const tool = async (token: string, name: string, args: unknown = {}) => {
   try {
     json = JSON.parse(txt);
   } catch {}
-  return { isError: !!out?.isError, text: txt, json, error: r.body?.error };
+  return { isError: !!out?.isError, text: txt, json, structured: out?.structuredContent, error: r.body?.error };
 };
 
 /** Register a client, sign it in as the current user and walk the authorization flow. Returns its tokens. */
@@ -179,19 +179,22 @@ const init = await rpc(access, "initialize", { protocolVersion: "2025-06-18", ca
 check("MCP initialize works and carries the coaching instructions", init.status === 200 && init.body?.result?.serverInfo?.name === "kilo" && /coach/i.test(init.body?.result?.instructions ?? ""), `status ${init.status}`);
 const list = await rpc(access, "tools/list", {}, 2);
 const names: string[] = (list.body?.result?.tools ?? []).map((t: { name: string }) => t.name);
-const expected = ["get_plan", "get_week", "get_workout", "get_recent_activities", "get_recovery", "propose_plan_changes", "apply_plan_changes", "discard_plan_changes", "write_coach_notes"];
+const expected = ["get_plan", "get_week", "get_workout", "get_recent_activities", "get_recovery", "propose_plan_changes", "apply_plan_changes", "discard_plan_changes", "write_coach_notes", "get_athlete_context", "validate_plan", "get_plan_diff", "update_workout", "bulk_update_workouts", "set_coaching_preferences", "get_training_summary", "get_workout_compliance"];
 check("Full-access token sees all tools", expected.every((n) => names.includes(n)), names.join(", "));
 
 const overview = await tool(access, "get_plan");
 check("get_plan returns the athlete's plan", overview.json?.goal === "half" && overview.json?.weeks?.length >= 10 && !!overview.json?.paces?.E, `${overview.json?.title}, ${overview.json?.weeks?.length} weeks`);
+check("MCP exposes the standard machine-readable envelope", overview.structured?.success === true && overview.structured?.data?.goal === "half" && Array.isArray(overview.structured?.errors));
 const week = await tool(access, "get_week", {});
 const workouts: any[] = week.json?.workouts ?? [];
 check("get_week lists workouts with ids", workouts.length >= 3 && workouts.every((w) => !!w.id), `${workouts.length} workouts in week ${week.json?.week}`);
 const detail = await tool(access, "get_workout", { workoutId: workouts.find((w) => w.type !== "strength")?.id });
 check("get_workout gives steps with paces", Array.isArray(detail.json?.steps) && /\/km/.test(detail.json.steps.join(" ")), detail.json?.steps?.[0]);
+check("get_workout also returns machine-readable steps and units", Array.isArray(detail.json?.workout?.steps) && detail.json?.units?.pace === "seconds/km");
 check("get_recovery says so when there is no data", /No recovery data/.test((await tool(access, "get_recovery")).text));
 const missing = await tool(access, "get_workout", { workoutId: "nope" });
 check("An unknown workout id is a clear error", missing.isError && /get_week/.test(missing.text));
+check("MCP errors also have structured codes", missing.structured?.success === false && missing.structured?.errors?.[0]?.code === "REQUEST");
 
 const wk2 = await tool(access, "get_week", { week: 2 });
 const w2: any[] = wk2.json?.workouts ?? [];
@@ -208,7 +211,8 @@ const dayBefore = new Date(Date.parse(longRun.date) - 86_400_000).toISOString().
 const broken = await tool(access, "propose_plan_changes", { summary: "Move the hard session to the day before the long run", changes: [{ op: "move", workoutId: hard.id, toDate: dayBefore }] });
 check("A change that breaks the plan's rules is refused, with the reason", broken.isError && /back to back/i.test(broken.text), broken.text.split("\n")[1]);
 
-const proposal = await tool(access, "propose_plan_changes", { summary: "Shorten the easy run to 4 km so the week is lighter.", changes: [{ op: "replace_run", workoutId: easy.id, as: "easy", distanceKm: 4 }] });
+const revisionBeforeProposal = (await tool(access, "get_plan")).json?.planRevision;
+const proposal = await tool(access, "propose_plan_changes", { summary: "Shorten the easy run to 4 km so the week is lighter.", changes: [{ op: "replace_run", workoutId: easy.id, as: "easy", distanceKm: 4 }], expectedRevision: revisionBeforeProposal });
 check("A valid suggestion is stored, not applied", !proposal.isError && !!proposal.json?.changeId && proposal.json?.status === "proposed", proposal.json?.changes?.[0]);
 const stillOld = (await tool(access, "get_workout", { workoutId: easy.id })).json;
 check("The plan is unchanged until it's accepted", stillOld?.summary === easyBefore?.summary && stillOld?.title === easyBefore?.title, stillOld?.title);
@@ -219,7 +223,7 @@ const accepted = await tool(access, "apply_plan_changes", { changeId: proposal.j
 check("Applying a suggestion updates the plan", !accepted.isError && accepted.json?.status === "accepted", accepted.text.slice(0, 80));
 const after = await api("GET", "/api/plans/active");
 const edited = after.json?.plan?.weeks?.flatMap((w: any) => w.workouts).find((w: any) => w.id === easy.id);
-check("The app's plan shows the edit and is marked as coach-edited", after.json?.plan?.source === "coach" && edited?.distanceKm === 4 && after.json?.revision === 2, `${edited?.title}, revision ${after.json?.revision}`);
+check("The app's plan shows the edit and is marked as coach-edited", after.json?.plan?.source === "coach" && edited?.distanceKm === 4 && after.json?.revision === revisionBeforeProposal + 1, `${edited?.title}, revision ${after.json?.revision}`);
 check("A suggestion can't be applied twice", (await tool(access, "apply_plan_changes", { changeId: proposal.json.changeId })).isError);
 
 const second = await tool(access, "propose_plan_changes", { summary: "Swap the easy run to Wednesday.", changes: [{ op: "move", workoutId: easy.id, toDate: new Date(Date.parse(easy.date) + 86_400_000).toISOString().slice(0, 10) }] });
@@ -230,6 +234,32 @@ const third = await tool(access, "propose_plan_changes", { summary: "Add an uppe
 check("A third suggestion replaces nothing pending", !third.isError && !!third.json?.changeId, third.text.slice(0, 160));
 const discarded = await tool(access, "discard_plan_changes", { changeId: third.json.changeId });
 check("A suggestion can be discarded", discarded.json?.status === "rejected");
+
+// ---- structured coaching controls ----
+const context = await tool(access, "get_athlete_context");
+check("Context exposes default rules and common strength patterns", context.json?.coachingRevision === 0 && !!context.json?.supportedStrengthFocuses?.push && !!context.json?.supportedStrengthFocuses?.posterior_chain);
+const rules = await tool(access, "set_coaching_preferences", { profile: { preferences: { allowHills: false }, constraints: {} }, expectedCoachingRevision: 0 });
+check("Structured preferences persist without rewriting the plan", rules.json?.coachingRevision === 1 && rules.json?.coaching?.preferences?.allowHills === false);
+check("A stale profile write is rejected", (await tool(access, "set_coaching_preferences", { profile: { preferences: {}, constraints: {} }, expectedCoachingRevision: 0 })).isError);
+const currentRevision = (await tool(access, "get_plan")).json?.planRevision;
+const preview = await tool(access, "validate_plan", { changes: [{ op: "update_workout", workoutId: easy.id, patch: { title: "Relaxed run" } }], expectedRevision: currentRevision });
+check("Validation returns a read-only before/after diff", preview.json?.diff?.changedWorkoutIds?.includes(easy.id) && (await tool(access, "get_plan")).json?.planRevision === currentRevision);
+const granular = await tool(access, "update_workout", { workoutId: easy.id, patch: { title: "Relaxed run" }, summary: "Clarify the workout title", expectedRevision: currentRevision });
+check("Granular edit creates an approved-later draft", granular.json?.status === "proposed" && !!granular.json?.changeId);
+const diff = await tool(access, "get_plan_diff", { changeId: granular.json?.changeId });
+check("Stored diff contains full before and after", diff.json?.diff?.workouts?.[0]?.after?.title === "Relaxed run" && diff.json?.stale === false);
+check("Granular draft applies after approval", (await tool(access, "apply_plan_changes", { changeId: granular.json?.changeId })).json?.status === "accepted");
+check("Stale plan revisions are rejected", (await tool(access, "update_workout", { workoutId: easy.id, patch: { title: "Stale title" }, summary: "This edit is stale", expectedRevision: currentRevision })).isError);
+const bulk = await tool(access, "bulk_update_workouts", { filter: { weekFrom: 2, weekTo: 3, kind: "run", types: ["easy"] }, patch: { coachNote: "Keep these conversational." }, summary: "Add easy effort reminders", expectedRevision: (await tool(access, "get_plan")).json?.planRevision });
+check("Bulk edits select multiple sessions into one proposal", bulk.json?.status === "proposed" && bulk.json?.changes?.length >= 2);
+await tool(access, "discard_plan_changes", { changeId: bulk.json?.changeId });
+const strengthWorkout = w2.find(w => w.type === "strength");
+const push = await tool(access, "update_workout", { workoutId: strengthWorkout.id, patch: { focus: "push" }, summary: "Use a push strength session", expectedRevision: (await tool(access, "get_plan")).json?.planRevision });
+check("A strength focus edit rebuilds a structured push session", push.json?.diff?.workouts?.[0]?.after?.focus === "push" && push.json?.diff?.workouts?.[0]?.after?.exercises?.length >= 2);
+await tool(access, "discard_plan_changes", { changeId: push.json?.changeId });
+const summaryData = await tool(access, "get_training_summary", {});
+check("Training summary exposes dates and units", summaryData.json?.units?.km === "km" && summaryData.json?.rolling7?.runSessions === 0);
+check("Compliance returns planned-vs-actual rows", Array.isArray((await tool(access, "get_workout_compliance", {})).json?.workouts));
 
 // ---- refresh ----
 const refresh = await fetch(`${base}/api/auth/oauth2/token`, {
@@ -244,7 +274,7 @@ check("A refresh token gives a new access token that works", refresh.status === 
 const r = await connect("openid plan:read", "Kilo smoke test read-only");
 const rDone = await finish(r);
 const rTools = ((await rpc(rDone.tokens.access_token, "tools/list", {}, 3)).body?.result?.tools ?? []).map((t: { name: string }) => t.name);
-check("A read-only token sees read tools and no write tools", rTools.includes("get_plan") && !rTools.includes("propose_plan_changes") && !rTools.includes("write_coach_notes"), rTools.join(", "));
+check("A read-only token sees read tools and no write tools", rTools.includes("get_athlete_context") && rTools.includes("validate_plan") && !["propose_plan_changes", "write_coach_notes", "update_workout", "bulk_update_workouts", "set_coaching_preferences"].some(name => rTools.includes(name)), rTools.join(", "));
 
 // ---- a token with no plan access ----
 const n = await connect("openid", "Kilo smoke test no-plan");

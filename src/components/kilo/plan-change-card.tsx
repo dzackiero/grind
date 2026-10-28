@@ -14,6 +14,7 @@ export interface PendingChangeView {
   id: string;
   summary: string;
   lines: ChangeLine[];
+  details?: { workoutKey: string; before: string[]; after: string[] }[];
 }
 
 /** A suggestion from the coach (Claude): why, what changes, and Accept or Keep my plan. */
@@ -65,6 +66,33 @@ export function PlanChangeCard({ change }: { change: PendingChangeView }) {
             </li>
           ))}
         </ul>
+        {change.details && change.details.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {change.details.map((detail) => {
+              const line = change.lines.find((item) => item.workoutKey === detail.workoutKey);
+              return (
+                <details key={detail.workoutKey} className="bg-card rounded-md px-3 py-2 text-[13px]">
+                  <summary className="cursor-pointer leading-5 font-semibold">
+                    Review {detail.after[0]?.split(" · ")[0] ?? detail.before[0]?.split(" · ")[0] ?? "workout"}
+                    {line && <span className="text-muted-foreground ml-2 font-normal">{line.when}</span>}
+                  </summary>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    {(["before", "after"] as const).map((side) => (
+                      <div key={side} className="min-w-0">
+                        <p className="text-muted-foreground mb-2 text-xs font-bold">{side === "before" ? "Current plan" : "Proposed plan"}</p>
+                        {detail[side].length > 0 ? (
+                          <ul className="flex flex-col gap-2 leading-5 break-words">
+                            {detail[side].map((text, index) => <li key={index}>{text}</li>)}
+                          </ul>
+                        ) : <p className="text-muted-foreground leading-5">{side === "before" ? "No workout scheduled." : "Workout removed."}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        )}
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>

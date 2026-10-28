@@ -85,7 +85,7 @@ export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLoc
                   <span className="truncate text-sm font-semibold">{app.name}</span>
                   <span className="text-muted-foreground text-xs">Last connected {timeAgo(app.lastConnected)}</span>
                 </span>
-                <Badge variant="secondary">{app.canEdit ? "Can suggest changes" : "Read only"}</Badge>
+                <Badge variant="secondary">{app.canEdit ? "Plan and coaching edits" : "Read only"}</Badge>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" disabled={pending} aria-label={`Disconnect ${app.name}`}>

@@ -9,7 +9,6 @@ import {
   EditOpSchema,
   formatDuration,
   formatPace,
-  PlanEditError,
   workoutOneLine,
   type Plan,
 } from "@/lib/plan";
@@ -17,8 +16,12 @@ import { actualKm, weekFor, weekStats, type Progress } from "@/lib/plan-view";
 import type { DB } from "../db/client";
 import { getActivities, getIntervalsStatus, listActivitiesBetween, listWellnessBetween } from "../intervals/sync";
 import { listPendingChanges, proposeChanges, resolveChange, setCoachNotes } from "../plans/changes";
-import { getActivePlan, PlanValidationError } from "../plans/service";
+import { getActivePlan } from "../plans/service";
 import { getTimezone, todayIn } from "../profile/service";
+import { getCoachingProfile } from "../profile/coaching";
+import { STRENGTH_FOCUS_LABELS } from "@/lib/plan/strength-focus";
+import { registerCoachingTools } from "./coaching-tools";
+import { mcpText as text, mcpFail as fail, mcpGuard as guard } from "./result";
 
 /*
  * Kilo's MCP server: what Claude can read and change. One server is built per request for the signed-in
@@ -37,34 +40,22 @@ const INSTRUCTIONS = `Kilo is a training app that combines running and strength 
 
 How to work:
 - Start with get_plan to see today's date, the race, the current week and any waiting suggestions. Use get_week for workout ids.
+- Read get_athlete_context for structured coaching preferences, mandatory constraints and supported strength focuses. Preferences can be negotiated; constraints must not be weakened without explicit athlete approval.
 - Look at the data before advising: get_recent_activities for what they actually ran, get_recovery for resting heart rate and training load.
-- Never invent paces, distances or workouts. To change the plan, use propose_plan_changes: you say what should change, Kilo builds the sessions at the athlete's own paces and checks them against its safety rules (no back-to-back hard days, sensible weekly increases, long run limits).
+- Use the athlete's plan pace zones. Propose changes with propose_plan_changes, update_workout or bulk_update_workouts. Granular custom steps must contain distance or duration and valid pace/effort targets. Kilo recalculates derived totals and validates the entire result.
+- get_plan, get_week and get_workout expose planRevision. Use expectedRevision on edits. validate_plan previews without saving; get_plan_diff inspects a stored suggestion. Read the diff and structured warnings before asking for approval.
 - A suggestion changes nothing by itself. Tell the athlete what you suggested and why. They accept it in the Kilo app, or if they agree in this chat, call apply_plan_changes.
 - Never call apply_plan_changes unless the athlete has clearly said yes in this conversation.
 - Use write_coach_notes to explain why a session is in the plan or how to run it. Keep notes to a few sentences.
 - Completed workouts can't be changed. Race day can't be moved.
 - Speak plainly, like a coach at the track: short sentences, give the reason with the instruction.`;
 
-const text = (data: unknown) => ({ content: [{ type: "text" as const, text: typeof data === "string" ? data : JSON.stringify(data) }] });
-const fail = (message: string) => ({ isError: true as const, content: [{ type: "text" as const, text: message }] });
-
-/** Turn the errors we expect into a message Claude can act on; anything else is a real failure. */
-async function guard<T>(run: () => Promise<T>) {
-  try {
-    return await run();
-  } catch (error) {
-    if (error instanceof PlanEditError) return fail(error.message);
-    if (error instanceof PlanValidationError)
-      return fail(`That would break the plan's rules:\n${error.result.errors.map((e) => `- ${e.message}`).join("\n")}\nAdjust the change and try again.`);
-    throw error;
-  }
-}
-
 const paceRange = (p: { minSecPerKm: number; maxSecPerKm: number }) => `${formatPace(p.minSecPerKm)}-${formatPace(p.maxSecPerKm)} /km`;
 const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(n * 10) / 10);
 
 export function buildMcpServer({ db, userId, scopes }: McpContext) {
   const server = new McpServer({ name: "kilo", version: "0.1.0" }, { instructions: INSTRUCTIONS });
+  registerCoachingTools(server, { db, userId, scopes });
 
   const load = async () => {
     const [saved, tz] = await Promise.all([getActivePlan(db, userId), getTimezone(db, userId)]);
@@ -125,8 +116,13 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const current = weekFor(plan, today);
           const pending = await listPendingChanges(db, userId);
           const intervals = await getIntervalsStatus(db, userId);
+          const coaching = await getCoachingProfile(db, userId);
           return text({
             today,
+            planRevision: saved.revision,
+            coachingRevision: coaching.revision,
+            coaching: coaching.profile,
+            supportedStrengthFocuses: STRENGTH_FOCUS_LABELS,
             title: plan.title,
             goal: plan.goal,
             raceDate: plan.raceDate,
@@ -163,7 +159,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const w = week ? plan.weeks[week - 1] : weekFor(plan, today);
           if (!w) return fail(`The plan has weeks 1 to ${plan.weeks.length}.`);
           const actuals = await actualsFor(progress);
-          return text({ today, week: w.index, starts: w.startDate, phase: w.phase, focus: w.focus, plannedKm: w.targetKm, workouts: w.workouts.map((x) => workoutRow(plan, x, progress, actuals)) });
+          return text({ today, planRevision: saved.revision, week: w.index, starts: w.startDate, phase: w.phase, focus: w.focus, plannedKm: w.targetKm, workouts: w.workouts.map((x) => workoutRow(plan, x, progress, actuals)) });
         }),
     );
 
@@ -184,6 +180,9 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const actuals = await actualsFor(saved.progress);
           return text({
             ...workoutRow(saved.plan, w, saved.progress, actuals),
+            planRevision: saved.revision,
+            workout: w,
+            units: { distanceKm: "km", stepDistance: "m", stepDuration: "seconds", pace: "seconds/km", rest: "seconds" },
             description: w.description,
             steps: w.kind === "run" ? describeRunSteps(w) : undefined,
             exercises: w.kind === "strength" ? describeExercises(w) : undefined,
@@ -269,20 +268,25 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           "Suggest edits to the plan: move or swap workouts, remove one, turn a run into an easier or different run, or add a run or strength session. Kilo builds the sessions at the athlete's own paces and checks the result against its safety rules; if a rule is broken you get the reason back so you can adjust. Nothing changes yet: the athlete accepts the suggestion in the Kilo app, or you call apply_plan_changes after they agree in chat. A new suggestion replaces any older one still waiting.",
         inputSchema: z.object({
           summary: z.string().min(5).max(280).describe("One or two plain sentences for the athlete: what changes and why. It is shown on their Today screen."),
-          changes: z.array(EditOpSchema).min(1).max(8),
+          changes: z.array(EditOpSchema).min(1).max(200),
+          expectedRevision: z.number().int().min(1).optional(),
         }),
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
       },
-      async ({ summary, changes }) =>
+      async ({ summary, changes, expectedRevision }) =>
         guard(async () => {
           const { today } = await load();
-          const result = await proposeChanges(db, userId, changes, summary, today, "coach");
+          const result = await proposeChanges(db, userId, changes, summary, today, "coach", expectedRevision);
           return text({
             changeId: result.id,
             status: "proposed",
             summary,
             changes: describeChanges(result.changes).map(changeLineText),
             warnings: result.warnings.map((w) => w.message),
+            validation: result.validation,
+            diff: result.diff,
+            planRevision: result.planRevision,
+            coachingRevision: result.coachingRevision,
             next: "Tell the athlete what you suggested and why. They can accept it on the Today screen in Kilo. If they agree in this chat, call apply_plan_changes with this changeId. Do not apply it before they say yes.",
           });
         }),
@@ -299,7 +303,7 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       async ({ changeId }) =>
         guard(async () => {
           const result = await resolveChange(db, userId, changeId, "accept");
-          return text({ status: result.status, warnings: result.warnings?.map((w) => w.message) ?? [], next: "The plan is updated. Tell the athlete it's done." });
+          return text({ ...result, warnings: result.warnings?.map((w) => w.message) ?? [], next: "The plan is updated. Tell the athlete it's done." });
         }),
     );
 

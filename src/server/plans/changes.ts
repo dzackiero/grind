@@ -1,10 +1,8 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import {
   applyChanges,
-  buildChanges,
   PlanEditError,
   staleReason,
-  validatePlan,
   type EditOp,
   type Plan,
   type PlanIssue,
@@ -12,8 +10,11 @@ import {
   type WorkoutChange,
 } from "@/lib/plan";
 import type { DB } from "../db/client";
-import { plan as planTable, planChange, plannedWorkout, planWeek } from "../db/schema";
+import { athleteProfile, plan as planTable, planChange, plannedWorkout, planWeek } from "../db/schema";
 import { getActivePlan, PlanValidationError } from "./service";
+import { getCoachingProfile } from "../profile/coaching";
+import { getTimezone, todayIn } from "../profile/service";
+import { changeEligibilityReason, planDiff, previewPlanChanges, validateWithCoaching } from "./preview";
 
 /*
  * Plan changes proposed by the coach (Claude through MCP). A proposal is stored with the before and after
@@ -29,35 +30,31 @@ export interface PendingChange {
   changes: WorkoutChange[];
 }
 
-/** Warnings that the edit introduces, ignoring ones the plan already had. */
-function newWarnings(before: Plan, after: Plan): PlanIssue[] {
-  const had = new Set(validatePlan(before).warnings.map((w) => w.message));
-  return validatePlan(after).warnings.filter((w) => !had.has(w.message));
+/** Serialize plan and preference writes in the same lock order. */
+async function lockContext(db: DB, userId: string) {
+  await db.insert(athleteProfile).values({ userId }).onConflictDoNothing({ target: athleteProfile.userId });
+  await db.select({ id: athleteProfile.userId }).from(athleteProfile).where(eq(athleteProfile.userId, userId)).for("update");
+  await db.select({ id: planTable.id }).from(planTable).where(and(eq(planTable.userId, userId), eq(planTable.status, "active"))).for("update");
 }
 
 /** Check the ops against the active plan and store them as a proposal. Throws PlanEditError / PlanValidationError. */
-export async function proposeChanges(db: DB, userId: string, ops: EditOp[], summary: string, today: string, source: "coach" | "user" = "coach") {
-  const saved = await getActivePlan(db, userId);
-  if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Kilo first.");
-
-  const locked = new Set(Object.entries(saved.progress).filter(([, p]) => p.status !== "planned").map(([key]) => key));
-  const changes = buildChanges(saved.plan, ops, { today, lockedIds: locked });
-  if (!changes.length) throw new PlanEditError("Those edits leave the plan exactly as it is.");
-
-  const next = applyChanges(saved.plan, changes);
-  const result = validatePlan(next);
-  if (!result.ok) throw new PlanValidationError(result);
-
-  // A new suggestion replaces any older one still waiting
-  const id = await db.transaction(async (tx) => {
+export async function proposeChanges(db: DB, userId: string, ops: EditOp[], summary: string, today: string, source: "coach" | "user" = "coach", expectedRevision?: number) {
+  return db.transaction(async (tx) => {
+    const connection = tx as unknown as DB;
+    await lockContext(connection, userId);
+    const { saved, changes, validation, diff, coachingRevision } = await previewPlanChanges(connection, userId, ops, today, expectedRevision);
+    if (!changes.length) throw new PlanEditError("Those edits leave the plan exactly as it is.");
+    if (!validation.ok) throw new PlanValidationError(validation);
     await tx
       .update(planChange)
       .set({ status: "rejected", resolvedAt: new Date() })
       .where(and(eq(planChange.planId, saved.id), eq(planChange.userId, userId), eq(planChange.status, "proposed")));
-    const [row] = await tx.insert(planChange).values({ planId: saved.id, userId, source, summary: summary.trim(), changes }).returning({ id: planChange.id });
-    return row.id;
+    const [row] = await tx.insert(planChange).values({ planId: saved.id, userId, source, summary: summary.trim(), changes, baseRevision: saved.revision, coachingRevision, diff }).returning({ id: planChange.id });
+    const previous = validateWithCoaching(saved.plan, (await getCoachingProfile(connection, userId)).profile, today);
+    const had = new Set(previous.warnings.map(w => w.message));
+    const warnings: PlanIssue[] = validation.warnings.filter(w => !had.has(w.message));
+    return { id: row.id, changes, warnings, validation, diff, planRevision: saved.revision, coachingRevision };
   });
-  return { id, changes, warnings: newWarnings(saved.plan, next) };
 }
 
 /** Suggestions waiting for an answer on the active plan, newest first. */
@@ -73,34 +70,50 @@ export async function listPendingChanges(db: DB, userId: string): Promise<Pendin
 
 /** Accept or reject a suggestion. Accepting writes the edited plan. Throws PlanEditError when it can't. */
 export async function resolveChange(db: DB, userId: string, changeId: string, action: "accept" | "reject") {
-  const [row] = await db
+  const resolved = await db.transaction(async (tx) => {
+  const connection = tx as unknown as DB;
+  await lockContext(connection, userId);
+  const [row] = await tx
     .select()
     .from(planChange)
-    .where(and(eq(planChange.id, changeId), eq(planChange.userId, userId)));
+    .where(and(eq(planChange.id, changeId), eq(planChange.userId, userId))).for("update");
   if (!row) throw new PlanEditError("That suggestion doesn't exist.");
   if (row.status !== "proposed") throw new PlanEditError(`That suggestion was already ${row.status}.`);
+  const invalidate = async (conflict: string) => {
+    await tx.update(planChange).set({ status: "rejected", resolvedAt: new Date() }).where(eq(planChange.id, row.id));
+    return { conflict };
+  };
 
   if (action === "reject") {
-    await db.update(planChange).set({ status: "rejected", resolvedAt: new Date() }).where(eq(planChange.id, row.id));
+    await tx.update(planChange).set({ status: "rejected", resolvedAt: new Date() }).where(eq(planChange.id, row.id));
     return { status: "rejected" as const };
   }
 
-  const saved = await getActivePlan(db, userId);
-  if (!saved || saved.id !== row.planId) throw new PlanEditError("That suggestion was for a plan you no longer have.");
+  await tx.select({ id: plannedWorkout.id }).from(plannedWorkout).where(eq(plannedWorkout.planId, row.planId)).for("update");
+  const saved = await getActivePlan(connection, userId);
+  if (!saved || saved.id !== row.planId) return invalidate("That suggestion was for a plan you no longer have.");
   const stale = staleReason(saved.plan, row.changes);
   if (stale) {
-    await db.update(planChange).set({ status: "rejected", resolvedAt: new Date() }).where(eq(planChange.id, row.id));
-    throw new PlanEditError(`${stale} Ask for a new suggestion.`);
+    return invalidate(`${stale} Ask for a new suggestion.`);
   }
+  if (row.baseRevision !== saved.revision) return invalidate("The plan revision changed. Ask for a new suggestion.");
+  const coaching = await getCoachingProfile(connection, userId);
+  if (coaching.revision !== row.coachingRevision) return invalidate("The coaching preferences or constraints changed. Ask for a new suggestion.");
+  const today = todayIn(await getTimezone(connection, userId));
+  const ineligible = changeEligibilityReason(saved, row.changes, today);
+  if (ineligible) return invalidate(ineligible);
   const next = applyChanges(saved.plan, row.changes);
-  const result = validatePlan(next);
+  const result = validateWithCoaching(next, coaching.profile, today);
   if (!result.ok) throw new PlanValidationError(result);
 
-  await db.transaction(async (tx) => {
     await writePlan(tx as unknown as DB, saved.id, userId, next);
     await tx.update(planChange).set({ status: "accepted", resolvedAt: new Date() }).where(eq(planChange.id, row.id));
+  const beforeWarnings = new Set(validateWithCoaching(saved.plan, coaching.profile, today).warnings.map(w => w.message));
+  return { status: "accepted" as const, warnings: result.warnings.filter(w => !beforeWarnings.has(w.message)),
+    planRevision: saved.revision + 1, diff: planDiff(saved.plan, next, row.changes), validation: result };
   });
-  return { status: "accepted" as const, warnings: newWarnings(saved.plan, next) };
+  if ("conflict" in resolved) throw new PlanEditError(resolved.conflict);
+  return resolved;
 }
 
 /** Write an edited plan over the stored one. Done, skipped and linked workouts keep their progress. */
@@ -140,13 +153,14 @@ async function writePlan(db: DB, planId: string, userId: string, next: Plan) {
  * so they apply straight away. Returns the ids that don't exist in the active plan.
  */
 export async function setCoachNotes(db: DB, userId: string, notes: { workoutId: string; note: string }[]) {
-  const saved = await getActivePlan(db, userId);
+  return db.transaction(async (tx) => {
+  await lockContext(tx as unknown as DB, userId);
+  const saved = await getActivePlan(tx as unknown as DB, userId);
   if (!saved) throw new PlanEditError("There's no active plan yet. Build one in Kilo first.");
   const ids = new Set(saved.plan.weeks.flatMap((w) => w.workouts).map((w) => w.id));
   const missing = notes.filter((n) => !ids.has(n.workoutId)).map((n) => n.workoutId);
   if (missing.length) throw new PlanEditError(`No workout with id: ${missing.join(", ")}. Use get_week to see the ids.`);
 
-  await db.transaction(async (tx) => {
     for (const { workoutId, note } of notes) {
       const [row] = await tx
         .select({ data: plannedWorkout.data })
@@ -158,6 +172,7 @@ export async function setCoachNotes(db: DB, userId: string, notes: { workoutId: 
         .set({ data, updatedAt: new Date() })
         .where(and(eq(plannedWorkout.planId, saved.id), eq(plannedWorkout.workoutKey, workoutId)));
     }
-  });
+    await tx.update(planTable).set({ revision: sql`${planTable.revision} + 1`, updatedAt: new Date() }).where(eq(planTable.id, saved.id));
   return notes.length;
+  });
 }

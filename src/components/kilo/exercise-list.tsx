@@ -25,6 +25,7 @@ export function ExerciseList({ workout }: { workout: StrengthWorkout }) {
                 <div className="text-muted-foreground font-mono text-[13px]">
                   {ex.sets} × {amount}
                   {ex.perSide ? " each side" : ""} · rest {formatDurationShort(ex.restSec)}
+                  {ex.rir !== undefined ? ` · RIR ${ex.rir}` : ""}
                 </div>
                 {ex.cue && <div className="text-muted-foreground mt-0.5 text-xs">{ex.cue}</div>}
               </div>

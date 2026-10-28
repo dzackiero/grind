@@ -15,7 +15,7 @@ export const IntensitySchema = z.enum(["steady", "balanced", "push"]);
 export const PhaseSchema = z.enum(["base", "build", "peak", "taper", "recovery"]);
 
 export const RunTypeSchema = z.enum(["easy", "tempo", "intervals", "hills", "long", "race"]);
-export const StrengthFocusSchema = z.enum(["legs_core", "upper", "full"]);
+export const StrengthFocusSchema = z.enum(["legs_core", "upper", "full", "lower", "push", "pull", "legs", "core", "posterior_chain", "chest_back", "shoulders_arms"]);
 export const PaceZoneSchema = z.enum(["E", "M", "T", "I", "R", "race"]);
 
 // ---------- Onboarding form ----------
@@ -149,7 +149,11 @@ export const ExerciseSchema = z.object({
   restSec: z.number().int().min(0).max(300),
   /** Effort guide: reps in reserve style */
   load: z.enum(["bodyweight", "light", "moderate", "heavy"]),
+  /** Optional target repetitions left in reserve. */
+  rir: z.number().int().min(0).max(5).optional(),
   cue: z.string().max(160).optional(),
+}).refine((exercise) => exercise.reps !== undefined || exercise.durationSec !== undefined, {
+  message: "An exercise needs repetitions or a duration.",
 });
 export type Exercise = z.infer<typeof ExerciseSchema>;
 

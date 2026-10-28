@@ -21,15 +21,21 @@ function jogPace(p: PaceZones): number {
   return p.E.maxSecPerKm + 20;
 }
 
+function stepPace(step: SimpleStep, p: PaceZones): number {
+  const explicit = step.target?.pace;
+  if (explicit) return (explicit.minSecPerKm + explicit.maxSecPerKm) / 2;
+  return step.kind === "recovery" ? jogPace(p) : step.target ? mid(p, step.target.zone) : mid(p, "E");
+}
+
 function simpleDistanceM(step: SimpleStep, p: PaceZones): number {
   if (step.distanceM) return step.distanceM;
-  const pace = step.kind === "recovery" ? jogPace(p) : step.target ? mid(p, step.target.zone) : mid(p, "E");
+  const pace = stepPace(step, p);
   return ((step.durationSec ?? 0) / pace) * 1000;
 }
 
 function simpleDurationSec(step: SimpleStep, p: PaceZones): number {
   if (step.durationSec) return step.durationSec;
-  const pace = step.kind === "recovery" ? jogPace(p) : step.target ? mid(p, step.target.zone) : mid(p, "E");
+  const pace = stepPace(step, p);
   return ((step.distanceM ?? 0) / 1000) * pace;
 }
 

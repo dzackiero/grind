@@ -6,6 +6,7 @@ import { getDb } from "./db";
 import { getActivities, getIntervalsStatus, getWellnessSummary } from "./intervals/sync";
 import type { Actuals } from "@/lib/plan-view";
 import { describeChanges } from "@/lib/plan";
+import { describeWorkoutDetails } from "@/lib/plan/describe";
 import { listPendingChanges } from "./plans/changes";
 import { getActivePlan } from "./plans/service";
 import { countRunsToCheck, getPoints, getRecords, getWeeklyTotals } from "./progress/service";
@@ -73,7 +74,16 @@ export const getViewerWellness = cache(async () => {
 export const getViewerPendingChanges = cache(async () => {
   const user = await requireViewer();
   const pending = await listPendingChanges(await getDb(), user.id);
-  return pending.map((c) => ({ id: c.id, summary: c.summary, lines: describeChanges(c.changes) }));
+  return pending.map((c) => ({
+    id: c.id,
+    summary: c.summary,
+    lines: describeChanges(c.changes),
+    details: c.changes.map((workout) => ({
+      workoutKey: workout.workoutKey,
+      before: describeWorkoutDetails(workout.before),
+      after: describeWorkoutDetails(workout.after),
+    })),
+  }));
 });
 
 /** Everything on the Progress page: points and tier, personal records, the last 12 weeks, and runs still to check. */

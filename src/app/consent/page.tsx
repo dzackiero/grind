@@ -14,8 +14,8 @@ type Params = Record<string, string | string[] | undefined>;
 
 /** Plain-language meaning of each scope an app can ask for. */
 const SCOPE_LABELS: Record<string, { title: string; detail: string }> = {
-  "plan:read": { title: "See your training", detail: "Your plan, workouts, runs from intervals.icu and recovery numbers like resting heart rate." },
-  "plan:write": { title: "Suggest changes to your plan", detail: "It can propose moving or changing workouts. Nothing changes until you accept it." },
+  "plan:read": { title: "See your training", detail: "Your plan, workouts, recorded activities, recovery, coaching preferences and any limitations you have shared." },
+  "plan:write": { title: "Suggest changes to your plan", detail: "It can propose workout edits for your approval in Kilo or chat, and save coaching preferences and notes when you ask." },
   offline_access: { title: "Stay connected", detail: "So you don't have to approve it again each time." },
   openid: { title: "Know who you are", detail: "Your name and email, to link this to your account." },
   profile: { title: "Know who you are", detail: "Your name and email, to link this to your account." },

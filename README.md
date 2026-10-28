@@ -4,7 +4,7 @@ One training plan for running and strength. Kilo builds a plan for a 5K, 10K, ha
 
 - **Plans:** rule-based templates (paces from a recent race, phases, long-run progression, hard days spaced apart) with Runna-style strength sessions, checked by a validator.
 - **intervals.icu:** reads runs, strength sessions, resting heart rate, HRV and sleep. Runs are matched to planned workouts.
-- **Claude as coach:** an MCP server lets Claude read your plan and suggest changes. Nothing changes until you accept it in the app.
+- **Claude as coach:** an MCP server lets Claude read your training and propose validated workout changes, approved in the app or chat. It can also save coaching preferences and notes when asked.
 
 ## Stack
 
@@ -47,6 +47,20 @@ Without `DATABASE_URL` the app uses an embedded local Postgres (PGlite) stored i
 3. Sign in to Kilo and choose what Claude can do. You can disconnect it any time in Kilo → Settings.
 
 Claude can read your plan, workouts, activities and recovery, and suggest changes. Suggestions only apply after you accept them.
+
+The MCP connector also supports structured coaching:
+
+- `get_athlete_context` returns preferences, mandatory constraints, reported limitations, revisions and supported strength focuses.
+- `update_workout` and `bulk_update_workouts` create proposals for granular edits. Read `planRevision` first and pass it as `expectedRevision`.
+- `validate_plan` previews without saving; `get_plan_diff` returns the saved before/after and weekly volume changes. The app's suggestion card also shows detailed changes.
+- `set_coaching_preferences` replaces the complete profile using `expectedCoachingRevision`. Preferences produce warnings; constraints block changes. Saving rules does not rewrite existing workouts.
+- `get_training_summary` and `get_workout_compliance` compare recorded training with the active plan, including activities that did not match a planned workout.
+
+Machine-readable MCP results use `structuredContent` with `success`, `data`, `warnings`, `errors` and, when applicable, `planRevision`. Existing text results and tool names remain available. Workout details include the raw `workout` object alongside readable steps and exercises. Distances use km at workout level and metres in steps; pace is seconds/km, step and rest durations are seconds. Strength exercises support optional numeric `rir` (0–5).
+
+Strength focus values include `push`, `pull`, `legs`, `upper`, `lower`, `full`, `core`, `posterior_chain`, `chest_back`, `shoulders_arms` and the existing `legs_core`. A focus change rebuilds its template unless custom exercises are supplied. Granular run edits recalculate distance and duration from steps, including explicit target paces.
+
+New plans use saved coaching rules to personalize generated session types, day-specific strength focuses and long-run variants. The selected calendar days remain explicit form inputs; incompatible mandatory schedule rules are reported instead of silently moving sessions. Existing plans only change through accepted proposals.
 
 ## Install as an app
 

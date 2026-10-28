@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { PaceZones, Plan, PlanInput, Workout } from "@/lib/plan";
+import type { CoachingProfile } from "@/lib/coaching";
 import { user } from "./auth";
 
 const userId = () =>
@@ -24,6 +25,8 @@ export const athleteProfile = pgTable("athlete_profile", {
   /** Last sync error, shown in Settings until the next successful sync */
   lastSyncError: text("last_sync_error"),
   timezone: text("timezone").notNull().default("UTC"),
+  coaching: jsonb("coaching").$type<CoachingProfile>().notNull().default({ preferences: {}, constraints: {} }),
+  coachingRevision: integer("coaching_revision").notNull().default(0),
   ...timestamps,
 });
 
@@ -174,6 +177,9 @@ export const planChange = pgTable(
     summary: text("summary").notNull(),
     /** Before/after for each touched workout */
     changes: jsonb("changes").$type<{ workoutKey: string; before: Workout | null; after: Workout | null }[]>().notNull(),
+    baseRevision: integer("base_revision"),
+    coachingRevision: integer("coaching_revision").notNull().default(0),
+    diff: jsonb("diff").$type<Record<string, unknown>>(),
     status: text("status", { enum: ["proposed", "accepted", "rejected"] }).notNull().default("proposed"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),

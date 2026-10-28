@@ -1,4 +1,5 @@
 import type { Exercise, PlanInput, StrengthWorkout, Week } from "./schema";
+import { STRENGTH_FOCUS_LABELS } from "./strength-focus";
 
 type Focus = StrengthWorkout["focus"];
 type Phase = Week["phase"];
@@ -41,7 +42,7 @@ interface Move {
   cue?: string;
 }
 
-const LIBRARY: Record<Focus, Move[]> = {
+const BASE_LIBRARY: Record<"legs_core" | "upper" | "full", Move[]> = {
   legs_core: [
     { id: "squat", gym: "Goblet squat", bodyweight: "Bodyweight squat", group: "A", role: "main", cue: "Sit between your heels, chest tall." },
     { id: "hinge", gym: "Romanian deadlift", bodyweight: "Single-leg glute bridge", group: "A", role: "main", perSide: false, cue: "Hips back, flat back, feel the hamstrings." },
@@ -68,10 +69,54 @@ const LIBRARY: Record<Focus, Move[]> = {
   ],
 };
 
+const LIBRARY: Record<Focus, Move[]> = {
+  ...BASE_LIBRARY,
+  lower: BASE_LIBRARY.legs_core.slice(0, 4),
+  legs: BASE_LIBRARY.legs_core.slice(0, 4),
+  push: [
+    { id: "bench", gym: "Dumbbell bench press", bodyweight: "Push-up", group: "A", role: "main" },
+    { id: "overhead", gym: "Seated dumbbell shoulder press", bodyweight: "Pike push-up", group: "A", role: "main" },
+    { id: "incline", gym: "Incline dumbbell press", bodyweight: "Incline push-up", group: "B", role: "accessory" },
+    { id: "triceps", gym: "Cable triceps extension", bodyweight: "Close-grip push-up", group: "B", role: "accessory" },
+  ],
+  pull: [
+    { id: "row", gym: "Chest-supported dumbbell row", bodyweight: "Inverted row", group: "A", role: "main" },
+    { id: "pulldown", gym: "Lat pulldown", bodyweight: "Prone lat pull-down", group: "A", role: "main" },
+    { id: "reardelt", gym: "Reverse dumbbell fly", bodyweight: "Prone reverse fly", group: "B", role: "accessory" },
+    { id: "curl", gym: "Dumbbell biceps curl", bodyweight: "Self-resisted biceps curl", group: "B", role: "accessory", perSide: true },
+  ],
+  core: [
+    { id: "deadbug", gym: "Dead bug", bodyweight: "Dead bug", group: "A", role: "core", perSide: true },
+    { id: "plank", gym: "Plank", bodyweight: "Plank", group: "A", role: "core", timed: true },
+    { id: "sideplank", gym: "Side plank", bodyweight: "Side plank", group: "B", role: "core", perSide: true, timed: true },
+    { id: "antirotation", gym: "Pallof press", bodyweight: "Bird dog", group: "B", role: "core", perSide: true },
+  ],
+  posterior_chain: [
+    { id: "hinge", gym: "Romanian deadlift", bodyweight: "Single-leg Romanian deadlift", group: "A", role: "main", perSide: true },
+    { id: "hipthrust", gym: "Barbell hip thrust", bodyweight: "Single-leg glute bridge", group: "A", role: "main", perSide: true },
+    { id: "hamstring", gym: "Seated hamstring curl", bodyweight: "Hamstring walkout", group: "B", role: "accessory" },
+    { id: "backextension", gym: "Back extension", bodyweight: "Prone back extension", group: "B", role: "accessory" },
+  ],
+  chest_back: [
+    { id: "bench", gym: "Dumbbell bench press", bodyweight: "Push-up", group: "A", role: "main" },
+    { id: "row", gym: "Chest-supported dumbbell row", bodyweight: "Inverted row", group: "A", role: "main" },
+    { id: "chestfly", gym: "Cable chest fly", bodyweight: "Wide-grip push-up", group: "B", role: "accessory" },
+    { id: "pulldown", gym: "Lat pulldown", bodyweight: "Prone lat pull-down", group: "B", role: "accessory" },
+  ],
+  shoulders_arms: [
+    { id: "shoulderpress", gym: "Seated dumbbell shoulder press", bodyweight: "Pike push-up", group: "A", role: "main" },
+    { id: "lateralraise", gym: "Dumbbell lateral raise", bodyweight: "Prone Y-T raise", group: "A", role: "accessory" },
+    { id: "curl", gym: "Dumbbell biceps curl", bodyweight: "Self-resisted biceps curl", group: "B", role: "accessory", perSide: true },
+    { id: "triceps", gym: "Cable triceps extension", bodyweight: "Bodyweight triceps extension", group: "B", role: "accessory" },
+  ],
+};
+
 /** Power phase adds jumps to lower-body sessions. */
-const PLYO: Record<"legs_core" | "full", Move> = {
+const PLYO: Partial<Record<Focus, Move>> = {
   legs_core: { id: "pogo", gym: "Pogo hops", bodyweight: "Pogo hops", group: "D", role: "plyo", cue: "Quick, springy contacts." },
   full: { id: "squatjump", gym: "Squat jump", bodyweight: "Squat jump", group: "D", role: "plyo", cue: "Land softly and reset." },
+  lower: { id: "squatjump", gym: "Squat jump", bodyweight: "Squat jump", group: "D", role: "plyo", cue: "Land softly and reset." },
+  legs: { id: "pogo", gym: "Pogo hops", bodyweight: "Pogo hops", group: "D", role: "plyo", cue: "Quick, springy contacts." },
 };
 
 interface Prescription {
@@ -111,12 +156,10 @@ const BLOCKS: Record<StrengthBlock, { main: Prescription; accessory: Prescriptio
 
 const LIGHTER: Record<Exercise["load"], Exercise["load"]> = { heavy: "moderate", moderate: "light", light: "light", bodyweight: "bodyweight" };
 
-const TITLES: Record<Focus, string> = { legs_core: "Legs & Core", upper: "Upper Body", full: "Full Body" };
-
 const DESCRIPTIONS: Record<StrengthBlock, string> = {
   foundation: "Learn the movements with lighter loads and higher reps. Finish every set feeling you had 3–4 reps left.",
-  strength: "Heavier loads for stronger legs and a stiffer core. Stop each set with about 2 reps left.",
-  power: "Heavy, low-rep lifts plus jumps to turn strength into running speed. Full rest between sets.",
+  strength: "Build strength with controlled repetitions. Stop each set with about 2 reps left.",
+  power: "Use controlled, low-rep sets for the main movements. Take the full rest between sets.",
   maintenance: "Shorter session to keep your strength while running volume drops. Nothing should feel hard.",
 };
 
@@ -134,7 +177,8 @@ export function buildStrength(params: {
   const lighterWeek = phase === "recovery";
 
   const moves = [...LIBRARY[focus]];
-  if (block === "power" && focus !== "upper") moves.push(PLYO[focus]);
+  const plyo = PLYO[focus];
+  if (block === "power" && plyo) moves.push(plyo);
 
   const exercises: Exercise[] = moves.map((m) => {
     const base = m.role === "plyo" ? { ...rx.accessory, reps: 6, load: "bodyweight" as const } : rx[m.role];
@@ -160,7 +204,7 @@ export function buildStrength(params: {
     kind: "strength",
     type: "strength",
     focus,
-    title: TITLES[focus],
+    title: STRENGTH_FOCUS_LABELS[focus],
     description: lighterWeek ? `Lighter week: one set fewer and easier loads. ${DESCRIPTIONS[block]}` : DESCRIPTIONS[block],
     durationMin: lighterWeek ? [30, 40] : rx.duration,
     exercises,

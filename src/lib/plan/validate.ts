@@ -2,6 +2,7 @@ import { addDays, daysBetween, weekdayIndex } from "./dates";
 import { stepsDistanceKm } from "./run-sessions";
 import { PlanSchema, type Plan, type RunWorkout, type Step } from "./schema";
 import { GOAL_TEMPLATES } from "./templates";
+import { strengthUsesLegs } from "./strength-focus";
 
 /*
  * Checks a plan before it is saved. Claude gets the codes and messages back through MCP,
@@ -29,7 +30,9 @@ export interface PlanIssue {
     | "LEGS_BEFORE_HARD"
     | "NO_REST_DAY"
     | "PLAN_TOO_SHORT"
-    | "LOW_BASE";
+    | "LOW_BASE"
+    | "COACHING_CONSTRAINT"
+    | "COACHING_PREFERENCE";
   message: string;
   week?: number;
   workoutId?: string;
@@ -174,7 +177,7 @@ export function validatePlan(candidate: unknown): ValidationResult {
   // Strength placement
   const hardSet = new Set(hardDates);
   for (const { wo, week } of all) {
-    if (wo.kind !== "strength" || wo.focus === "upper") continue;
+    if (wo.kind !== "strength" || !strengthUsesLegs(wo.focus)) continue;
     if (hardSet.has(addDays(wo.date, 1)))
       add({ severity: "warning", code: "LEGS_BEFORE_HARD", week, workoutId: wo.id, message: `${wo.title} on ${wo.date} is the day before a hard run. Move it to the same day as the hard run or after it.` });
   }

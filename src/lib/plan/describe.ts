@@ -20,11 +20,13 @@ function amount(s: SimpleStep) {
   return sec >= 60 && sec % 60 === 0 ? `${sec / 60} min` : sec > 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}` : `${sec}s`;
 }
 
-const NAME: Record<SimpleStep["kind"], string> = { warmup: "Warm up", work: "Run", recovery: "Recover", cooldown: "Cool down", steady: "Run" };
+const NAME: Record<SimpleStep["kind"], string> = { warmup: "Warm up", work: "Run", recovery: "Recover", cooldown: "Cool down", steady: "Steady run" };
 
 function stepText(s: SimpleStep) {
-  const pace = s.target?.pace ? `${formatPace(s.target.pace.minSecPerKm)}–${formatPace(s.target.pace.maxSecPerKm)}/km` : (s.target?.effort ?? s.note);
-  return `${NAME[s.kind]} ${amount(s)}${pace ? ` at ${pace}` : ""}`;
+  const pace = s.target?.pace ? `${formatPace(s.target.pace.minSecPerKm)}–${formatPace(s.target.pace.maxSecPerKm)}/km` : undefined;
+  const duration = s.distanceM !== undefined && s.durationSec !== undefined ? ` (${amount({ ...s, distanceM: undefined })})` : "";
+  const notes = [s.target?.effort, s.note].filter(Boolean);
+  return `${NAME[s.kind]} ${amount(s)}${duration}${pace ? ` at ${pace}` : ""}${s.target ? ` [${s.target.zone}]` : ""}${notes.length ? ` · ${notes.join(" · ")}` : ""}`;
 }
 
 export function describeRunSteps(w: RunWorkout): string[] {
@@ -35,14 +37,26 @@ export function describeExercises(w: StrengthWorkout): string[] {
   const n: Record<string, number> = {};
   return w.exercises.map((e) => {
     n[e.group] = (n[e.group] ?? 0) + 1;
-    const amt = e.durationSec ? `${e.durationSec}s` : `${e.reps}`;
-    return `${e.group}${n[e.group]} ${e.name}: ${e.sets} x ${amt}${e.perSide ? " each side" : ""}, rest ${e.restSec}s, ${e.load}`;
+    const amt = e.durationSec ? `${e.durationSec}s${e.reps !== undefined ? ` (${e.reps} reps)` : ""}` : `${e.reps}`;
+    return `${e.group}${n[e.group]} ${e.name}: ${e.sets} x ${amt}${e.perSide ? " each side" : ""}, rest ${e.restSec}s, ${e.load}${e.rir !== undefined ? `, RIR ${e.rir}` : ""}${e.cue ? `. ${e.cue}` : ""}`;
   });
 }
 
 /** One line: "6 km · about 40 min" or "40–50 min · 6 exercises" */
 export function workoutOneLine(w: Workout) {
   return w.kind === "run" ? `${w.distanceKm} km, about ${w.estDurationMin} min` : `${w.durationMin[0]}–${w.durationMin[1]} min, ${w.exercises.length} exercises`;
+}
+
+/** Human-readable before/after content for granular proposal approval, including unchanged context. */
+export function describeWorkoutDetails(w: Workout | null): string[] {
+  if (!w) return [];
+  return [
+    `${w.title} · ${w.date}`,
+    w.kind === "run" ? `Run · ${w.type} · ${workoutOneLine(w)}` : `Strength · ${w.focus.replaceAll("_", " + ")} · ${workoutOneLine(w)}`,
+    ...(w.description ? [w.description] : []),
+    ...(w.coachNote ? [`Coach note: ${w.coachNote}`] : []),
+    ...(w.kind === "run" ? describeRunSteps(w) : describeExercises(w)),
+  ];
 }
 
 export interface ChangeLine {

@@ -29,6 +29,20 @@
       "when": 1793152335059,
       "tag": "0003_best_efforts",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793159000596,
+      "tag": "0004_simple_darwin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793159311177,
+      "tag": "0005_bouncy_romulus",
+      "breakpoints": true
     }
   ]
 }
