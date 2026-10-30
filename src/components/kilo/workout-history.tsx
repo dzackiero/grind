@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Activity, Check, Dumbbell, Footprints } from "lucide-react";
 import { activityTitle } from "@/lib/activity-detail";
+import { HistoryFilters as HistoryFilterForm } from "@/components/kilo/history-filters";
 import { formatPace } from "@/lib/plan";
 import type { HistoryEntry, HistoryFilters, MonthTotals } from "@/server/progress/history-list";
 
 const months = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(2020, i, 1)).toLocaleString("en-US", { month: "long", timeZone: "UTC" }));
-const selectClass = "border-input bg-background h-10 w-full rounded-md border px-3 text-sm";
 function dateLabel(date: string) { return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
 function localTime(value: string | null) {
   const match = value?.match(/T(\d{2}):(\d{2})/);
@@ -67,12 +67,7 @@ export function WorkoutHistory({ result, filters }: { result: { entries: History
   for (const entry of result.entries) { const key = entry.date.slice(0, 7); groups.set(key, [...(groups.get(key) || []), entry]); }
   return <div className="flex flex-col gap-6">
     <div><h2 className="text-xl font-bold">Workout history</h2><p className="text-muted-foreground mt-1 text-sm">Your recorded activities and past workouts.</p></div>
-    <form action="/progress" className="grid gap-3 sm:grid-cols-4 sm:items-end">
-      <label className="text-sm font-medium">Workout type<select name="type" defaultValue={filters.type || ""} className={`${selectClass} mt-1.5`}><option value="">All types</option><option value="run">Run</option><option value="strength">Strength</option><option value="other">Other</option></select></label>
-      <label className="text-sm font-medium">Year<select name="year" defaultValue={filters.year || ""} className={`${selectClass} mt-1.5`}><option value="">All years</option>{result.years.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
-      <label className="text-sm font-medium">Month<select name="month" defaultValue={filters.month || ""} className={`${selectClass} mt-1.5`}><option value="">All months</option>{months.map((month, index) => <option key={month} value={index + 1}>{month}</option>)}</select></label>
-      <button className="bg-primary text-primary-foreground h-10 rounded-md px-4 text-sm font-medium" type="submit">Apply filters</button>
-    </form>
+    <HistoryFilterForm years={result.years} months={months} type={filters.type} year={filters.year} month={filters.month} />
     {result.entries.length === 0 ? <div className="border-border rounded-xl border border-dashed p-8 text-center"><p className="font-medium">No workouts found</p><p className="text-muted-foreground mt-1 text-sm">Try different filters, or sync your activities to see them here.</p></div> : Array.from(groups, ([key, entries]) => {
       const [year, month] = key.split("-");
       const total = result.totals[key];
