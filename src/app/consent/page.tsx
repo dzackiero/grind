@@ -37,6 +37,21 @@ export default async function ConsentPage({ searchParams }: { searchParams: Prom
   const user = await getViewer();
   if (valid && !user) redirect(`/sign-in?${query.toString()}`);
 
+  if (valid && user?.isAnonymous) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4 py-10">
+        <Logo />
+        <Alert>
+          <AlertTitle>Save your account first</AlertTitle>
+          <AlertDescription>Claude can only connect to a saved account, not a guest one. Add an email and password in Settings, then connect again.</AlertDescription>
+        </Alert>
+        <Button variant="outline" asChild>
+          <a href="/settings#save-account">Open Settings</a>
+        </Button>
+      </main>
+    );
+  }
+
   if (!valid || !user) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4 py-10">

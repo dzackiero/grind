@@ -38,10 +38,20 @@ export function createAuth(db: DB, plugins: BetterAuthPlugin[] = [], background?
     ...authEmailOptions(db, appUrl(), background),
     rateLimit: {
       enabled: true,
+      // Serverless instances don't share memory, so counters live in the rate_limit table.
+      storage: "database",
+      // Buckets are keyed by client IP + path. Vercel overwrites X-Forwarded-For with the real client IP.
       customRules: {
         "/request-password-reset": { window: 60, max: 3 },
         "/send-verification-email": { window: 60, max: 3 },
         "/sign-in/anonymous": { window: 60, max: 10 },
+        // OAuth endpoints. Claude's servers (not the user's browser) call register and token, so many users can
+        // share one egress IP: these stay well above one person's connect flow, yet cap scripted abuse.
+        "/oauth2/register": { window: 60, max: 10 },
+        "/oauth2/authorize": { window: 60, max: 30 },
+        "/oauth2/consent": { window: 60, max: 20 },
+        "/oauth2/continue": { window: 60, max: 20 },
+        "/oauth2/token": { window: 60, max: 60 },
       },
     },
     socialProviders: google,
