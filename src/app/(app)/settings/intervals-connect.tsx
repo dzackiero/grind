@@ -166,7 +166,7 @@ export function IntervalsConnect({
       )}
       <div className="flex gap-3">
         <Button
-          className="flex-1"
+          width="fill"
           disabled={pending}
           onClick={() =>
             run(async () => {

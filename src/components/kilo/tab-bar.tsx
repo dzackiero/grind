@@ -33,7 +33,7 @@ function TabFace({
           on ? "bg-primary text-primary-foreground" : "group-active:bg-secondary",
         )}
       >
-        <Icon className="size-[22px]" strokeWidth={1.75} />
+        <Icon className="size-5.5" strokeWidth={1.75} />
       </span>
       {label}
     </>
@@ -48,10 +48,7 @@ function TabFace({
 export function TabBar() {
   const pathname = usePathname();
   return (
-    <nav
-      aria-label="Main"
-      className="bg-card fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)]"
-    >
+    <nav aria-label="Main" className="bg-card fixed inset-x-0 bottom-0 z-40 border-t pb-safe">
       <ul className={tabBarInnerClassName}>
         {TABS.map(({ href, label, icon }) => {
           const active = pathname.startsWith(href);
@@ -62,7 +59,7 @@ export function TabBar() {
                 prefetch
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group flex h-16 w-full touch-manipulation flex-col items-center justify-center gap-1 text-[11px] font-semibold select-none",
+                  "group flex h-16 w-full touch-manipulation flex-col items-center justify-center gap-1 text-xs font-semibold select-none",
                   active ? "text-foreground" : "text-subtle",
                 )}
               >

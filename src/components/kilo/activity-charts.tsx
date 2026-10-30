@@ -53,7 +53,7 @@ export function PaceChart({ series, showGap }: { series: PacePoint[]; showGap: b
   const high = Math.ceil((percentile(all, 0.97) + 10) / step) * step;
   const totalKm = series.at(-1)?.km ?? 0;
   return (
-    <ChartContainer config={paceConfig} className="aspect-auto h-56 w-full">
+    <ChartContainer config={paceConfig} height="xl">
       <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <CartesianGrid vertical />
         <XAxis
@@ -123,7 +123,7 @@ export function ElevationChart({ series }: { series: { km: number; m: number }[]
   const high = Math.ceil(Math.max(...values) + 1);
   const totalKm = series.at(-1)?.km ?? 0;
   return (
-    <ChartContainer config={elevationConfig} className="aspect-auto h-48 w-full">
+    <ChartContainer config={elevationConfig} height="lg">
       <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <CartesianGrid vertical />
         <XAxis

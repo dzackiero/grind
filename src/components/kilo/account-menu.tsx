@@ -33,17 +33,19 @@ export function AccountMenu({ name, email }: { name: string; email: string | nul
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Account">
-          <Avatar className="size-9">
-            <AvatarFallback className="bg-secondary text-sm font-bold">{initials}</AvatarFallback>
+          <Avatar size="lg">
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel className="flex flex-col">
-          <span>{name}</span>
-          <span className="text-muted-foreground text-xs font-normal">
-            {email ?? "Guest account"}
-          </span>
+      <DropdownMenuContent align="start" width="wide">
+        <DropdownMenuLabel>
+          <div className="flex flex-col">
+            <span>{name}</span>
+            <span className="text-muted-foreground text-xs font-normal">
+              {email ?? "Guest account"}
+            </span>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -59,7 +61,7 @@ export function AccountMenu({ name, email }: { name: string; email: string | nul
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="kilo-label">Theme</DropdownMenuLabel>
+        <DropdownMenuLabel variant="label">Theme</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="dark">
             <Moon /> Dark

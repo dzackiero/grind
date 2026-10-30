@@ -101,34 +101,37 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
         </DialogHeader>
 
         {!editing && (
-          <Collapsible open={ideasOpen} onOpenChange={setIdeasOpen} className="flex flex-col gap-2">
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" className="group h-11 justify-between">
-                <span className="flex items-center gap-2">
-                  <Lightbulb /> Need ideas?
-                </span>
-                <ChevronDown className="transition-transform group-data-[state=open]:rotate-180" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="flex flex-wrap gap-2 pt-1">
-              {HABIT_SUGGESTIONS.map((s) => (
-                <Button
-                  key={s.name}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-11"
-                  onClick={() => {
-                    setName(s.name);
-                    setIcon(s.icon);
-                    setDays(s.days);
-                    setIdeasOpen(false);
-                  }}
-                >
-                  <HabitIconView icon={s.icon} className="size-4" /> {s.name}
+          <Collapsible open={ideasOpen} onOpenChange={setIdeasOpen}>
+            <div className="flex flex-col gap-2">
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" justify="between">
+                  <span className="flex items-center gap-2">
+                    <Lightbulb /> Need ideas?
+                  </span>
+                  <ChevronDown className="transition-transform group-data-[state=open]/button:rotate-180" />
                 </Button>
-              ))}
-            </CollapsibleContent>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {HABIT_SUGGESTIONS.map((s) => (
+                    <Button
+                      key={s.name}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setName(s.name);
+                        setIcon(s.icon);
+                        setDays(s.days);
+                        setIdeasOpen(false);
+                      }}
+                    >
+                      <HabitIconView icon={s.icon} className="size-4" /> {s.name}
+                    </Button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </div>
           </Collapsible>
         )}
 
@@ -140,7 +143,7 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
             maxLength={40}
             placeholder="Stretch for 10 minutes"
             onChange={(e) => setName(e.target.value)}
-            className="h-11"
+            size="lg"
           />
         </div>
 
@@ -152,16 +155,11 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
             onValueChange={(v) => v && setIcon(v)}
             variant="outline"
             spacing={2}
-            className="flex-wrap"
+            wrap
             aria-label="Icon"
           >
             {HABIT_ICONS.map((key: HabitIcon) => (
-              <ToggleGroupItem
-                key={key}
-                value={key}
-                aria-label={habitIconLabel(key)}
-                className="size-11"
-              >
+              <ToggleGroupItem key={key} value={key} aria-label={habitIconLabel(key)} size="touch">
                 <HabitIconView icon={key} className="size-5" />
               </ToggleGroupItem>
             ))}
@@ -181,16 +179,12 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
             onValueChange={(v) => setDays(v as Weekday[])}
             variant="outline"
             spacing={1}
-            className="w-full"
+            size="touch"
+            width="full"
             aria-label="Days"
           >
             {WEEKDAYS.map((d) => (
-              <ToggleGroupItem
-                key={d}
-                value={d}
-                aria-label={FULL_DAY[d]}
-                className="h-11 flex-1 px-0 text-xs"
-              >
+              <ToggleGroupItem key={d} value={d} aria-label={FULL_DAY[d]}>
                 {WEEKDAY_LABELS[d]}
               </ToggleGroupItem>
             ))}
@@ -198,12 +192,7 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            className="h-11"
-            disabled={saving || !name.trim() || !days.length}
-            onClick={save}
-          >
+          <Button type="button" disabled={saving || !name.trim() || !days.length} onClick={save}>
             {saving ? "Saving…" : editing ? "Save changes" : "Add habit"}
           </Button>
         </DialogFooter>

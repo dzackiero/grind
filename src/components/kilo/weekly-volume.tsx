@@ -71,7 +71,7 @@ export function WeeklyVolume({ weeks }: { weeks: WeekTotals[] }) {
         <Stat label="Strength" value={week.strength} />
       </div>
 
-      <ChartContainer config={config} className="aspect-auto h-40 w-full">
+      <ChartContainer config={config} height="sm">
         <BarChart data={weeks} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} />
           <XAxis

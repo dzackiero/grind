@@ -74,7 +74,6 @@ export default async function TodayPage({
 
   return (
     <div className="-mt-5 flex flex-col gap-6">
-      {viewer.isAnonymous && <GuestBanner />}
       <WeekStrip
         week={week}
         totalWeeks={plan.weeks.length}
@@ -83,9 +82,10 @@ export default async function TodayPage({
         selected={selected}
         additionalCounts={additionalCounts}
       />
+      {viewer.isAnonymous && <GuestBanner />}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)]">
-        <div className="flex flex-col gap-6">
+      <div className="grid items-start gap-6 xl:grid-cols-3">
+        <div className="flex flex-col gap-6 xl:col-span-2">
           {suggestions[0] && <PlanChangeCard change={suggestions[0]} />}
 
           <section
@@ -114,10 +114,10 @@ export default async function TodayPage({
             ) : !recorded.length ? (
               <Card>
                 <CardHeader>
-                  <div className="text-muted-foreground flex items-center gap-2 text-[13px] font-semibold">
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
                     <Coffee className="size-4" /> {beforeStart ? "Plan starts soon" : "Rest day"}
                   </div>
-                  <CardTitle className="font-display text-[22px] leading-[26px] font-extrabold">
+                  <CardTitle variant="display">
                     {beforeStart
                       ? `Your plan starts ${longDate(plan.startDate)}`
                       : "Nothing planned. Recover well."}
@@ -140,16 +140,16 @@ export default async function TodayPage({
 
         <aside className="flex flex-col gap-6">
           <Link href="/plan" className="group">
-            <Card className="group-hover:border-line-strong">
+            <Card hoverable>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-base font-semibold">
+                <CardTitle layout="between">
                   Week {week.index} overview{" "}
                   <ChevronRight className="text-muted-foreground size-5" />
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-3">
+              <CardContent layout="stack" gap="3">
                 <SegmentedProgress done={stats.done} total={stats.total} />
-                <div className="text-muted-foreground flex justify-between text-[13px]">
+                <div className="text-muted-foreground flex justify-between text-sm">
                   <span>
                     Plan workouts{" "}
                     <b className="text-foreground">
@@ -171,7 +171,7 @@ export default async function TodayPage({
           <RecoveryCard wellness={wellness} connected={intervals.connected} />
 
           <Card>
-            <CardContent className="grid grid-cols-2 gap-4">
+            <CardContent layout="grid-2" gap="4">
               <Stat
                 label="Race day"
                 value={toRace > 0 ? toRace : "Today"}
@@ -196,7 +196,7 @@ export default async function TodayPage({
                 <TypeTag type={upNext.type} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-semibold">{upNext.title}</span>
-                  <span className="text-muted-foreground text-[13px]">
+                  <span className="text-muted-foreground text-sm">
                     {upNext.date === addDaysIso(selected, 1) ? "Tomorrow" : longDate(upNext.date)} ·{" "}
                     {workoutSummary(upNext)}
                   </span>

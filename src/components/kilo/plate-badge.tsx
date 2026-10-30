@@ -45,7 +45,7 @@ export function PlateBadge({
       className={cn("flex flex-col items-center gap-1.5 text-center", className)}
       aria-label={locked ? `${name}: ${caption}` : `${name} personal record ${value}, ${caption}`}
     >
-      <svg viewBox="0 0 76 76" className="size-[76px]" aria-hidden>
+      <svg viewBox="0 0 76 76" className="size-19" aria-hidden>
         <circle cx="38" cy="38" r="38" className="fill-plate-rim" />
         <circle cx="38" cy="38" r="34" className={locked ? "fill-secondary" : colors.face} />
         <circle
@@ -61,8 +61,9 @@ export function PlateBadge({
             x="38"
             y="27"
             textAnchor="middle"
+            fontSize={7}
             className={cn(
-              "font-sans text-[7px] font-bold tracking-[0.1em]",
+              "font-sans font-bold tracking-widest",
               locked ? "fill-subtle" : colors.text,
             )}
             opacity={0.75}
@@ -75,10 +76,9 @@ export function PlateBadge({
           y="46"
           textAnchor="middle"
           className={cn(
-            "font-display text-[15px] font-extrabold",
+            "font-display text-base font-extrabold",
             locked ? "fill-subtle" : colors.text,
           )}
-          style={{ fontStretch: "112%" }}
         >
           {label}
         </text>

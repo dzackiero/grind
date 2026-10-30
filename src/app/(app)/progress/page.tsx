@@ -77,7 +77,7 @@ export default async function ProgressPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Weekly volume</CardTitle>
+          <CardTitle>Weekly volume</CardTitle>
           <CardDescription>
             What your watch recorded, the last 12 weeks. Tap a bar to see that week.
           </CardDescription>
@@ -104,17 +104,17 @@ export default async function ProgressPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Personal records</CardTitle>
+          <CardTitle>Personal records</CardTitle>
           <CardDescription>
             Your fastest time over each distance, found inside your runs. Treadmill runs don&apos;t
             count.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-5">
+        <CardContent layout="stack" gap="5">
           <RecordsGrid records={progress.records} goal={plan.goal} raceDate={plan.raceDate} />
           {progress.toCheck > 0 && (
             <div className="bg-secondary flex flex-col items-start gap-3 rounded-md p-3">
-              <p className="text-muted-foreground text-[13px]">
+              <p className="text-muted-foreground text-sm">
                 Older runs are checked in batches. {progress.toCheck} still to go, so a faster
                 record may be hiding in them.
               </p>

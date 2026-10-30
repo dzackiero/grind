@@ -8,7 +8,7 @@ export function TypeTag({ type, className }: { type: Workout["type"]; className?
     <span
       aria-hidden
       className={cn(
-        "inline-block size-3.5 shrink-0 rounded-[5px]",
+        "inline-block size-3.5 shrink-0 rounded-sm",
         WORKOUT_TYPES[type].fill,
         className,
       )}

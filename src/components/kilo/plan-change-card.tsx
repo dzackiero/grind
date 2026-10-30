@@ -45,23 +45,23 @@ export function PlanChangeCard({ change }: { change: PendingChangeView }) {
     });
 
   return (
-    <Card className="bg-accent-soft gap-4 border-transparent" aria-label="Coach suggestion">
+    <Card tone="accent" aria-label="Coach suggestion">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-[13px] font-bold">
+        <CardTitle variant="compact" layout="inline">
           <Sparkles className="text-accent-ink size-4" />
           Coach suggested{" "}
           {change.lines.length === 1 ? "a change" : `${change.lines.length} changes`}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent layout="stack" gap="4">
         <p className="text-sm leading-5">{change.summary}</p>
         <ul className="flex flex-col gap-1.5">
           {change.lines.map((l) => (
             <li
               key={l.workoutKey}
-              className="bg-card grid grid-cols-[88px_1fr] items-center gap-2 rounded-md px-3 py-2 text-[13px]"
+              className="bg-card flex items-center gap-2 rounded-md px-3 py-2 text-sm"
             >
-              <span className="text-muted-foreground font-bold">{l.when}</span>
+              <span className="text-muted-foreground w-22 shrink-0 font-bold">{l.when}</span>
               <span className="min-w-0">
                 {l.kind === "moved" && <b>{l.to}</b>}
                 {l.kind === "removed" && <s className="text-subtle">{l.from}</s>}
@@ -88,10 +88,7 @@ export function PlanChangeCard({ change }: { change: PendingChangeView }) {
             {change.details.map((detail) => {
               const line = change.lines.find((item) => item.workoutKey === detail.workoutKey);
               return (
-                <details
-                  key={detail.workoutKey}
-                  className="bg-card rounded-md px-3 py-2 text-[13px]"
-                >
+                <details key={detail.workoutKey} className="bg-card rounded-md px-3 py-2 text-sm">
                   <summary className="cursor-pointer leading-5 font-semibold">
                     Review{" "}
                     {detail.after[0]?.split(" · ")[0] ??

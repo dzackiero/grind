@@ -328,6 +328,11 @@ html[data-splash="out"] #launch-splash {
   }
   /* Uppercase label above a stat */
   .kilo-label {
-    @apply text-subtle text-[11px] leading-[14px] font-semibold tracking-[0.08em] uppercase;
+    @apply text-subtle text-xs leading-3.5 font-semibold tracking-wider uppercase;
   }
+}
+
+/* Keeps the bottom tab bar clear of the home indicator on iPhones; Tailwind has no utility for env() */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }

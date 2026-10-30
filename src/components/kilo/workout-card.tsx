@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cn } from "cn";
 import {
   Card,
   CardAction,
@@ -59,16 +58,16 @@ export function WorkoutCard({
         ];
 
   return (
-    <Card className={cn("relative", done && "opacity-80", className)}>
+    <Card dimmed={done} className={className}>
       <CardHeader>
-        <div className="text-muted-foreground flex items-center gap-2 text-[13px] font-semibold">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
           <TypeTag type={workout.type} />
           {WORKOUT_TYPES[workout.type].label}
           {done && (
             <span className="text-success">· {actual ? "Synced from your watch" : "Done"}</span>
           )}
         </div>
-        <CardTitle className="font-display text-[22px] leading-[26px] font-extrabold">
+        <CardTitle variant="display">
           <Link
             href={`/workouts/${encodeURIComponent(workout.id)}`}
             className="after:absolute after:inset-0 focus-visible:outline-none"
@@ -77,11 +76,11 @@ export function WorkoutCard({
           </Link>
         </CardTitle>
         <CardDescription>{longDate(workout.date)}</CardDescription>
-        <CardAction className="relative z-10">
+        <CardAction>
           <DoneCheckbox workoutKey={workout.id} status={status} label={workout.title} />
         </CardAction>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent layout="stack" gap="3">
         <Separator />
         <div className="flex gap-6">
           {metrics.map((m) => (

@@ -5,27 +5,24 @@ import type { TierKey } from "@/lib/points";
 import type { PointsStatus } from "@/server/progress/service";
 import { Stat } from "./stat";
 
-const TIER_COLOR: Record<TierKey, { fill: string; bar: string }> = {
-  bronze: { fill: "fill-tier-bronze", bar: "[&>[data-slot=progress-indicator]]:bg-tier-bronze" },
-  silver: { fill: "fill-tier-silver", bar: "[&>[data-slot=progress-indicator]]:bg-tier-silver" },
-  gold: { fill: "fill-tier-gold", bar: "[&>[data-slot=progress-indicator]]:bg-tier-gold" },
-  platinum: {
-    fill: "fill-tier-platinum",
-    bar: "[&>[data-slot=progress-indicator]]:bg-tier-platinum",
-  },
-  lime: { fill: "fill-tier-lime", bar: "[&>[data-slot=progress-indicator]]:bg-tier-lime" },
+const TIER_FILL: Record<TierKey, string> = {
+  bronze: "fill-tier-bronze",
+  silver: "fill-tier-silver",
+  gold: "fill-tier-gold",
+  platinum: "fill-tier-platinum",
+  lime: "fill-tier-lime",
 };
 
 /** Octagon medal in the tier's colour with the Grind K. */
 export function TierMedal({ tier, className }: { tier: TierKey; className?: string }) {
   return (
     <svg viewBox="0 0 56 56" className={cn("size-14 shrink-0", className)} aria-hidden>
-      <path d="M20 2h16l14 14v24L36 54H20L6 40V16z" className={TIER_COLOR[tier].fill} />
+      <path d="M20 2h16l14 14v24L36 54H20L6 40V16z" className={TIER_FILL[tier]} />
       <text
         x="28"
         y="36"
         textAnchor="middle"
-        className="fill-on-type font-display text-[22px] font-black"
+        className="fill-on-type font-display text-2xl font-black"
       >
         G
       </text>
@@ -36,10 +33,9 @@ export function TierMedal({ tier, className }: { tier: TierKey; className?: stri
 /** Points, the tier they reach, how far the next tier is, and the weekly streak. */
 export function TierCard({ status }: { status: PointsStatus }) {
   const { tier, next, remaining, progress } = status.tier;
-  const colors = TIER_COLOR[tier.key];
   return (
     <Card>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent layout="stack" gap="5">
         <div className="flex items-center gap-4">
           <TierMedal tier={tier.key} />
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -60,9 +56,9 @@ export function TierCard({ status }: { status: PointsStatus }) {
                 ? `${Math.round(progress * 100)}% of the way to ${next.name}`
                 : "Top tier reached"
             }
-            className={cn("h-2 bg-secondary!", colors.bar)}
+            tier={tier.key}
           />
-          <p className="text-muted-foreground text-[13px]">
+          <p className="text-muted-foreground text-sm">
             {next ? (
               <>
                 <b className="text-foreground tabular-nums">

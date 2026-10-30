@@ -20,14 +20,14 @@ export function ExerciseList({ workout }: { workout: StrengthWorkout }) {
         return (
           <li key={ex.id}>
             {i > 0 && <Separator />}
-            <div className="grid grid-cols-[44px_1fr_auto] items-center gap-3 py-3">
-              <span className="bg-secondary text-type-strength-mark font-display grid size-11 place-items-center rounded-md text-[13px] font-extrabold">
+            <div className="flex items-center gap-3 py-3">
+              <span className="bg-secondary text-type-strength-mark font-display grid size-11 shrink-0 place-items-center rounded-md text-sm font-extrabold">
                 {ex.group}
                 {counters[ex.group]}
               </span>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="font-semibold">{ex.name}</div>
-                <div className="text-muted-foreground font-mono text-[13px]">
+                <div className="text-muted-foreground font-mono text-sm">
                   {ex.sets} × {amount}
                   {ex.perSide ? " each side" : ""} · rest {formatDurationShort(ex.restSec)}
                   {ex.rir !== undefined ? ` · RIR ${ex.rir}` : ""}

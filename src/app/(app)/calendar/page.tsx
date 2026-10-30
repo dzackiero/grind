@@ -69,7 +69,7 @@ export default async function CalendarPage() {
     const stats = weekStats(week, progress, real);
     const days = Array.from({ length: 7 }, (_, i) => addDaysIso(week.startDate, i));
     return (
-      <Card className={cn("gap-0 py-0", week.index === current.index && "border-line-strong")}>
+      <Card spacing="flush" tone={week.index === current.index ? "outline" : "default"}>
         <div className="flex flex-col gap-1 px-5 py-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold">
@@ -89,9 +89,9 @@ export default async function CalendarPage() {
             const workouts = week.workouts.filter((w) => w.date === d);
             const recorded = recordedByDate.get(d) ?? [];
             return (
-              <li key={d} className="grid grid-cols-[48px_1fr] gap-3 border-t px-5 py-3">
-                <div className="flex flex-col items-center">
-                  <span className="text-subtle text-[11px] font-semibold uppercase">
+              <li key={d} className="flex gap-3 border-t px-5 py-3">
+                <div className="flex w-12 shrink-0 flex-col items-center">
+                  <span className="text-subtle text-xs font-semibold uppercase">
                     {weekdayShort(d)}
                   </span>
                   <span
@@ -103,7 +103,7 @@ export default async function CalendarPage() {
                     {dayOfMonth(d)}
                   </span>
                 </div>
-                <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                   {workouts.length === 0 && recorded.length === 0 && (
                     <span className="text-subtle self-center py-1.5 text-sm">
                       {d < plan.startDate ? "Before your plan" : "Rest"}

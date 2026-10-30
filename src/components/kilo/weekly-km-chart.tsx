@@ -22,7 +22,7 @@ export interface WeekKm {
 /** Planned km per week with completed km drawn over it in lime. */
 export function WeeklyKmChart({ data }: { data: WeekKm[] }) {
   return (
-    <ChartContainer config={config} className="aspect-auto h-44 w-full">
+    <ChartContainer config={config} height="md">
       <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barGap={-14}>
         <CartesianGrid vertical={false} strokeDasharray="0" />
         <XAxis
