@@ -24,6 +24,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm format:check
       - run: pnpm typecheck
       # Catches build-only failures before Vercel does. Needs no env: the build passes without any secrets or DATABASE_URL.
       - uses: actions/cache@v4
