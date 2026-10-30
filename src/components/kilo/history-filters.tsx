@@ -40,7 +40,7 @@ function Filter({
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id={id} className="h-10 w-full">
+        <SelectTrigger id={id} width="full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent position="popper">
@@ -99,9 +99,7 @@ export function HistoryFilters({
         allLabel="All months"
         options={months.map((m, i) => ({ value: String(i + 1), label: m }))}
       />
-      <Button type="submit" className="h-10">
-        Apply filters
-      </Button>
+      <Button type="submit">Apply filters</Button>
     </form>
   );
 }

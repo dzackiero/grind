@@ -74,22 +74,24 @@ export function AuthForm({
   }
 
   return (
-    <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="gap-6">
-      <TabsList className="w-full">
+    <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} spacing="relaxed">
+      <TabsList width="full">
         <TabsTrigger value="sign-in">Sign in</TabsTrigger>
         <TabsTrigger value="sign-up">Create account</TabsTrigger>
       </TabsList>
 
       <form action={submit} className="flex flex-col gap-4">
-        <TabsContent value="sign-up" className="flex flex-col gap-2">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            name="name"
-            autoComplete="name"
-            required={mode === "sign-up"}
-            placeholder="Dzaky"
-          />
+        <TabsContent value="sign-up">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              name="name"
+              autoComplete="name"
+              required={mode === "sign-up"}
+              placeholder="Dzaky"
+            />
+          </div>
         </TabsContent>
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">Email</Label>
@@ -137,7 +139,13 @@ export function AuthForm({
       {(googleEnabled || guestEnabled) && (
         <div className="flex flex-col gap-3">
           <div className="text-muted-foreground flex items-center gap-3 text-xs">
-            <Separator className="flex-1" /> or <Separator className="flex-1" />
+            <div className="flex-1">
+              <Separator />
+            </div>{" "}
+            or
+            <div className="flex-1">
+              <Separator />
+            </div>
           </div>
           {googleEnabled && (
             <Button

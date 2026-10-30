@@ -71,7 +71,7 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
         </p>
         <HabitForm
           trigger={
-            <Button className="h-11 shrink-0">
+            <Button>
               <Plus /> Add
             </Button>
           }
@@ -80,9 +80,11 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
 
       {habits.length === 0 && (
         <Card>
-          <CardContent className="text-muted-foreground text-sm">
-            No habits yet. Add one to start a streak: stretching, sleep, water, anything that helps
-            you train.
+          <CardContent>
+            <p className="text-muted-foreground text-sm">
+              No habits yet. Add one to start a streak: stretching, sleep, water, anything that
+              helps you train.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -94,13 +96,13 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
         return (
           <Card key={h.id}>
             <CardHeader>
-              <CardTitle className="flex items-start gap-3 text-base font-semibold">
+              <CardTitle layout="start">
                 <span className="bg-secondary text-muted-foreground grid size-10 shrink-0 place-items-center rounded-full">
                   <HabitIconView icon={h.icon} className="size-5" />
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate">{h.name}</span>
-                  <span className="text-muted-foreground text-[13px] font-normal">
+                  <span className="text-muted-foreground text-sm font-normal">
                     {scheduleLabel(h.days)}
                   </span>
                 </span>
@@ -108,12 +110,7 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
                   <HabitForm
                     habit={{ id: h.id, name: h.name, icon: h.icon, days: h.days }}
                     trigger={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-11"
-                        aria-label={`Edit ${h.name}`}
-                      >
+                      <Button variant="ghost" size="icon" aria-label={`Edit ${h.name}`}>
                         <Pencil />
                       </Button>
                     }
@@ -121,7 +118,6 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-11"
                     aria-label={`Archive ${h.name}`}
                     onClick={() => setArchiving(h)}
                   >
@@ -130,7 +126,7 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent layout="stack" gap="4">
               <ol className="grid grid-cols-7 gap-1.5" aria-label="This week">
                 {weekDays(h.days, done, today, today).map((d) => (
                   <li
@@ -138,7 +134,7 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
                     className="flex flex-col items-center gap-1"
                     aria-label={`${WEEKDAY_LABELS[d.weekday]}: ${STATE_LABEL[d.state]}`}
                   >
-                    <span className="text-muted-foreground text-[11px]">
+                    <span className="text-muted-foreground text-xs">
                       {WEEKDAY_LABELS[d.weekday].slice(0, 1)}
                     </span>
                     <span
@@ -185,10 +181,9 @@ export function HabitsPanel({ habits, today }: { habits: HabitWithLogs[]; today:
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-11">Keep it</AlertDialogCancel>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="h-11"
               onClick={() => archiving && archive(archiving)}
             >
               Archive

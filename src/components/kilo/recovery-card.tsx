@@ -52,9 +52,9 @@ export function RecoveryCard({
   if (!connected) {
     return (
       <Link href="/settings" className="group">
-        <Card className="group-hover:border-line-strong">
+        <Card hoverable>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between text-base font-semibold">
+            <CardTitle layout="between">
               Connect intervals.icu <ChevronRight className="text-muted-foreground size-5" />
             </CardTitle>
             <CardDescription>
@@ -80,12 +80,12 @@ export function RecoveryCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Recovery</CardTitle>
+        <CardTitle>Recovery</CardTitle>
         <CardDescription>
           From your watch via intervals.icu · {shortDate(wellness.date)}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-4">
+      <CardContent layout="grid-2" gap="4">
         {wellness.restingHr != null && (
           <Stat
             label="Resting HR"

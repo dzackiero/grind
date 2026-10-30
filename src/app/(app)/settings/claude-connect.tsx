@@ -79,7 +79,7 @@ export function ClaudeConnect({
           readOnly
           value={mcpUrl}
           aria-label="Grind connector address"
-          className="font-mono text-xs"
+          variant="mono"
           onFocus={(e) => e.currentTarget.select()}
         />
         <Button variant="outline" size="icon" onClick={copy} aria-label="Copy address">

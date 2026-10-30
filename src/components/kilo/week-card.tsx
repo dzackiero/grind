@@ -26,16 +26,16 @@ export function WeekCard({
   const stats = weekStats(week, progress, actualKm);
   const label = week.index === totalWeeks ? "Race week" : PHASE_LABEL[week.phase];
   return (
-    <Card className={cn(current && "border-line-strong")} id={`week-${week.index}`}>
+    <Card tone={current ? "outline" : "default"} id={`week-${week.index}`}>
       <CardHeader>
-        <CardDescription className="kilo-label">
+        <CardDescription variant="label">
           {shortDate(week.startDate)} – {shortDate(addDaysIso(week.startDate, 6))} · {label}
         </CardDescription>
-        <CardTitle className="font-display text-2xl font-extrabold">Week {week.index}</CardTitle>
+        <CardTitle variant="display">Week {week.index}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent layout="stack" gap="4">
         <SegmentedProgress done={stats.done} total={stats.total} />
-        <div className="text-muted-foreground flex gap-4 text-[13px]">
+        <div className="text-muted-foreground flex gap-4 text-sm">
           <span>
             Workouts{" "}
             <b className="text-foreground font-semibold">
@@ -56,11 +56,16 @@ export function WeekCard({
               <li key={w.id}>
                 <Link
                   href={`/workouts/${encodeURIComponent(w.id)}`}
-                  className="hover:bg-accent -mx-2 grid grid-cols-[14px_36px_1fr_auto] items-center gap-3 rounded-md px-2 py-1 text-sm"
+                  className="hover:bg-accent -mx-2 flex items-center gap-3 rounded-md px-2 py-1 text-sm"
                 >
                   <TypeTag type={w.type} />
-                  <span className="text-subtle text-[13px]">{weekdayShort(w.date)}</span>
-                  <span className={cn(done && "text-muted-foreground line-through decoration-1")}>
+                  <span className="text-subtle w-9 shrink-0 text-sm">{weekdayShort(w.date)}</span>
+                  <span
+                    className={cn(
+                      "flex-1",
+                      done && "text-muted-foreground line-through decoration-1",
+                    )}
+                  >
                     {w.title}
                     {w.kind === "strength" && (
                       <span className="text-muted-foreground">

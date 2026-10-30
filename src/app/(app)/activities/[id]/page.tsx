@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { ElevationChart, PaceChart } from "@/components/kilo/activity-charts";
 import { ActivityRoute } from "@/components/kilo/activity-route";
 import { ActivitySplits } from "@/components/kilo/activity-splits";
+import { BackLink } from "@/components/kilo/back-link";
 import { PlateBadge } from "@/components/kilo/plate-badge";
 import { Stat } from "@/components/kilo/stat";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   activityTitle,
@@ -80,11 +78,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="flex flex-col gap-5">
-      <Button variant="ghost" size="sm" asChild className="-ml-3 self-start">
-        <Link href="/progress">
-          <ArrowLeft /> Progress
-        </Link>
-      </Button>
+      <BackLink href="/progress">Progress</BackLink>
 
       {route && <ActivityRoute route={route} />}
 
@@ -109,7 +103,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       </div>
 
       <Card>
-        <CardContent className="grid grid-cols-3 gap-x-4 gap-y-6">
+        <CardContent layout="grid-3" gap="5">
           {distanceKm != null && <Stat label="Distance" value={distanceKm.toFixed(2)} unit="km" />}
           {a.movingTimeSec != null && <Stat label="Time" value={formatEffort(a.movingTimeSec)} />}
           {isRun && avgPace && <Stat label="Avg pace" value={formatPace(avgPace)} unit="/km" />}
@@ -131,13 +125,13 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       {effortRows.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Best efforts</CardTitle>
+            <CardTitle>Best efforts</CardTitle>
             <CardDescription>
               The fastest stretch of each distance inside this run. They use total time, so pauses
               count.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-6">
+          <CardContent layout="wrap" gap="6">
             {effortRows.map((e) => (
               <PlateBadge
                 key={e.key}
@@ -156,7 +150,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       {splits.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Splits</CardTitle>
+            <CardTitle>Splits</CardTitle>
           </CardHeader>
           <CardContent>
             <ActivitySplits splits={splits} />
@@ -167,7 +161,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       {pace && pace.series.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Pace</CardTitle>
+            <CardTitle>Pace</CardTitle>
             {showGap && (
               <CardDescription>
                 The dashed line is pace adjusted for hills: what the same effort would be on flat
@@ -175,7 +169,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
               </CardDescription>
             )}
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent layout="stack" gap="4">
             <PaceChart series={pace.series} showGap={showGap} />
             <dl>
               {pace.avgPaceSec != null && (
@@ -195,9 +189,9 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       {elevation && elevation.series.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Elevation</CardTitle>
+            <CardTitle>Elevation</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
+          <CardContent layout="stack" gap="4">
             <ElevationChart series={elevation.series} />
             <dl>
               {a.elevationGainM != null && (

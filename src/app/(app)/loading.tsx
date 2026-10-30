@@ -9,11 +9,11 @@ export default function Loading() {
   return (
     <div className="flex flex-col gap-5" role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">Loading</span>
-      <Skeleton className="h-9 w-44" />
-      <Skeleton className="h-12 w-full rounded-xl" />
-      <Skeleton className="h-32 w-full rounded-xl" />
-      <Skeleton className="h-32 w-full rounded-xl" />
-      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton shape="title" />
+      <Skeleton shape="bar" />
+      <Skeleton shape="card" />
+      <Skeleton shape="card" />
+      <Skeleton shape="card-sm" />
     </div>
   );
 }

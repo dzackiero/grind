@@ -42,9 +42,7 @@ export function ConsentForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-2xl font-extrabold">
-          Connect {clientName} to Grind?
-        </CardTitle>
+        <CardTitle variant="display">Connect {clientName} to Grind?</CardTitle>
         <CardDescription>
           Signed in as {userName}.
           {redirectHost ? (
@@ -56,7 +54,7 @@ export function ConsentForm({
           ) : null}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent layout="stack" gap="5">
         <ul className="flex flex-col gap-3">
           {items.map((item) => (
             <li key={item.title} className="flex gap-3">

@@ -111,14 +111,7 @@ function OptionCard({
 }) {
   const selected = current === value;
   return (
-    <Label
-      htmlFor={`opt-${value}`}
-      className={cn(
-        "bg-card flex cursor-pointer items-center gap-3 rounded-xl border-2 border-transparent p-3.5 transition-colors",
-        compact && "relative flex-col items-start",
-        selected && "border-primary",
-      )}
-    >
+    <Label htmlFor={`opt-${value}`} variant={compact ? "option-stacked" : "option"}>
       <span
         className={cn(
           "grid size-11 shrink-0 place-items-center rounded-md transition-transform",
@@ -126,7 +119,7 @@ function OptionCard({
           selected && "scale-105",
         )}
       >
-        <Icon className="size-[22px]" strokeWidth={2} aria-hidden />
+        <Icon className="size-5.5" strokeWidth={2} aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="font-display text-lg leading-6 font-extrabold">{title}</span>
@@ -134,12 +127,7 @@ function OptionCard({
           <span className="text-muted-foreground text-sm leading-5 font-normal">{description}</span>
         )}
       </span>
-      <RadioGroupItem
-        id={`opt-${value}`}
-        value={value}
-        aria-label={title}
-        className={cn(compact && "absolute opacity-0")}
-      />
+      <RadioGroupItem id={`opt-${value}`} value={value} aria-label={title} hidden={compact} />
     </Label>
   );
 }
@@ -156,19 +144,15 @@ function DayPicker({
   return (
     <ToggleGroup
       type="multiple"
-      variant="outline"
+      variant="outline-primary"
       value={value}
       onValueChange={(v) => onChange((v as Weekday[]).sort((a, b) => dayOrder(a) - dayOrder(b)))}
       aria-label={label}
-      className="w-full"
+      width="full"
+      size="touch"
     >
       {DAYS.map((d) => (
-        <ToggleGroupItem
-          key={d.value}
-          value={d.value}
-          aria-label={d.long}
-          className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 flex-1 font-bold"
-        >
+        <ToggleGroupItem key={d.value} value={d.value} aria-label={d.long}>
           {d.short}
         </ToggleGroupItem>
       ))}
@@ -328,11 +312,7 @@ export function OnboardingForm({
                 />
               </div>
             )}
-            <RadioGroup
-              value={f.goal}
-              onValueChange={(v) => set("goal", v as FormState["goal"])}
-              className="gap-3"
-            >
+            <RadioGroup value={f.goal} onValueChange={(v) => set("goal", v as FormState["goal"])}>
               {/* Goal tiles use the PR plate colours: 5K green, 10K yellow, half blue, marathon red */}
               <OptionCard
                 value="5k"
@@ -394,7 +374,7 @@ export function OnboardingForm({
                 </p>
               )}
             </div>
-            <Label htmlFor="noRace" className="flex items-center gap-3 font-normal">
+            <Label htmlFor="noRace" variant="inline">
               <Checkbox
                 id="noRace"
                 checked={f.noRace}
@@ -411,7 +391,6 @@ export function OnboardingForm({
             <RadioGroup
               value={f.experience}
               onValueChange={(v) => set("experience", v as FormState["experience"])}
-              className="gap-3"
             >
               <OptionCard
                 value="beginner"
@@ -456,7 +435,7 @@ export function OnboardingForm({
                 value={f.raceDistance}
                 onValueChange={(v) => set("raceDistance", v as FormState["raceDistance"])}
               >
-                <SelectTrigger aria-label="Race distance" className="w-full">
+                <SelectTrigger aria-label="Race distance" width="full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -499,7 +478,7 @@ export function OnboardingForm({
             <div className="flex flex-col gap-2">
               <Label>Long run day</Label>
               <Select value={f.longRunDay} onValueChange={(v) => set("longRunDay", v as Weekday)}>
-                <SelectTrigger aria-label="Long run day" className="w-full">
+                <SelectTrigger aria-label="Long run day" width="full">
                   <SelectValue placeholder="Pick a day" />
                 </SelectTrigger>
                 <SelectContent>
@@ -551,7 +530,7 @@ export function OnboardingForm({
                 <RadioGroup
                   value={f.equipment}
                   onValueChange={(v) => set("equipment", v as FormState["equipment"])}
-                  className="grid grid-cols-2 gap-3"
+                  columns={2}
                 >
                   <OptionCard
                     compact
@@ -583,7 +562,6 @@ export function OnboardingForm({
             <RadioGroup
               value={f.intensity}
               onValueChange={(v) => set("intensity", v as FormState["intensity"])}
-              className="gap-3"
             >
               <OptionCard
                 value="steady"
@@ -632,7 +610,7 @@ export function OnboardingForm({
             <ArrowLeft />
           </Button>
         )}
-        <Button size="lg" className="flex-1" onClick={next} disabled={pending}>
+        <Button size="lg" width="fill" onClick={next} disabled={pending}>
           {pending
             ? "Building your plan…"
             : step === STEPS.length - 1

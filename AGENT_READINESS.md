@@ -20,30 +20,31 @@ Everything below falls under one of these.
 
 ## 2. Current state
 
-| Area | Status | Notes |
-|---|---|---|
-| One-command scripts (`lint`, `typecheck`, `test`, `build`) | ✅ | `package.json` |
-| CI on every PR | ✅ | `.github/workflows/ci.yml`: lint, typecheck, build, vitest |
-| Tests need no secrets | ✅ | PGlite in memory, applies every migration |
-| Local dev needs no secrets | ✅ | PGlite fallback in `.data/` |
-| Migrations on deploy | ✅ | `migrate` job, gated on the `production` environment |
-| Dependency updates | ✅ | Dependabot, weekly, grouped |
-| Smoke scripts | ✅ | `smoke`, `mcp:smoke`, `intervals:check` |
-| Plans and specs in repo | ✅ | `docs/superpowers/plans/` |
-| **Agent instruction file** (`AGENTS.md` / `CLAUDE.md`) | ❌ | Highest-value gap |
-| Shared agent settings (`.claude/settings.json`, hooks, skills) | ⚠️ | Only `launch.json` |
-| Per-PR preview environment with its own DB | ⚠️ | Vercel previews exist, no Neon branch per PR |
-| End-to-end / browser tests | ❌ | No Playwright |
-| AI review and `@claude` on issues/PRs | ❌ | |
-| PR / issue templates, CODEOWNERS | ❌ | |
-| Supply-chain hardening (pinned actions, secret scanning) | ⚠️ | Actions pinned to tags, not SHAs |
-| Formatter | ❌ | No Prettier/Biome. Agents produce noisy diffs without one |
+| Area                                                           | Status | Notes                                                      |
+| -------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| One-command scripts (`lint`, `typecheck`, `test`, `build`)     | ✅     | `package.json`                                             |
+| CI on every PR                                                 | ✅     | `.github/workflows/ci.yml`: lint, typecheck, build, vitest |
+| Tests need no secrets                                          | ✅     | PGlite in memory, applies every migration                  |
+| Local dev needs no secrets                                     | ✅     | PGlite fallback in `.data/`                                |
+| Migrations on deploy                                           | ✅     | `migrate` job, gated on the `production` environment       |
+| Dependency updates                                             | ✅     | Dependabot, weekly, grouped                                |
+| Smoke scripts                                                  | ✅     | `smoke`, `mcp:smoke`, `intervals:check`                    |
+| Plans and specs in repo                                        | ✅     | `docs/superpowers/plans/`                                  |
+| **Agent instruction file** (`AGENTS.md` / `CLAUDE.md`)         | ❌     | Highest-value gap                                          |
+| Shared agent settings (`.claude/settings.json`, hooks, skills) | ⚠️     | Only `launch.json`                                         |
+| Per-PR preview environment with its own DB                     | ⚠️     | Vercel previews exist, no Neon branch per PR               |
+| End-to-end / browser tests                                     | ❌     | No Playwright                                              |
+| AI review and `@claude` on issues/PRs                          | ❌     |                                                            |
+| PR / issue templates, CODEOWNERS                               | ❌     |                                                            |
+| Supply-chain hardening (pinned actions, secret scanning)       | ⚠️     | Actions pinned to tags, not SHAs                           |
+| Formatter                                                      | ❌     | No Prettier/Biome. Agents produce noisy diffs without one  |
 
 ---
 
 ## 3. Instruction files (do this first)
 
 ### `AGENTS.md` at the root
+
 `AGENTS.md` is the cross-tool convention (read by Codex, Copilot, Cursor, Gemini CLI, Jules, Amp, and others). Claude Code reads `CLAUDE.md`, so keep one source of truth and make `CLAUDE.md` contain a single line: `@AGENTS.md`.
 
 Keep it short (under about 150 lines). Agents load it into every session, so each line costs tokens. Contents:
@@ -55,9 +56,11 @@ Keep it short (under about 150 lines). Agents load it into every session, so eac
 - **Workflow:** trunk-based, branch + PR to `main`, never push to `main`.
 
 ### Nested files
+
 Add a small `AGENTS.md` in a directory only when it has rules of its own, for example `src/server/mcp/AGENTS.md` (tool schemas, OAuth scopes) or `drizzle/AGENTS.md` (migration rules). Agents load these only when they work in that directory.
 
 ### Keep it true
+
 Instruction files rot. Add a CI check or a monthly scheduled agent that confirms every command in `AGENTS.md` still exists in `package.json`.
 
 ---
@@ -118,17 +121,18 @@ PR closed
 
 ### Specific additions
 
-| Workflow | Use | Notes |
-|---|---|---|
-| `neon-preview.yml` | `neondatabase/create-branch-action`, `delete-branch-action`, `schema-diff-action` | Every PR and every agent gets an isolated real Postgres. Alternatively use the Neon ↔ Vercel integration, which does this automatically. |
-| `e2e.yml` | Playwright, triggered on `deployment_status` success from Vercel | Upload trace on failure so agents can read it. |
-| `claude.yml` | `anthropics/claude-code-action@v1` | Responds to `@claude` in issues/PR comments: implements, opens a PR, answers questions. Reads `AGENTS.md`/`CLAUDE.md`. |
-| `claude-review.yml` | same action, `pull_request` trigger with a review prompt | Automatic review. Keep it advisory; humans or required checks gate merges. |
-| `security.yml` | `github/codeql-action`, `actions/dependency-review-action`, gitleaks or GitHub secret scanning push protection | |
-| `post-deploy.yml` | after production deploy: `pnpm smoke` and `pnpm mcp:smoke` against the live URL | Roll back via Vercel instant rollback on failure. |
-| Scheduled agents | cron workflows or Claude Code scheduled routines | Weekly: dependency PR triage, flaky-test hunt, `AGENTS.md` freshness, dead-code sweep. |
+| Workflow            | Use                                                                                                            | Notes                                                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `neon-preview.yml`  | `neondatabase/create-branch-action`, `delete-branch-action`, `schema-diff-action`                              | Every PR and every agent gets an isolated real Postgres. Alternatively use the Neon ↔ Vercel integration, which does this automatically. |
+| `e2e.yml`           | Playwright, triggered on `deployment_status` success from Vercel                                               | Upload trace on failure so agents can read it.                                                                                           |
+| `claude.yml`        | `anthropics/claude-code-action@v1`                                                                             | Responds to `@claude` in issues/PR comments: implements, opens a PR, answers questions. Reads `AGENTS.md`/`CLAUDE.md`.                   |
+| `claude-review.yml` | same action, `pull_request` trigger with a review prompt                                                       | Automatic review. Keep it advisory; humans or required checks gate merges.                                                               |
+| `security.yml`      | `github/codeql-action`, `actions/dependency-review-action`, gitleaks or GitHub secret scanning push protection |                                                                                                                                          |
+| `post-deploy.yml`   | after production deploy: `pnpm smoke` and `pnpm mcp:smoke` against the live URL                                | Roll back via Vercel instant rollback on failure.                                                                                        |
+| Scheduled agents    | cron workflows or Claude Code scheduled routines                                                               | Weekly: dependency PR triage, flaky-test hunt, `AGENTS.md` freshness, dead-code sweep.                                                   |
 
 ### Repo settings that make agent PRs safe
+
 - Branch protection / rulesets on `main`: required checks (`check`, `e2e`), 1 approval, linear history.
 - **Merge queue:** many agent PRs land in parallel; the queue retests each on top of the others.
 - `CODEOWNERS`: `drizzle/`, `src/server/mcp/`, `.github/` need human review.

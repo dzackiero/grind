@@ -31,7 +31,7 @@ export default async function SettingsPage() {
   const intervalsCard = (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">intervals.icu</CardTitle>
+        <CardTitle>intervals.icu</CardTitle>
         <CardDescription>
           Your Huawei watch syncs to intervals.icu. Grind reads your runs, strength sessions, HRV,
           resting heart rate and sleep from there.
@@ -46,7 +46,7 @@ export default async function SettingsPage() {
   const claudeCard = (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Claude</CardTitle>
+        <CardTitle>Claude</CardTitle>
         <CardDescription>
           Let Claude be your coach. It can read your plan and training, and suggest changes that you
           accept or decline in Grind.
@@ -75,7 +75,7 @@ export default async function SettingsPage() {
   const installCard = (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Install Grind</CardTitle>
+        <CardTitle>Install Grind</CardTitle>
         <CardDescription>
           Add Grind to your home screen. It opens full screen like an app.
         </CardDescription>
@@ -87,38 +87,38 @@ export default async function SettingsPage() {
   );
 
   const accountCard = (
-    <Card id="save-account" className="scroll-mt-20">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">
-          {user.isAnonymous ? "Save your account" : "Account"}
-        </CardTitle>
-        <CardDescription>
-          {user.isAnonymous ? (
-            "You're on a guest account that only lives in this browser. Add an email and password to keep your plan and log, and to sign in anywhere."
-          ) : (
-            <>
-              Signed in as <b className="text-foreground">{user.email}</b>
-            </>
-          )}
-        </CardDescription>
-      </CardHeader>
-      {user.isAnonymous && (
-        <CardContent>
-          <SaveAccountForm name={user.name} />
-        </CardContent>
-      )}
-      {!user.isAnonymous && (
-        <CardContent>
-          <EmailSettings
-            preferences={preferences}
-            timezone={timezone}
-            verified={user.emailVerified}
-            email={user.email}
-            enabled={emailConfigured()}
-          />
-        </CardContent>
-      )}
-    </Card>
+    <div id="save-account" className="scroll-mt-20">
+      <Card>
+        <CardHeader>
+          <CardTitle>{user.isAnonymous ? "Save your account" : "Account"}</CardTitle>
+          <CardDescription>
+            {user.isAnonymous ? (
+              "You're on a guest account that only lives in this browser. Add an email and password to keep your plan and log, and to sign in anywhere."
+            ) : (
+              <>
+                Signed in as <b className="text-foreground">{user.email}</b>
+              </>
+            )}
+          </CardDescription>
+        </CardHeader>
+        {user.isAnonymous && (
+          <CardContent>
+            <SaveAccountForm name={user.name} />
+          </CardContent>
+        )}
+        {!user.isAnonymous && (
+          <CardContent>
+            <EmailSettings
+              preferences={preferences}
+              timezone={timezone}
+              verified={user.emailVerified}
+              email={user.email}
+              enabled={emailConfigured()}
+            />
+          </CardContent>
+        )}
+      </Card>
+    </div>
   );
 
   return (

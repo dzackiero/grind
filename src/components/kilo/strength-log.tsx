@@ -43,9 +43,6 @@ const LOAD_LABEL = {
   heavy: "Heavy",
 } as const;
 const SAVE_DELAY_MS = 700;
-/** Set rows: with a column for what was lifted last time, or without when there is no history yet. Literal for Tailwind. */
-const WITH_LAST = "grid-cols-[1.5rem_4.5rem_1fr_1fr_2.75rem]";
-const WITHOUT_LAST = "grid-cols-[2rem_1fr_1fr_2.75rem]";
 
 function buildEntries(
   workout: StrengthWorkout,
@@ -226,7 +223,7 @@ export function StrengthLog({
   return (
     <div className="flex flex-col gap-3">
       <p
-        className="text-muted-foreground flex items-center justify-between text-[13px]"
+        className="text-muted-foreground flex items-center justify-between text-sm"
         aria-live="polite"
       >
         <span>
@@ -262,18 +259,18 @@ export function StrengthLog({
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="focus-visible:ring-ring grid min-h-16 w-full grid-cols-[44px_1fr_auto] items-center gap-3 rounded-xl p-3 text-left outline-none focus-visible:ring-2"
+                    className="focus-visible:ring-ring flex min-h-16 w-full items-center gap-3 rounded-xl p-3 text-left outline-none focus-visible:ring-2"
                   >
-                    <span className="bg-secondary text-type-strength-mark font-display grid size-11 place-items-center rounded-md text-[13px] font-extrabold">
+                    <span className="bg-secondary text-type-strength-mark font-display grid size-11 shrink-0 place-items-center rounded-md text-sm font-extrabold">
                       {ex ? (
                         `${ex.group}${counters[ex.group]}`
                       ) : (
                         <Plus className="size-4" aria-hidden />
                       )}
                     </span>
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="block font-semibold">{entry.name}</span>
-                      <span className="text-muted-foreground block font-mono text-[13px]">
+                      <span className="text-muted-foreground block font-mono text-sm">
                         {ex ? (
                           <>
                             {ex.sets} ×{" "}
@@ -317,133 +314,141 @@ export function StrengthLog({
                   </button>
                 </CollapsibleTrigger>
 
-                <CollapsibleContent className="flex flex-col gap-2 px-3 pb-3">
-                  {ex && (
-                    <p className="text-muted-foreground text-xs">{LOAD_LABEL[ex.load]} load</p>
-                  )}
-                  <div
-                    className={cn(
-                      "text-muted-foreground grid items-end gap-2 text-center text-[11px] font-semibold tracking-wide uppercase",
-                      lastTime ? WITH_LAST : WITHOUT_LAST,
+                <CollapsibleContent>
+                  <div className="flex flex-col gap-2 px-3 pb-3">
+                    {ex && (
+                      <p className="text-muted-foreground text-xs">{LOAD_LABEL[ex.load]} load</p>
                     )}
-                  >
-                    <span>Set</span>
-                    {lastTime && <span>Last</span>}
-                    <span>KG</span>
-                    <span>{entry.timed ? "Sec" : "Reps"}</span>
-                    <span className="sr-only">Done</span>
-                  </div>
-                  {entry.rows.map((row, i) => (
-                    <div
-                      key={i}
-                      className={cn("grid items-center gap-2", lastTime ? WITH_LAST : WITHOUT_LAST)}
-                    >
-                      <span className="text-muted-foreground text-center text-sm tabular-nums">
-                        {i + 1}
+                    <div className="text-muted-foreground flex items-end gap-2 text-center text-xs font-semibold tracking-wide uppercase">
+                      <span className={lastTime ? "w-6 shrink-0" : "w-8 shrink-0"}>Set</span>
+                      {lastTime && <span className="w-18 shrink-0">Last</span>}
+                      <span className="flex-1">KG</span>
+                      <span className="flex-1">{entry.timed ? "Sec" : "Reps"}</span>
+                      <span className="w-11 shrink-0">
+                        <span className="sr-only">Done</span>
                       </span>
-                      {lastTime && (
-                        <span
-                          className="text-muted-foreground text-center text-xs tabular-nums"
-                          aria-label={`Last time, set ${i + 1}: ${lastSetText(lastTime.sets[i])}`}
-                        >
-                          {lastSetText(lastTime.sets[i])}
-                        </span>
-                      )}
-                      <Input
-                        inputMode="decimal"
-                        placeholder="–"
-                        value={row.weight}
-                        aria-label={`${entry.name}, set ${i + 1}, weight in kilograms`}
-                        className="h-11 text-center tabular-nums"
-                        onChange={(e) =>
-                          change(
-                            entry.id,
-                            (rows) =>
-                              rows.map((r, j) => (j === i ? { ...r, weight: e.target.value } : r)),
-                            false,
-                          )
-                        }
-                      />
-                      <Input
-                        inputMode="numeric"
-                        placeholder="–"
-                        value={row.amount}
-                        aria-label={`${entry.name}, set ${i + 1}, ${entry.timed ? "seconds" : "reps"}`}
-                        className="h-11 text-center tabular-nums"
-                        onChange={(e) =>
-                          change(
-                            entry.id,
-                            (rows) =>
-                              rows.map((r, j) => (j === i ? { ...r, amount: e.target.value } : r)),
-                            false,
-                          )
-                        }
-                      />
-                      <label className="grid size-11 cursor-pointer place-items-center">
-                        <Checkbox
-                          checked={row.done}
-                          aria-label={`${entry.name}, set ${i + 1} done`}
-                          className="size-7 rounded-[9px]"
-                          onCheckedChange={(checked) =>
-                            change(
-                              entry.id,
-                              (rows) =>
-                                rows.map((r, j) =>
-                                  j === i ? { ...r, done: checked === true } : r,
-                                ),
-                              true,
-                            )
-                          }
-                        />
-                      </label>
                     </div>
-                  ))}
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11"
-                      disabled={entry.rows.length >= 20}
-                      onClick={() =>
-                        change(
-                          entry.id,
-                          (rows) => {
-                            const prev = rows.at(-1);
-                            return [
-                              ...rows,
-                              {
-                                weight: prev?.weight ?? "",
-                                amount: prev?.amount ?? "",
-                                done: false,
-                              },
-                            ];
-                          },
-                          true,
-                        )
-                      }
-                    >
-                      <Plus /> Add set
-                    </Button>
-                    {entry.rows.length > 1 && (
+                    {entry.rows.map((row, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "text-muted-foreground shrink-0 text-center text-sm tabular-nums",
+                            lastTime ? "w-6" : "w-8",
+                          )}
+                        >
+                          {i + 1}
+                        </span>
+                        {lastTime && (
+                          <span
+                            className="text-muted-foreground w-18 shrink-0 text-center text-xs tabular-nums"
+                            aria-label={`Last time, set ${i + 1}: ${lastSetText(lastTime.sets[i])}`}
+                          >
+                            {lastSetText(lastTime.sets[i])}
+                          </span>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <Input
+                            inputMode="decimal"
+                            placeholder="–"
+                            value={row.weight}
+                            aria-label={`${entry.name}, set ${i + 1}, weight in kilograms`}
+                            size="lg"
+                            variant="numeric"
+                            onChange={(e) =>
+                              change(
+                                entry.id,
+                                (rows) =>
+                                  rows.map((r, j) =>
+                                    j === i ? { ...r, weight: e.target.value } : r,
+                                  ),
+                                false,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <Input
+                            inputMode="numeric"
+                            placeholder="–"
+                            value={row.amount}
+                            aria-label={`${entry.name}, set ${i + 1}, ${entry.timed ? "seconds" : "reps"}`}
+                            size="lg"
+                            variant="numeric"
+                            onChange={(e) =>
+                              change(
+                                entry.id,
+                                (rows) =>
+                                  rows.map((r, j) =>
+                                    j === i ? { ...r, amount: e.target.value } : r,
+                                  ),
+                                false,
+                              )
+                            }
+                          />
+                        </div>
+                        <label className="grid size-11 shrink-0 cursor-pointer place-items-center">
+                          <Checkbox
+                            checked={row.done}
+                            aria-label={`${entry.name}, set ${i + 1} done`}
+                            size="lg"
+                            onCheckedChange={(checked) =>
+                              change(
+                                entry.id,
+                                (rows) =>
+                                  rows.map((r, j) =>
+                                    j === i ? { ...r, done: checked === true } : r,
+                                  ),
+                                true,
+                              )
+                            }
+                          />
+                        </label>
+                      </div>
+                    ))}
+                    <div className="flex flex-wrap gap-2 pt-1">
                       <Button
                         type="button"
-                        variant="ghost"
-                        className="h-11"
-                        onClick={() => change(entry.id, (rows) => rows.slice(0, -1), true)}
+                        variant="outline"
+                        disabled={entry.rows.length >= 20}
+                        onClick={() =>
+                          change(
+                            entry.id,
+                            (rows) => {
+                              const prev = rows.at(-1);
+                              return [
+                                ...rows,
+                                {
+                                  weight: prev?.weight ?? "",
+                                  amount: prev?.amount ?? "",
+                                  done: false,
+                                },
+                              ];
+                            },
+                            true,
+                          )
+                        }
                       >
-                        Remove last set
+                        <Plus /> Add set
                       </Button>
-                    )}
-                    {!ex && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="text-destructive h-11"
-                        onClick={() => removeExercise(entry)}
-                      >
-                        Remove exercise
-                      </Button>
-                    )}
+                      {entry.rows.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => change(entry.id, (rows) => rows.slice(0, -1), true)}
+                        >
+                          Remove last set
+                        </Button>
+                      )}
+                      {!ex && (
+                        <Button
+                          type="button"
+                          variant="ghost-destructive"
+                          onClick={() => removeExercise(entry)}
+                        >
+                          Remove exercise
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -464,15 +469,10 @@ export function StrengthLog({
           maxLength={60}
           placeholder="Add another exercise"
           aria-label="Name of an exercise to add"
-          className="h-11"
+          size="lg"
           onChange={(e) => setNewName(e.target.value)}
         />
-        <Button
-          type="submit"
-          variant="outline"
-          className="h-11 shrink-0"
-          disabled={!newName.trim()}
-        >
+        <Button type="submit" variant="outline" disabled={!newName.trim()}>
           <Plus /> Add
         </Button>
       </form>

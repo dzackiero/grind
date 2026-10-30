@@ -47,13 +47,13 @@ function StepRow({
   return (
     <li
       className={cn(
-        "bg-secondary grid grid-cols-[4px_1fr_auto] items-center gap-3 overflow-hidden rounded-md py-2.5 pr-3",
+        "bg-secondary flex items-center gap-3 overflow-hidden rounded-md py-2.5 pr-3",
         nested && "ml-4",
       )}
     >
-      <span className={cn("self-stretch -my-2.5", stripClass(step, type))} />
-      <span className="font-semibold">{STEP_NAME[step.kind]}</span>
-      <span className="text-muted-foreground text-right font-mono text-[13px] tabular-nums">
+      <span className={cn("-my-2.5 w-1 shrink-0 self-stretch", stripClass(step, type))} />
+      <span className="flex-1 font-semibold">{STEP_NAME[step.kind]}</span>
+      <span className="text-muted-foreground text-right font-mono text-sm tabular-nums">
         {describe(step)}
       </span>
     </li>

@@ -56,7 +56,7 @@ export function DoneCheckbox({
       disabled={pending}
       onCheckedChange={toggle}
       aria-label={done ? `Mark ${label} not done` : `Mark ${label} done`}
-      className="size-7 rounded-[9px]"
+      size="lg"
     />
   );
 }
@@ -68,7 +68,7 @@ export function DoneButton({ workoutKey, status }: { workoutKey: string; status:
     <Button
       size="lg"
       variant={done ? "outline" : "default"}
-      className="w-full"
+      width="full"
       disabled={pending}
       onClick={toggle}
     >

@@ -16,7 +16,7 @@ function PlanRing({ value }: { value: number }) {
   const r = 8.5;
   const c = 2 * Math.PI * r;
   return (
-    <svg viewBox="0 0 22 22" className="size-[22px]" aria-hidden>
+    <svg viewBox="0 0 22 22" className="size-5.5" aria-hidden>
       <circle cx="11" cy="11" r={r} fill="none" strokeWidth="3" className="stroke-secondary" />
       <circle
         cx="11"
@@ -105,7 +105,7 @@ export function WeekStrip({
         }
       }}
     >
-      <div className="mb-3 flex items-center justify-between text-[15px] font-bold">
+      <div className="mb-3 flex items-center justify-between text-base font-bold">
         <button
           type="button"
           aria-label="Previous week"
@@ -142,12 +142,12 @@ export function WeekStrip({
                 className="flex flex-col items-center gap-1.5 rounded-md py-1"
                 aria-current={d === selected ? "date" : undefined}
               >
-                <span className="text-subtle text-[11px] font-semibold tracking-[0.06em] uppercase">
+                <span className="text-subtle text-xs font-semibold tracking-wider uppercase">
                   {weekdayShort(d)}
                 </span>
                 <span
                   className={cn(
-                    "grid size-[34px] place-items-center rounded-full text-[15px] font-bold tabular-nums",
+                    "grid size-8.5 place-items-center rounded-full text-base font-bold tabular-nums",
                     d === today && "bg-primary text-primary-foreground",
                     d !== today && d === selected && "bg-secondary",
                     allDone && d !== today && "ring-success ring-2 ring-inset",
@@ -155,7 +155,7 @@ export function WeekStrip({
                 >
                   {dayOfMonth(d)}
                 </span>
-                <span className="flex h-1.5 gap-[3px]">
+                <span className="flex h-1.5 gap-0.75">
                   {workouts.slice(0, 3).map((w) => (
                     <TypeDot key={w.id} type={w.type} />
                   ))}

@@ -51,18 +51,18 @@ export function DurationPicker({
         value={unset ? undefined : String(current)}
         onValueChange={(v) => set(Number(v))}
       >
-        <SelectTrigger aria-label={label} className="w-full justify-between font-mono tabular-nums">
+        <SelectTrigger aria-label={label} width="full" variant="mono">
           <SelectValue placeholder="--" />
         </SelectTrigger>
-        <SelectContent className="max-h-64">
+        <SelectContent>
           {options.map((o) => (
-            <SelectItem key={o} value={String(o)} className="font-mono tabular-nums">
+            <SelectItem key={o} value={String(o)} variant="mono">
               {suffix === "h" ? o : pad(o)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <span className="text-subtle text-center text-[11px] font-semibold uppercase">{label}</span>
+      <span className="text-subtle text-center text-xs font-semibold uppercase">{label}</span>
     </div>
   );
 

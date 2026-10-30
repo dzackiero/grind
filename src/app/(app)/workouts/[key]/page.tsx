@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Sparkles, Watch } from "lucide-react";
+import { Sparkles, Watch } from "lucide-react";
+import { BackLink } from "@/components/kilo/back-link";
 import { DoneButton } from "@/components/kilo/done-toggle";
 import { ExerciseList } from "@/components/kilo/exercise-list";
 import { km, longDate, mainPace, paceFrom } from "@/components/kilo/format";
@@ -64,26 +65,24 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
 
   return (
     <div className="flex flex-col gap-5">
-      <Button variant="ghost" size="sm" asChild className="-ml-3 self-start">
-        <Link href={`/today?date=${workout.date}`}>
-          <ArrowLeft /> {longDate(workout.date)}
-        </Link>
-      </Button>
+      <BackLink href={`/today?date=${workout.date}`}>{longDate(workout.date)}</BackLink>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={`${WORKOUT_TYPES[workout.type].fill} text-on-type`}>
-            {WORKOUT_TYPES[workout.type].label}
+          <Badge variant="ghost" asChild>
+            <span className={`${WORKOUT_TYPES[workout.type].fill} text-on-type`}>
+              {WORKOUT_TYPES[workout.type].label}
+            </span>
           </Badge>
           <Badge variant="secondary">Week {week.index}</Badge>
-          {status === "completed" && <Badge className="bg-accent-soft text-foreground">Done</Badge>}
+          {status === "completed" && <Badge variant="accent">Done</Badge>}
         </div>
         <h1 className="font-display text-3xl leading-9 font-extrabold">{workout.title}</h1>
         <p className="text-muted-foreground">{workout.description}</p>
       </div>
 
       <Card>
-        <CardContent className="grid grid-cols-3 gap-4">
+        <CardContent layout="grid-3" gap="4">
           {workout.kind === "run" ? (
             <>
               <Stat label="Distance" value={km(workout.distanceKm)} />
@@ -105,9 +104,9 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
       </Card>
 
       {actual && (
-        <Card className="border-line-strong">
+        <Card tone="outline">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <CardTitle layout="inline">
               <Watch className="text-accent-ink size-5" />{" "}
               {workout.kind === "run" ? "Your run" : "Your session"}
             </CardTitle>
@@ -130,13 +129,15 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
                 </>
               )}
             </CardDescription>
-            <Button asChild variant="outline" size="sm" className="mt-2 self-start">
-              <Link href={`/activities/${encodeURIComponent(actual.activityId)}`}>
-                See map, splits and charts
-              </Link>
-            </Button>
+            <div className="mt-2 self-start">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/activities/${encodeURIComponent(actual.activityId)}`}>
+                  See map, splits and charts
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-4">
+          <CardContent layout="grid-3" gap="4">
             {actual.distanceM != null && (
               <Stat label="Distance" value={km(Math.round(actual.distanceM / 100) / 10)} />
             )}
@@ -159,18 +160,16 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
       )}
 
       {workout.coachNote && (
-        <Alert className="bg-accent-soft border-transparent">
+        <Alert variant="accent">
           <Sparkles className="text-accent-ink" />
           <AlertTitle>From your coach</AlertTitle>
-          <AlertDescription className="text-foreground">{workout.coachNote}</AlertDescription>
+          <AlertDescription>{workout.coachNote}</AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            {workout.kind === "run" ? "Steps" : "Exercises"}
-          </CardTitle>
+          <CardTitle>{workout.kind === "run" ? "Steps" : "Exercises"}</CardTitle>
           {workout.kind === "run" && (
             <CardDescription>
               Set these up in your watch&apos;s workout editor, in this order.

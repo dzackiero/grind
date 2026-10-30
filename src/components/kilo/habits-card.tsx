@@ -27,7 +27,7 @@ export function HabitsCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Habits</CardTitle>
+          <CardTitle>Habits</CardTitle>
           <CardDescription>
             Small daily things that help you train: stretching, sleep, water. Pick the days and tick
             them off.
@@ -36,7 +36,7 @@ export function HabitsCard({
         <CardContent>
           <HabitForm
             trigger={
-              <Button variant="outline" className="h-11">
+              <Button variant="outline">
                 <Plus /> Add a habit
               </Button>
             }
@@ -53,14 +53,14 @@ export function HabitsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-base font-semibold">
+        <CardTitle layout="between">
           Habits
-          <span className="text-muted-foreground text-[13px] font-medium tabular-nums">
+          <span className="text-muted-foreground text-sm font-medium tabular-nums">
             {shown.length ? `${doneCount}/${shown.length} done` : ""}
           </span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-1">
+      <CardContent layout="stack" gap="1">
         {shown.length === 0 && (
           <p className="text-muted-foreground px-1 pb-2 text-sm">
             Nothing scheduled {date === today ? "today" : "that day"}.
@@ -97,7 +97,7 @@ export function HabitsCard({
                 >
                   {h.name}
                 </span>
-                <span className="text-muted-foreground flex items-center gap-2 text-[13px]">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
                   <span className="tabular-nums">
                     {week.done}/{week.target} this week
                   </span>
