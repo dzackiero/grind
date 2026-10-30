@@ -4,6 +4,7 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "cn";
 import { CalendarDays, ChartColumn, ClipboardList, Sun, type LucideIcon } from "lucide-react";
+import { tabBarInnerClassName } from "@/lib/app-shell";
 
 const TABS = [
   { href: "/today", label: "Today", icon: Sun },
@@ -35,7 +36,7 @@ export function TabBar() {
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="bg-card fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className={tabBarInnerClassName}>
         {TABS.map(({ href, label, icon }) => {
           const active = pathname.startsWith(href);
           return (

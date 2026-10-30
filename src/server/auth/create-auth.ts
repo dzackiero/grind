@@ -3,7 +3,7 @@ import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
 import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { jwt } from "better-auth/plugins";
+import { anonymous, jwt } from "better-auth/plugins";
 import type { DB } from "../db/client";
 import * as schema from "../db/schema";
 import { authEmailOptions, type BackgroundTask } from "../email/auth";
@@ -19,7 +19,7 @@ export function mcpResource() {
 }
 
 /**
- * Better Auth for a database: email + password, optional Google, and Grind as an OAuth server for MCP.
+ * Better Auth for a database: email + password, guest accounts, optional Google, and Grind as an OAuth server for MCP.
  *
  * Following Better Auth's MCP docs:
  *  - jwt()  signs access tokens and serves /jwks
@@ -41,11 +41,14 @@ export function createAuth(db: DB, plugins: BetterAuthPlugin[] = [], background?
       customRules: {
         "/request-password-reset": { window: 60, max: 3 },
         "/send-verification-email": { window: 60, max: 3 },
+        "/sign-in/anonymous": { window: 60, max: 10 },
       },
     },
     socialProviders: google,
     session: { expiresIn: 60 * 60 * 24 * 30 },
     plugins: [
+      // Guests skip the sign-up form. Their placeholder email is never verified, so no email is ever sent to it.
+      anonymous({ emailDomainName: "guest.invalid", generateName: () => "Guest" }),
       jwt(),
       mcp({
         loginPage: "/sign-in",

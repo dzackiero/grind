@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { authClient } from "@/lib/auth-client";
 import { GOAL_TEMPLATES, RACE_DISTANCE_M, type PlanInput } from "@/lib/plan";
 
 type Weekday = PlanInput["runDays"][number];
@@ -54,7 +55,6 @@ interface FormState {
   raceTimeSec: number | null;
   runDays: Weekday[];
   longRunDay: Weekday | "";
-  strengthSessions: string;
   strengthDays: Weekday[];
   equipment: PlanInput["strength"]["equipment"];
   intensity: PlanInput["intensity"];
@@ -62,13 +62,15 @@ interface FormState {
 
 const STEPS = ["Goal", "Race day", "Your running", "Run days", "Strength", "Intensity"] as const;
 
-const STRENGTH_SPLITS: Record<string, string> = {
-  "0": "Running only.",
-  "1": "One Full Body session.",
-  "2": "Legs & Core, plus Upper Body.",
-  "3": "Legs & Core, Upper Body and Full Body.",
-  "4": "Upper/lower split, twice: Legs & Core and Upper Body, two of each.",
-  "5": "Two Legs & Core, two Upper Body and one Full Body.",
+const MAX_STRENGTH_DAYS = 5;
+
+const STRENGTH_SPLITS: Record<number, string> = {
+  0: "Running only.",
+  1: "One Full Body session.",
+  2: "Legs & Core, plus Upper Body.",
+  3: "Legs & Core, Upper Body and Full Body.",
+  4: "Upper/lower split, twice: Legs & Core and Upper Body, two of each.",
+  5: "Two Legs & Core, two Upper Body and one Full Body.",
 };
 
 function localToday() {
@@ -142,11 +144,12 @@ function DayPicker({ value, onChange, label }: { value: Weekday[]; onChange: (v:
   );
 }
 
-export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasPlan: boolean }) {
+export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: string; /** Current name when this is a guest account (empty until they give one), otherwise null. */ guestName: string | null; hasPlan: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [name, setName] = useState(guestName ?? "");
   const [f, setF] = useState<FormState>({
     goal: "half",
     raceDate: "",
@@ -157,13 +160,13 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
     raceTimeSec: null,
     runDays: ["wed", "fri", "sun"],
     longRunDay: "sun",
-    strengthSessions: "2",
-    strengthDays: ["mon", "thu"],
+    strengthDays: [],
     equipment: "gym",
     intensity: "balanced",
   });
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setF((prev) => ({ ...prev, [key]: value }));
   const tpl = GOAL_TEMPLATES[f.goal];
+  const greeting = guestName === null ? firstName : name.trim().split(" ")[0];
 
   function stepError(): string | null {
     switch (step) {
@@ -179,14 +182,9 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
         return null;
       }
       case 3:
-        if (f.runDays.length < 3 || f.runDays.length > 6) return "Pick 3 to 6 run days.";
+        if (!f.runDays.length) return "Pick at least one run day.";
         if (!f.longRunDay || !f.runDays.includes(f.longRunDay)) return "Pick which run day is your long run.";
         return null;
-      case 4: {
-        const n = Number(f.strengthSessions);
-        if (f.strengthDays.length !== n) return n === 0 ? null : `Pick ${n} strength day${n > 1 ? "s" : ""}.`;
-        return null;
-      }
       default:
         return null;
     }
@@ -196,12 +194,14 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
     const problem = stepError();
     if (problem) return setError(problem);
     setError(null);
+    // Guests can give a name here; it shows in greetings and carries over when they save the account
+    if (step === 0 && guestName !== null && name.trim() && name.trim() !== guestName) void authClient.updateUser({ name: name.trim() }).then(() => router.refresh());
     if (step < STEPS.length - 1) setStep(step + 1);
     else submit();
   }
 
   function submit() {
-    const sessions = Number(f.strengthSessions);
+    const sessions = f.strengthDays.length;
     const time = f.raceDistance !== "none" ? f.raceTimeSec : null;
     const input: PlanInput = {
       goal: f.goal,
@@ -212,7 +212,7 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
       recentRace: time && f.raceDistance !== "none" ? { distanceM: RACE_DISTANCE_M[f.raceDistance], timeSec: time } : undefined,
       runDays: f.runDays,
       longRunDay: f.longRunDay as Weekday,
-      strength: { sessionsPerWeek: sessions, days: sessions ? f.strengthDays : [], equipment: f.equipment },
+      strength: { sessionsPerWeek: sessions, days: f.strengthDays, equipment: f.equipment },
       intensity: f.intensity,
     };
     startTransition(async () => {
@@ -245,9 +245,15 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
         {step === 0 && (
           <>
             <h1 className="font-display text-3xl font-extrabold">
-              {hasPlan ? "Start a new plan" : `Hi ${firstName}, what are you training for?`}
+              {hasPlan ? "Start a new plan" : greeting ? `Hi ${greeting}, what are you training for?` : "What are you training for?"}
             </h1>
             {hasPlan && <p className="text-muted-foreground text-sm">Your current plan will be archived when the new one is ready.</p>}
+            {guestName !== null && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="guestName">What should we call you? (optional)</Label>
+                <Input id="guestName" autoComplete="given-name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your first name" />
+              </div>
+            )}
             <RadioGroup value={f.goal} onValueChange={(v) => set("goal", v as FormState["goal"])} className="gap-3">
               {/* Goal tiles use the PR plate colours: 5K green, 10K yellow, half blue, marathon red */}
               <OptionCard value="5k" current={f.goal} icon={Zap} tone="bg-plate-green text-white" title="5K" description={`${GOAL_TEMPLATES["5k"].minWeeks}–${GOAL_TEMPLATES["5k"].maxWeeks} weeks. Get faster over a short distance.`} />
@@ -320,7 +326,7 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
           <>
             <h1 className="font-display text-3xl font-extrabold">Which days can you run?</h1>
             <div className="flex flex-col gap-2">
-              <Label>Run days (3 to 6)</Label>
+              <Label>Run days (as many as you like)</Label>
               <DayPicker
                 label="Run days"
                 value={f.runDays}
@@ -345,7 +351,12 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">Hard sessions are spaced so they never land on back-to-back days.</p>
+            {f.runDays.length === 7 && <p className="text-warning text-sm">Running every day leaves no rest day. That only suits experienced runners.</p>}
+            <p className="text-muted-foreground text-sm">
+              {f.runDays.length === 1
+                ? "One run a week is your long run. Add more days whenever you can."
+                : "Hard sessions are spaced so they never land on back-to-back days."}
+            </p>
           </>
         )}
 
@@ -353,34 +364,14 @@ export function OnboardingForm({ firstName, hasPlan }: { firstName: string; hasP
           <>
             <h1 className="font-display text-3xl font-extrabold">Add strength training</h1>
             <div className="flex flex-col gap-2">
-              <Label>Sessions per week</Label>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={f.strengthSessions}
-                onValueChange={(v) => {
-                  if (!v) return;
-                  set("strengthSessions", v);
-                  set("strengthDays", f.strengthDays.slice(0, Number(v)));
-                }}
-                className="w-full"
-              >
-                {["0", "1", "2", "3", "4", "5"].map((n) => (
-                  <ToggleGroupItem key={n} value={n} className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 flex-1 font-bold">
-                    {n}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              <p className="text-muted-foreground text-xs">{STRENGTH_SPLITS[f.strengthSessions]}</p>
+              <Label>Strength days (optional, up to {MAX_STRENGTH_DAYS})</Label>
+              <DayPicker label="Strength days" value={f.strengthDays} onChange={(v) => set("strengthDays", v.slice(-MAX_STRENGTH_DAYS))} />
+              <p className="text-muted-foreground text-xs">
+                {f.strengthDays.length ? STRENGTH_SPLITS[f.strengthDays.length] : "No days picked: Grind plans running only. You can skip this step."}
+              </p>
             </div>
-            {f.strengthSessions !== "0" && (
+            {f.strengthDays.length > 0 && (
               <>
-                <div className="flex flex-col gap-2">
-                  <Label>
-                    Strength days (pick {f.strengthSessions})
-                  </Label>
-                  <DayPicker label="Strength days" value={f.strengthDays} onChange={(v) => set("strengthDays", v.slice(-Number(f.strengthSessions)))} />
-                </div>
                 {new Set([...f.runDays, ...f.strengthDays]).size === 7 && (
                   <p className="text-warning text-sm">No rest day left in your week. That works for experienced athletes; otherwise pair some strength days with run days.</p>
                 )}

@@ -1,6 +1,7 @@
 import { AccountMenu } from "@/components/kilo/account-menu";
 import { AutoSync } from "@/components/kilo/auto-sync";
 import { TabBar } from "@/components/kilo/tab-bar";
+import { appShellClassName } from "@/lib/app-shell";
 import { getDb } from "@/server/db";
 import { getIntervalsStatus } from "@/server/intervals/sync";
 import { requireViewer, requireViewerPlan } from "@/server/queries";
@@ -14,9 +15,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   await requireViewerPlan();
   const intervals = await getIntervalsStatus(await getDb(), user.id);
   return (
-    <div className="isolate mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      <header className="bg-background sticky top-0 z-30 -mx-4 flex h-14 shrink-0 items-center justify-between border-b px-4">
-        <AccountMenu name={user.name} email={user.email} />
+    <div className={appShellClassName}>
+      <header className="bg-background sticky top-0 z-30 -mx-4 flex h-14 shrink-0 items-center justify-between border-b px-4 lg:-mx-8 lg:px-8">
+        <AccountMenu name={user.name} email={user.isAnonymous ? null : user.email} />
         <span className="font-display text-lg font-extrabold">Grind</span>
         <span className="size-11" aria-hidden />
       </header>

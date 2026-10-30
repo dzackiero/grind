@@ -7,7 +7,7 @@ let db: DB;
 beforeAll(async () => { db = await createDb("memory://"); });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
-it("requires verification, welcomes once verified, and resets a password with confirmation and session revocation", async () => {
+it("lets people in before verifying, welcomes once verified, and resets a password with confirmation and session revocation", async () => {
   vi.stubEnv("BETTER_AUTH_SECRET", "test-secret-long-enough-for-better-auth-123");
   vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
   vi.stubEnv("RESEND_API_KEY", "test-key");
@@ -19,10 +19,10 @@ it("requires verification, welcomes once verified, and resets a password with co
   });
   const auth = createAuth(db);
   const signup = await auth.api.signUpEmail({ body: { name: "Runner", email: "auth-email@example.com", password: "original-password", callbackURL: "/sign-in" } });
-  expect(signup.token).toBeNull();
+  expect(signup.token).toBeTruthy();
   expect(sent.map((s) => s.subject)).toEqual(["Verify your email"]);
-  const blocked = await auth.api.signInEmail({ body: { email: "auth-email@example.com", password: "original-password" }, asResponse: true });
-  expect(blocked.status).toBe(403);
+  const unverified = await auth.api.signInEmail({ body: { email: "auth-email@example.com", password: "original-password" }, asResponse: true });
+  expect(unverified.status).toBe(200);
   const verifyUrl = sent[0].text.match(/http:\/\/localhost:3000\/api\/auth\/verify-email\?\S+/)![0];
   const verified = await auth.api.verifyEmail({ query: { token: new URL(verifyUrl).searchParams.get("token")! } });
   expect(verified).toMatchObject({ status: true });
@@ -53,4 +53,24 @@ it("persists an auth email for retry when Resend is down", async () => {
   expect(pending).toHaveLength(1);
   expect(pending[0].sentAt).toBeNull();
   expect(pending[0].attempts).toBe(1);
+});
+
+it("starts a guest session without an email address and never mails it", async () => {
+  vi.stubEnv("BETTER_AUTH_SECRET", "test-secret-long-enough-for-better-auth-123");
+  vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
+  vi.stubEnv("RESEND_API_KEY", "test-key");
+  vi.stubEnv("EMAIL_FROM", "Grind <noreply@example.com>");
+  const sent: unknown[] = [];
+  vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+    sent.push(JSON.parse(init.body as string));
+    return Response.json({ id: "provider-id" });
+  });
+  const auth = createAuth(db);
+  const response = await auth.api.signInAnonymous({ asResponse: true });
+  expect(response.status).toBe(200);
+  const cookie = response.headers.get("set-cookie")!.split(";")[0];
+  const session = await auth.api.getSession({ headers: new Headers({ cookie }) });
+  expect(session?.user).toMatchObject({ name: "Guest", isAnonymous: true, emailVerified: false });
+  expect(session?.user.email.endsWith("@guest.invalid")).toBe(true);
+  expect(sent).toEqual([]);
 });

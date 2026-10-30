@@ -36,7 +36,7 @@ export const PlanInputSchema = z
         timeSec: z.number().min(150).max(8 * 3600),
       })
       .optional(),
-    runDays: z.array(WeekdaySchema).min(3, "Pick at least 3 run days.").max(6, "Pick at most 6 run days."),
+    runDays: z.array(WeekdaySchema).min(1, "Pick at least 1 run day.").max(7, "A week only has 7 days."),
     longRunDay: WeekdaySchema,
     strength: z.object({
       sessionsPerWeek: z.number().int().min(0).max(5, "Pick at most 5 strength sessions a week."),

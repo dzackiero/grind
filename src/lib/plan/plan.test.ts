@@ -73,10 +73,13 @@ describe("every template combination is valid", () => {
   const levels = ["beginner", "intermediate", "advanced"] as const;
   const intensities = ["steady", "balanced", "push"] as const;
   const daySets: { runDays: PlanInput["runDays"]; longRunDay: PlanInput["longRunDay"] }[] = [
+    { runDays: ["sun"], longRunDay: "sun" },
+    { runDays: ["wed", "sun"], longRunDay: "sun" },
     { runDays: ["tue", "thu", "sat"], longRunDay: "sat" },
     { runDays: ["mon", "wed", "fri", "sun"], longRunDay: "sun" },
     { runDays: ["mon", "tue", "thu", "sat", "sun"], longRunDay: "sun" },
     { runDays: ["mon", "tue", "wed", "thu", "fri", "sun"], longRunDay: "sun" },
+    { runDays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], longRunDay: "sun" },
   ];
 
   for (const goal of goals)

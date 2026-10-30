@@ -34,42 +34,44 @@ export default async function PlanPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-2xl font-extrabold">{plan.title}</CardTitle>
-          <CardDescription>
-            Your race: <b className="text-foreground">{longDate(plan.raceDate)}</b>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-4">
-            <Stat label="Estimated finish" value={formatDuration(plan.estimatedRaceTimeSec.low)} hint={`to ${formatDuration(plan.estimatedRaceTimeSec.high)} in ${plan.weeks.length} weeks`} />
-            <Stat label="Plan progress" value={`${doneWorkouts}/${totalWorkouts}`} hint={`${Math.round(doneKm)} of ${Math.round(totalKm)} km`} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{plan.input.runDays.length} runs a week</Badge>
-            {plan.input.strength.sessionsPerWeek > 0 && <Badge variant="secondary">{plan.input.strength.sessionsPerWeek} strength sessions</Badge>}
-            <Badge variant="secondary" className="capitalize">
-              {plan.input.intensity === "push" ? "Push me" : plan.input.intensity}
-            </Badge>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/onboarding">
-              <RefreshCw /> Start a new plan
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,0.75fr)]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-2xl font-extrabold">{plan.title}</CardTitle>
+            <CardDescription>
+              Your race: <b className="text-foreground">{longDate(plan.raceDate)}</b>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="grid grid-cols-2 gap-4">
+              <Stat label="Estimated finish" value={formatDuration(plan.estimatedRaceTimeSec.low)} hint={`to ${formatDuration(plan.estimatedRaceTimeSec.high)} in ${plan.weeks.length} weeks`} />
+              <Stat label="Plan progress" value={`${doneWorkouts}/${totalWorkouts}`} hint={`${Math.round(doneKm)} of ${Math.round(totalKm)} km`} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{plan.input.runDays.length} runs a week</Badge>
+              {plan.input.strength.sessionsPerWeek > 0 && <Badge variant="secondary">{plan.input.strength.sessionsPerWeek} strength sessions</Badge>}
+              <Badge variant="secondary" className="capitalize">
+                {plan.input.intensity === "push" ? "Push me" : plan.input.intensity}
+              </Badge>
+            </div>
+            <Button variant="outline" asChild>
+              <Link href="/onboarding">
+                <RefreshCw /> Start a new plan
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Plan overview</CardTitle>
-          <CardDescription>Kilometers per week. Lime shows what you&apos;ve done.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <WeeklyKmChart data={chart} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Plan overview</CardTitle>
+            <CardDescription>Kilometers per week. Lime shows what you&apos;ve done.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WeeklyKmChart data={chart} />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

@@ -13,7 +13,7 @@ import { authClient, inOAuthFlow } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up";
 
-export function AuthForm({ initialMode, googleEnabled, emailEnabled = false }: { initialMode: Mode; googleEnabled: boolean; emailEnabled?: boolean }) {
+export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, guestEnabled = false }: { initialMode: Mode; googleEnabled: boolean; emailEnabled?: boolean; guestEnabled?: boolean }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +28,6 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false }: {
       const result =
         mode === "sign-up" ? await authClient.signUp.email({ name, email, password, callbackURL: `/sign-in${window.location.search}` }) : await authClient.signIn.email({ email, password });
       if (result.error) {
-        if (result.error.code === "EMAIL_NOT_VERIFIED") {
-          router.push(`/verify-email?${new URLSearchParams({ email, returnTo: `/sign-in${window.location.search}` })}`);
-          return;
-        }
         setError(
           result.error.status === 401
             ? "That email and password don't match. Check them and try again."
@@ -39,14 +35,23 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false }: {
         );
         return;
       }
-      if (mode === "sign-up" && emailEnabled) {
-        router.push(`/verify-email?${new URLSearchParams({ email, returnTo: `/sign-in${window.location.search}` })}`);
-        return;
-      }
       // When Claude sent the user here, Better Auth continues the authorization (consent) by itself
       if (inOAuthFlow()) return;
       // New accounts go to onboarding; the app layout sends people without a plan there too
       router.push(mode === "sign-up" ? "/onboarding" : "/today");
+      router.refresh();
+    });
+  }
+
+  function continueAsGuest() {
+    setError(null);
+    startTransition(async () => {
+      const result = await authClient.signIn.anonymous();
+      if (result.error) {
+        setError(result.error.message ?? "Couldn't start a guest session. Try again.");
+        return;
+      }
+      router.push("/onboarding");
       router.refresh();
     });
   }
@@ -92,15 +97,22 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false }: {
         {mode === "sign-in" && emailEnabled && <Link href="/forgot-password" className="text-muted-foreground text-center text-sm underline">Forgot password?</Link>}
       </form>
 
-      {googleEnabled && (
-        <>
+      {(googleEnabled || guestEnabled) && (
+        <div className="flex flex-col gap-3">
           <div className="text-muted-foreground flex items-center gap-3 text-xs">
             <Separator className="flex-1" /> or <Separator className="flex-1" />
           </div>
-          <Button variant="outline" size="lg" onClick={() => authClient.signIn.social({ provider: "google", callbackURL: "/today" })}>
-            Continue with Google
-          </Button>
-        </>
+          {googleEnabled && (
+            <Button variant="outline" size="lg" onClick={() => authClient.signIn.social({ provider: "google", callbackURL: "/today" })}>
+              Continue with Google
+            </Button>
+          )}
+          {guestEnabled && (
+            <Button variant="outline" size="lg" disabled={pending} onClick={continueAsGuest}>
+              Continue as guest
+            </Button>
+          )}
+        </div>
       )}
     </Tabs>
   );

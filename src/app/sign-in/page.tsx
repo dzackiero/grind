@@ -27,7 +27,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       {error && ["TOKEN_EXPIRED", "INVALID_TOKEN", "USER_NOT_FOUND"].includes(error.toUpperCase()) && (
         <p role="alert" className="text-destructive text-sm">This verification link is invalid or expired. <Link href="/verify-email" className="underline">Request another link</Link>.</p>
       )}
-      <AuthForm initialMode={mode === "sign-up" ? "sign-up" : "sign-in"} googleEnabled={!!process.env.GOOGLE_CLIENT_ID} emailEnabled={emailConfigured()} />
+      <AuthForm initialMode={mode === "sign-up" ? "sign-up" : "sign-in"} googleEnabled={!!process.env.GOOGLE_CLIENT_ID} emailEnabled={emailConfigured()} guestEnabled={!fromClaude} />
     </main>
   );
 }

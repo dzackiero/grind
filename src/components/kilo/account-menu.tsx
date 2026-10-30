@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { LogOut, Monitor, Moon, Settings, Sun, UserRoundCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +19,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 /** Avatar menu: theme and sign out. */
-export function AccountMenu({ name, email }: { name: string; email: string }) {
+export function AccountMenu({ name, email }: { name: string; email: string | null }) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const initials = name
@@ -41,7 +41,7 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel className="flex flex-col">
           <span>{name}</span>
-          <span className="text-muted-foreground text-xs font-normal">{email}</span>
+          <span className="text-muted-foreground text-xs font-normal">{email ?? "Guest account"}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -49,6 +49,13 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
             <Settings /> Settings
           </Link>
         </DropdownMenuItem>
+        {email === null && (
+          <DropdownMenuItem asChild>
+            <Link href="/settings#save-account">
+              <UserRoundCheck /> Save my account
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="kilo-label">Theme</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
@@ -65,6 +72,7 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={async () => {
+            if (email === null && !window.confirm("You're on a guest account. Signing out deletes it and your plan for good. Sign out anyway?")) return;
             await authClient.signOut();
             router.push("/sign-in");
             router.refresh();

@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { pruneInactiveGuests } from "@/server/account/guest";
 import { getDb } from "@/server/db";
 import { emailDelivery, emailPreference } from "@/server/db/schema";
 import { deliverPendingEmails } from "@/server/email/outbox";
@@ -14,6 +15,8 @@ export async function GET(request: Request) {
   const provided = Buffer.from(request.headers.get("authorization") ?? "");
   const expected = Buffer.from(`Bearer ${secret ?? ""}`);
   if (!secret || expected.length !== provided.length || !timingSafeEqual(expected, provided)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  // Housekeeping rides on this schedule: abandoned guest accounts expire after 30 days.
+  await getDb().then((db) => pruneInactiveGuests(db)).catch(() => console.error("Guest cleanup failed."));
   if (!emailConfigured()) return Response.json({ error: "Email delivery is not configured." }, { status: 503 });
   try {
     const db = await getDb();

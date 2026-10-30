@@ -26,7 +26,7 @@ export function authEmailOptions(db: DB, baseUrl: string, background?: Backgroun
 
   return {
     emailAndPassword: {
-      enabled: true, minPasswordLength: 8, requireEmailVerification: true, revokeSessionsOnPasswordReset: true,
+      enabled: true, minPasswordLength: 8, revokeSessionsOnPasswordReset: true,
       resetPasswordTokenExpiresIn: 60 * 60,
       sendResetPassword: async ({ user, url }: { user: Recipient; url: string }) => { await dispatch("reset", user, url); },
       onPasswordReset: async ({ user }: { user: Recipient }) => { await dispatch("password-changed", user, `${baseUrl}/forgot-password`); },
