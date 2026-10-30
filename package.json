@@ -55,7 +55,7 @@
     "dotenv": "17.2.1",
     "drizzle-kit": "0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "15.5.28",
+    "eslint-config-next": "16.4.3",
     "shadcn": "^4.23.0",
     "tailwindcss": "^4",
     "tsx": "4.20.5",
