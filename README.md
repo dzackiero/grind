@@ -64,6 +64,12 @@ To check the sender/key/template safely, run `node --conditions=react-server --i
 | `pnpm smoke` | End-to-end check of sign-up, plans and workouts against a running app. |
 | `pnpm mcp:smoke` | End-to-end check of the OAuth flow and every MCP tool against a running app. |
 
+## CI/CD
+
+`.github/workflows/ci.yml` runs on every pull request and push to `main`: lint, typecheck and the test suite (database tests use in-memory PGlite and apply every migration in `drizzle/`). On push to `main`, after those pass, a `migrate` job runs `pnpm db:migrate` against the production Neon database. Vercel's Git integration builds and deploys the app.
+
+One-time setup: in the GitHub repo, create an environment named `production` and add the secret `DATABASE_URL_UNPOOLED` (the direct, non-pooler Neon connection string for the production branch). Optionally add required reviewers to that environment to gate migrations. CI pins pnpm 10 because the lockfile's `overrides` are read from `package.json`'s `pnpm` field, which pnpm 11 ignores.
+
 ## Connect Claude
 
 1. Deploy Grind and set `BETTER_AUTH_URL` to its public https address.
