@@ -1,5 +1,5 @@
 overrides:
-  "@better-auth/oauth-provider": 1.7.7
+  "@better-auth/oauth-provider": 1.7.14
   sharp: ">=0.35.5"
   postcss: ">=8.5.23"
   esbuild: 0.25.12
