@@ -1,4 +1,4 @@
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 // Better Auth core tables (user, session, account, verification), plus the jwt and OAuth provider
 // tables the mcp() plugin needs. Property names must match Better Auth's field names; column names are ours.
@@ -219,4 +219,16 @@ export const verification = pgTable("verification", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * Request counters for Better Auth's rate limiter, one row per client IP and path. Stored in the database
+ * (not memory) because serverless instances don't share memory, so a memory limit could be dodged
+ * by landing on a fresh instance. Rows are pruned by Better Auth as their windows expire.
+ */
+export const rateLimit = pgTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });

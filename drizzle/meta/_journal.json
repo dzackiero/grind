@@ -78,6 +78,13 @@
       "when": 1793350847178,
       "tag": "0010_guest_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793355012610,
+      "tag": "0011_rate_limit",
+      "breakpoints": true
     }
   ]
 }
