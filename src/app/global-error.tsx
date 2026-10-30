@@ -15,7 +15,8 @@ function applyTheme() {
   const root = document.documentElement;
   try {
     let theme = localStorage.getItem("theme") || "dark";
-    if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    if (theme === "system")
+      theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     root.classList.add(theme);
   } catch {
     root.classList.add("dark");
@@ -23,7 +24,13 @@ function applyTheme() {
 }
 const THEME_SCRIPT = `(${applyTheme.toString()})()`;
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -34,9 +41,16 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="font-sans">
-        <ErrorPanel fullPage title="Something went wrong" description="Grind hit a snag loading this page. Please try again." digest={error.digest}>
+        <ErrorPanel
+          fullPage
+          title="Something went wrong"
+          description="Grind hit a snag loading this page. Please try again."
+          digest={error.digest}
+        >
           <Button onClick={reset}>Try again</Button>
-          <Button asChild variant="outline"><a href="/today">Back to Today</a></Button>
+          <Button asChild variant="outline">
+            <a href="/today">Back to Today</a>
+          </Button>
         </ErrorPanel>
       </body>
     </html>

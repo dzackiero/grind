@@ -1,7 +1,14 @@
 import type { Plan, Week, Workout } from "@/lib/plan";
 
 /** Progress as returned by the plans service, keyed by workout id. */
-export type Progress = Record<string, { status: "planned" | "completed" | "skipped"; completedAt: string | null; activityId: string | null }>;
+export type Progress = Record<
+  string,
+  {
+    status: "planned" | "completed" | "skipped";
+    completedAt: string | null;
+    activityId: string | null;
+  }
+>;
 
 /** What the watch recorded for a completed workout (from intervals.icu). */
 export interface ActualSummary {
@@ -20,7 +27,8 @@ export type Actuals = Record<string, ActualSummary>;
 /** Real km per workout id, for weekStats. */
 export function actualKm(actuals: Actuals): Record<string, number> {
   const out: Record<string, number> = {};
-  for (const [key, a] of Object.entries(actuals)) if (a.distanceM) out[key] = Math.round(a.distanceM / 100) / 10;
+  for (const [key, a] of Object.entries(actuals))
+    if (a.distanceM) out[key] = Math.round(a.distanceM / 100) / 10;
   return out;
 }
 
@@ -54,7 +62,11 @@ export function findWorkout(plan: Plan, key: string): { workout: Workout; week: 
 
 /** First workout after a date that is still planned. */
 export function nextWorkout(plan: Plan, progress: Progress, afterDate: string): Workout | null {
-  return plan.weeks.flatMap((w) => w.workouts).find((w) => w.date > afterDate && statusOf(progress, w) === "planned") ?? null;
+  return (
+    plan.weeks
+      .flatMap((w) => w.workouts)
+      .find((w) => w.date > afterDate && statusOf(progress, w) === "planned") ?? null
+  );
 }
 
 /**
@@ -63,6 +75,14 @@ export function nextWorkout(plan: Plan, progress: Progress, afterDate: string): 
  */
 export function weekStats(week: Week, progress: Progress, actualKm: Record<string, number> = {}) {
   const done = week.workouts.filter((w) => statusOf(progress, w) === "completed");
-  const kmDone = done.reduce((s, w) => s + (w.kind === "run" ? (actualKm[w.id] ?? w.distanceKm) : 0), 0);
-  return { done: done.length, total: week.workouts.length, kmDone: Math.round(kmDone * 10) / 10, kmTarget: week.targetKm };
+  const kmDone = done.reduce(
+    (s, w) => s + (w.kind === "run" ? (actualKm[w.id] ?? w.distanceKm) : 0),
+    0,
+  );
+  return {
+    done: done.length,
+    total: week.workouts.length,
+    kmDone: Math.round(kmDone * 10) / 10,
+    kmTarget: week.targetKm,
+  };
 }

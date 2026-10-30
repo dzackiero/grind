@@ -6,7 +6,17 @@ import { addDays, mondayOf, WEEKDAYS, weekdayOf, type Weekday } from "./plan/dat
  * server/habits. Dates are "YYYY-MM-DD" strings in the athlete's own time zone.
  */
 
-export const HABIT_ICONS = ["check", "water", "sleep", "stretch", "food", "read", "meds", "walk", "heart"] as const;
+export const HABIT_ICONS = [
+  "check",
+  "water",
+  "sleep",
+  "stretch",
+  "food",
+  "read",
+  "meds",
+  "walk",
+  "heart",
+] as const;
 export type HabitIcon = (typeof HABIT_ICONS)[number];
 
 export const MAX_HABITS = 12;
@@ -15,7 +25,11 @@ export const MAX_BACKFILL_DAYS = 60;
 /** How many days back the streak looks. */
 export const STREAK_LOOKBACK_DAYS = 120;
 
-const nameField = z.string().trim().min(1, "Give the habit a name.").max(40, "Keep the name under 40 characters.");
+const nameField = z
+  .string()
+  .trim()
+  .min(1, "Give the habit a name.")
+  .max(40, "Keep the name under 40 characters.");
 const iconField = z.enum(HABIT_ICONS);
 const daysField = z
   .array(z.enum(WEEKDAYS))
@@ -23,11 +37,17 @@ const daysField = z
   .transform((days) => WEEKDAYS.filter((d) => days.includes(d)));
 
 /** A new habit; the icon defaults to a tick. */
-export const HabitInputSchema = z.object({ name: nameField, icon: iconField.default("check"), days: daysField });
+export const HabitInputSchema = z.object({
+  name: nameField,
+  icon: iconField.default("check"),
+  days: daysField,
+});
 export type HabitInput = z.infer<typeof HabitInputSchema>;
 
 /** An edit: only the fields given change. No defaults here, or leaving out the icon would reset it. */
-export const HabitPatchSchema = z.object({ name: nameField.optional(), icon: iconField.optional(), days: daysField.optional() }).strict();
+export const HabitPatchSchema = z
+  .object({ name: nameField.optional(), icon: iconField.optional(), days: daysField.optional() })
+  .strict();
 
 export interface HabitSuggestion {
   name: string;
@@ -49,14 +69,24 @@ export const HABIT_SUGGESTIONS: HabitSuggestion[] = [
   { name: "Read for 15 minutes", icon: "read", days: EVERY_DAY },
 ];
 
-export const WEEKDAY_LABELS: Record<Weekday, string> = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+export const WEEKDAY_LABELS: Record<Weekday, string> = {
+  mon: "Mon",
+  tue: "Tue",
+  wed: "Wed",
+  thu: "Thu",
+  fri: "Fri",
+  sat: "Sat",
+  sun: "Sun",
+};
 
 /** "Every day", "Weekdays", "Mon, Wed, Fri" */
 export function scheduleLabel(days: readonly Weekday[]): string {
   if (days.length === 7) return "Every day";
   if (days.length === 5 && !days.includes("sat") && !days.includes("sun")) return "Weekdays";
   if (days.length === 2 && days.includes("sat") && days.includes("sun")) return "Weekends";
-  return WEEKDAYS.filter((d) => days.includes(d)).map((d) => WEEKDAY_LABELS[d]).join(", ");
+  return WEEKDAYS.filter((d) => days.includes(d))
+    .map((d) => WEEKDAY_LABELS[d])
+    .join(", ");
 }
 
 export function isScheduled(days: readonly Weekday[], date: string): boolean {
@@ -71,7 +101,11 @@ export interface WeekProgress {
 }
 
 /** The week (Monday to Sunday) containing `date`. A tick on an unscheduled day still counts toward the target. */
-export function weekProgress(days: readonly Weekday[], doneDates: ReadonlySet<string>, date: string): WeekProgress {
+export function weekProgress(
+  days: readonly Weekday[],
+  doneDates: ReadonlySet<string>,
+  date: string,
+): WeekProgress {
   const start = mondayOf(date);
   let done = 0;
   for (let i = 0; i < 7; i++) if (doneDates.has(addDays(start, i))) done++;
@@ -81,12 +115,25 @@ export function weekProgress(days: readonly Weekday[], doneDates: ReadonlySet<st
 export type DayState = "done" | "missed" | "due" | "rest" | "future";
 
 /** The seven days of the week containing `date`, each marked for the week row. */
-export function weekDays(days: readonly Weekday[], doneDates: ReadonlySet<string>, date: string, today: string) {
+export function weekDays(
+  days: readonly Weekday[],
+  doneDates: ReadonlySet<string>,
+  date: string,
+  today: string,
+) {
   const start = mondayOf(date);
   return Array.from({ length: 7 }, (_, i) => {
     const day = addDays(start, i);
     const scheduled = isScheduled(days, day);
-    const state: DayState = doneDates.has(day) ? "done" : day > today ? "future" : !scheduled ? "rest" : day === today ? "due" : "missed";
+    const state: DayState = doneDates.has(day)
+      ? "done"
+      : day > today
+        ? "future"
+        : !scheduled
+          ? "rest"
+          : day === today
+            ? "due"
+            : "missed";
     return { date: day, weekday: WEEKDAYS[i], scheduled, state };
   });
 }
@@ -95,7 +142,11 @@ export function weekDays(days: readonly Weekday[], doneDates: ReadonlySet<string
  * Days in a row the habit was kept, counted back from today. A scheduled day with no tick ends the streak, except
  * today, which is still open. Days it isn't scheduled never break it, and a tick on one adds to it.
  */
-export function streak(days: readonly Weekday[], doneDates: ReadonlySet<string>, today: string): number {
+export function streak(
+  days: readonly Weekday[],
+  doneDates: ReadonlySet<string>,
+  today: string,
+): number {
   let count = 0;
   for (let i = 0; i < STREAK_LOOKBACK_DAYS; i++) {
     const day = addDays(today, -i);
@@ -113,7 +164,13 @@ export interface Adherence {
 }
 
 /** How well the last `windowDays` went, counting only days since the habit existed (`createdOn`) and today excluded. */
-export function adherence(days: readonly Weekday[], doneDates: ReadonlySet<string>, today: string, createdOn: string, windowDays: number): Adherence {
+export function adherence(
+  days: readonly Weekday[],
+  doneDates: ReadonlySet<string>,
+  today: string,
+  createdOn: string,
+  windowDays: number,
+): Adherence {
   let scheduled = 0;
   let done = 0;
   for (let i = 1; i <= windowDays; i++) {

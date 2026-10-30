@@ -3,7 +3,14 @@ import { generatePlan, type PlanInput } from "@/lib/plan";
 import { createAuth } from "../auth/create-auth";
 import { createDb, type DB } from "../db/client";
 import { user } from "../db/schema";
-import { createPlanFromInput, getActivePlan, listWorkouts, PlanValidationError, savePlan, setWorkoutStatus } from "./service";
+import {
+  createPlanFromInput,
+  getActivePlan,
+  listWorkouts,
+  PlanValidationError,
+  savePlan,
+  setWorkoutStatus,
+} from "./service";
 
 const input: PlanInput = {
   goal: "half",
@@ -39,7 +46,11 @@ describe("plans service", () => {
 
   it("archives the previous plan when a new one is saved", async () => {
     const first = await getActivePlan(db, "u1");
-    const second = await createPlanFromInput(db, "u1", { ...input, goal: "10k", raceDate: undefined });
+    const second = await createPlanFromInput(db, "u1", {
+      ...input,
+      goal: "10k",
+      raceDate: undefined,
+    });
     const active = await getActivePlan(db, "u1");
     expect(active?.id).toBe(second.id);
     expect(active?.id).not.toBe(first?.id);
@@ -81,10 +92,15 @@ describe("auth", () => {
     process.env.BETTER_AUTH_URL = "http://localhost:3000";
     const auth = createAuth(db);
 
-    const signUp = await auth.api.signUpEmail({ body: { name: "Dzaky", email: "runner@example.com", password: "long-enough-pw" } });
+    const signUp = await auth.api.signUpEmail({
+      body: { name: "Dzaky", email: "runner@example.com", password: "long-enough-pw" },
+    });
     expect(signUp.user.email).toBe("runner@example.com");
 
-    const res = await auth.api.signInEmail({ body: { email: "runner@example.com", password: "long-enough-pw" }, asResponse: true });
+    const res = await auth.api.signInEmail({
+      body: { email: "runner@example.com", password: "long-enough-pw" },
+      asResponse: true,
+    });
     expect(res.status).toBe(200);
     const cookie = res.headers.get("set-cookie")!.split(";")[0];
 
@@ -98,7 +114,10 @@ describe("auth", () => {
 
   it("rejects a wrong password", async () => {
     const auth = createAuth(db);
-    const res = await auth.api.signInEmail({ body: { email: "runner@example.com", password: "wrong-password" }, asResponse: true });
+    const res = await auth.api.signInEmail({
+      body: { email: "runner@example.com", password: "wrong-password" },
+      asResponse: true,
+    });
     expect(res.status).toBe(401);
   });
 });

@@ -3,7 +3,16 @@ import type { PersonalRecord } from "@/server/progress/service";
 import { PlateBadge } from "./plate-badge";
 import { shortDate } from "./format";
 
-const NAMES: Record<EffortKey, string> = { "1k": "1K", "1mi": "1 mile", "2mi": "2 miles", "5k": "5K", "5mi": "5 miles", "10k": "10K", half: "Half marathon", marathon: "Marathon" };
+const NAMES: Record<EffortKey, string> = {
+  "1k": "1K",
+  "1mi": "1 mile",
+  "2mi": "2 miles",
+  "5k": "5K",
+  "5mi": "5 miles",
+  "10k": "10K",
+  half: "Half marathon",
+  marathon: "Marathon",
+};
 
 /**
  * One plate per standard distance. Earned plates show the time and the day of the run.
@@ -33,7 +42,13 @@ export function RecordsGrid({
             locked={!record}
             tag={!record && isGoal ? "GOAL" : undefined}
             value={record ? formatEffort(record.seconds) : "—"}
-            caption={record ? shortDate(record.date) : isGoal && raceDate ? `Race ${shortDate(raceDate)}` : "Not yet"}
+            caption={
+              record
+                ? shortDate(record.date)
+                : isGoal && raceDate
+                  ? `Race ${shortDate(raceDate)}`
+                  : "Not yet"
+            }
           />
         );
       })}

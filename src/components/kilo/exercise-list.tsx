@@ -2,7 +2,12 @@ import type { StrengthWorkout } from "@/lib/plan";
 import { Separator } from "@/components/ui/separator";
 import { formatDurationShort } from "./format";
 
-const LOAD_LABEL = { bodyweight: "Bodyweight", light: "Light", moderate: "Moderate", heavy: "Heavy" } as const;
+const LOAD_LABEL = {
+  bodyweight: "Bodyweight",
+  light: "Light",
+  moderate: "Moderate",
+  heavy: "Heavy",
+} as const;
 
 /** Exercises of a strength session, numbered by superset (A1, A2, B1…). */
 export function ExerciseList({ workout }: { workout: StrengthWorkout }) {
@@ -29,7 +34,9 @@ export function ExerciseList({ workout }: { workout: StrengthWorkout }) {
                 </div>
                 {ex.cue && <div className="text-muted-foreground mt-0.5 text-xs">{ex.cue}</div>}
               </div>
-              <span className="text-muted-foreground text-right text-xs font-semibold">{LOAD_LABEL[ex.load]}</span>
+              <span className="text-muted-foreground text-right text-xs font-semibold">
+                {LOAD_LABEL[ex.load]}
+              </span>
             </div>
           </li>
         );

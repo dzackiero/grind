@@ -13,7 +13,8 @@ const { eq } = await import("drizzle-orm");
 
 const email = process.env.DEV_TEST_EMAIL!;
 const password = process.env.DEV_TEST_PASSWORD!;
-if (!email || !password || !process.env.INTERVALS_DEV_API_KEY) throw new Error("Set DEV_TEST_EMAIL, DEV_TEST_PASSWORD and INTERVALS_DEV_API_KEY in .env.local");
+if (!email || !password || !process.env.INTERVALS_DEV_API_KEY)
+  throw new Error("Set DEV_TEST_EMAIL, DEV_TEST_PASSWORD and INTERVALS_DEV_API_KEY in .env.local");
 
 const db = await createDb(process.env.DATABASE_URL);
 await db.delete(user).where(eq(user.email, email));
@@ -22,7 +23,9 @@ if (process.argv.includes("--delete")) {
   process.exit(0);
 }
 
-const { user: u } = await createAuth(db).api.signUpEmail({ body: { name: "Dev Runner", email, password } });
+const { user: u } = await createAuth(db).api.signUpEmail({
+  body: { name: "Dev Runner", email, password },
+});
 const tz = "Asia/Jakarta";
 await setTimezone(db, u.id, tz);
 await createPlanFromInput(db, u.id, {
@@ -40,6 +43,7 @@ await createPlanFromInput(db, u.id, {
 const athlete = await connectIntervals(db, u.id, process.env.INTERVALS_DEV_API_KEY!);
 let result = await syncIntervals(db, u.id, todayIn(tz));
 // Older runs are checked in batches; keep going so the dev account has all its records
-for (let i = 0; i < 8 && result.recordsPending > 0; i++) result = await syncIntervals(db, u.id, todayIn(tz));
+for (let i = 0; i < 8 && result.recordsPending > 0; i++)
+  result = await syncIntervals(db, u.id, todayIn(tz));
 console.log(`Connected as ${athlete.name} (${athlete.id}).`, result);
 process.exit(0);

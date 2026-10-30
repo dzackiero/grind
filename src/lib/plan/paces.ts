@@ -6,14 +6,21 @@ import type { PaceRange, PaceZones, PlanInput } from "./schema";
  *   Share of VO2max held for t min:   0.8 + 0.1894393 e^(-0.012778 t) + 0.2989558 e^(-0.1932605 t)
  */
 
-export const RACE_DISTANCE_M = { "5k": 5000, "10k": 10000, half: 21097.5, marathon: 42195 } as const;
+export const RACE_DISTANCE_M = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097.5,
+  marathon: 42195,
+} as const;
 
 function vo2Cost(vMetersPerMin: number): number {
   return -4.6 + 0.182258 * vMetersPerMin + 0.000104 * vMetersPerMin ** 2;
 }
 
 function sustainableFraction(minutes: number): number {
-  return 0.8 + 0.1894393 * Math.exp(-0.012778 * minutes) + 0.2989558 * Math.exp(-0.1932605 * minutes);
+  return (
+    0.8 + 0.1894393 * Math.exp(-0.012778 * minutes) + 0.2989558 * Math.exp(-0.1932605 * minutes)
+  );
 }
 
 /** Fitness score (VDOT) from a race result. */
@@ -94,5 +101,7 @@ export function formatDuration(totalSec: number): string {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = Math.round(totalSec % 60);
-  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`;
 }

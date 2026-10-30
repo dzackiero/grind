@@ -14,10 +14,14 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const provided = Buffer.from(request.headers.get("authorization") ?? "");
   const expected = Buffer.from(`Bearer ${secret ?? ""}`);
-  if (!secret || expected.length !== provided.length || !timingSafeEqual(expected, provided)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!secret || expected.length !== provided.length || !timingSafeEqual(expected, provided))
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   // Housekeeping rides on this schedule: abandoned guest accounts expire after 30 days.
-  await getDb().then((db) => pruneInactiveGuests(db)).catch(() => console.error("Guest cleanup failed."));
-  if (!emailConfigured()) return Response.json({ error: "Email delivery is not configured." }, { status: 503 });
+  await getDb()
+    .then((db) => pruneInactiveGuests(db))
+    .catch(() => console.error("Guest cleanup failed."));
+  if (!emailConfigured())
+    return Response.json({ error: "Email delivery is not configured." }, { status: 503 });
   try {
     const db = await getDb();
     if (new URL(request.url).searchParams.get("check") === "1") {
@@ -34,7 +38,10 @@ export async function GET(request: Request) {
     const previous = await deliverPendingEmails(db, { limit: 20, pauseMs: 600, deadline });
     const queued = await queueWeeklyEmails(db, new Date(), deadline);
     const current = await deliverPendingEmails(db, { limit: 20, pauseMs: 600, deadline });
-    const delivered = { sent: previous.sent + current.sent, failed: previous.failed + current.failed };
+    const delivered = {
+      sent: previous.sent + current.sent,
+      failed: previous.failed + current.failed,
+    };
     // Retried rows remain in the outbox; return a failed status so the scheduled run is observable.
     return Response.json({ ...queued, ...delivered }, { status: delivered.failed ? 502 : 200 });
   } catch {

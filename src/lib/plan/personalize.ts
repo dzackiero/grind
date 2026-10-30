@@ -7,12 +7,14 @@ import type { Plan } from "./schema";
 export function personalizeGeneratedPlan(plan: Plan, profile: CoachingProfile): Plan {
   const { preferences, constraints } = profile;
   const allowHills = constraints.allowHills ?? preferences.allowHills;
-  const allowProgressive = constraints.allowProgressiveLongRun ?? preferences.allowProgressiveLongRun;
+  const allowProgressive =
+    constraints.allowProgressiveLongRun ?? preferences.allowProgressiveLongRun;
   const qualityWeeks = constraints.qualityOnlyLastWeeks ?? preferences.qualityOnlyLastWeeks;
-  const qualityStarts = qualityWeeks === undefined ? undefined : addDays(plan.raceDate, -7 * qualityWeeks);
+  const qualityStarts =
+    qualityWeeks === undefined ? undefined : addDays(plan.raceDate, -7 * qualityWeeks);
   const ops: EditOp[] = [];
 
-  for (const workout of plan.weeks.flatMap(week => week.workouts)) {
+  for (const workout of plan.weeks.flatMap((week) => week.workouts)) {
     if (workout.date < plan.startDate || workout.type === "race") continue;
     const day = weekdayOf(workout.date);
     if (workout.kind === "strength") {
@@ -28,17 +30,31 @@ export function personalizeGeneratedPlan(plan: Plan, profile: CoachingProfile): 
     // Soft restrictions cannot override that type; validation explains remaining conflicts.
     if (mandatoryType === undefined) {
       if (type === "hills" && allowHills === false) type = "easy";
-      if (["tempo", "intervals", "hills"].includes(type) && qualityStarts !== undefined
-        && (workout.date < qualityStarts || workout.date > plan.raceDate)) type = "easy";
+      if (
+        ["tempo", "intervals", "hills"].includes(type) &&
+        qualityStarts !== undefined &&
+        (workout.date < qualityStarts || workout.date > plan.raceDate)
+      )
+        type = "easy";
     }
-    const steadyLong = type === "long" && allowProgressive === false && workout.steps.some(step => {
-      const simple = step.kind === "repeat" ? step.steps : [step];
-      return simple.some(s => (s.kind === "work" || s.kind === "steady") && s.target && s.target.zone !== "E");
-    });
+    const steadyLong =
+      type === "long" &&
+      allowProgressive === false &&
+      workout.steps.some((step) => {
+        const simple = step.kind === "repeat" ? step.steps : [step];
+        return simple.some(
+          (s) => (s.kind === "work" || s.kind === "steady") && s.target && s.target.zone !== "E",
+        );
+      });
     if (type !== workout.type || steadyLong) {
-      ops.push({ op: "update_workout", workoutId: workout.id, patch: {
-        type, ...((type === "easy" || type === "long") && { distanceKm: workout.distanceKm }),
-      } });
+      ops.push({
+        op: "update_workout",
+        workoutId: workout.id,
+        patch: {
+          type,
+          ...((type === "easy" || type === "long") && { distanceKm: workout.distanceKm }),
+        },
+      });
     }
   }
   if (!ops.length) return plan;

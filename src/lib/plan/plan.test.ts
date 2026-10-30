@@ -30,7 +30,20 @@ describe("paces", () => {
 
 describe("phases", () => {
   it("puts lighter weeks every 4th week and taper at the end", () => {
-    expect(phasesFor(12, 2)).toEqual(["base", "base", "base", "recovery", "build", "build", "build", "recovery", "peak", "peak", "taper", "taper"]);
+    expect(phasesFor(12, 2)).toEqual([
+      "base",
+      "base",
+      "base",
+      "recovery",
+      "build",
+      "build",
+      "build",
+      "recovery",
+      "peak",
+      "peak",
+      "taper",
+      "taper",
+    ]);
   });
 });
 
@@ -49,7 +62,9 @@ describe("generatePlan", () => {
   });
 
   it("puts long runs on the chosen day", () => {
-    const longs = plan.weeks.flatMap((w) => w.workouts).filter((w) => w.kind === "run" && w.type === "long");
+    const longs = plan.weeks
+      .flatMap((w) => w.workouts)
+      .filter((w) => w.kind === "run" && w.type === "long");
     expect(longs.length).toBeGreaterThan(8);
     for (const l of longs) expect(weekdayOf(l.date)).toBe("sun");
   });
@@ -59,7 +74,9 @@ describe("generatePlan", () => {
   });
 
   it("schedules the Runna-style strength split", () => {
-    const focuses = plan.weeks[2].workouts.filter((w) => w.kind === "strength").map((w) => (w.kind === "strength" ? w.focus : ""));
+    const focuses = plan.weeks[2].workouts
+      .filter((w) => w.kind === "strength")
+      .map((w) => (w.kind === "strength" ? w.focus : ""));
     expect(focuses.sort()).toEqual(["full", "legs_core", "upper"]);
   });
 
@@ -107,7 +124,10 @@ describe("every template combination is valid", () => {
 describe("4–5 strength sessions", () => {
   it.each([4, 5])("schedules %i sessions a week with leg days apart", (n) => {
     const days = (["mon", "tue", "wed", "thu", "sat"] as const).slice(0, n);
-    const plan = generatePlan({ ...base, strength: { sessionsPerWeek: n, days: [...days], equipment: "gym" } });
+    const plan = generatePlan({
+      ...base,
+      strength: { sessionsPerWeek: n, days: [...days], equipment: "gym" },
+    });
     expect(validatePlan(plan).errors).toEqual([]);
     const week = plan.weeks[4].workouts.filter((w) => w.kind === "strength");
     expect(week).toHaveLength(n);

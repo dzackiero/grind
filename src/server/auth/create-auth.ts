@@ -29,7 +29,12 @@ export function mcpResource() {
 export function createAuth(db: DB, plugins: BetterAuthPlugin[] = [], background?: BackgroundTask) {
   const google =
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? { google: { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET } }
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
       : undefined;
 
   return betterAuth({

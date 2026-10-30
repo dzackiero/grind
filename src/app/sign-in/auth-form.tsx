@@ -13,7 +13,17 @@ import { authClient, inOAuthFlow } from "@/lib/auth-client";
 
 type Mode = "sign-in" | "sign-up";
 
-export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, guestEnabled = false }: { initialMode: Mode; googleEnabled: boolean; emailEnabled?: boolean; guestEnabled?: boolean }) {
+export function AuthForm({
+  initialMode,
+  googleEnabled,
+  emailEnabled = false,
+  guestEnabled = false,
+}: {
+  initialMode: Mode;
+  googleEnabled: boolean;
+  emailEnabled?: boolean;
+  guestEnabled?: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +36,14 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, gue
     const name = String(form.get("name") ?? "").trim();
     startTransition(async () => {
       const result =
-        mode === "sign-up" ? await authClient.signUp.email({ name, email, password, callbackURL: `/sign-in${window.location.search}` }) : await authClient.signIn.email({ email, password });
+        mode === "sign-up"
+          ? await authClient.signUp.email({
+              name,
+              email,
+              password,
+              callbackURL: `/sign-in${window.location.search}`,
+            })
+          : await authClient.signIn.email({ email, password });
       if (result.error) {
         setError(
           result.error.status === 401
@@ -66,11 +83,24 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, gue
       <form action={submit} className="flex flex-col gap-4">
         <TabsContent value="sign-up" className="flex flex-col gap-2">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" autoComplete="name" required={mode === "sign-up"} placeholder="Dzaky" />
+          <Input
+            id="name"
+            name="name"
+            autoComplete="name"
+            required={mode === "sign-up"}
+            placeholder="Dzaky"
+          />
         </TabsContent>
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@example.com" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="you@example.com"
+          />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="password">Password</Label>
@@ -94,7 +124,14 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, gue
         <Button type="submit" size="lg" disabled={pending}>
           {pending ? "One moment…" : mode === "sign-up" ? "Create account" : "Sign in"}
         </Button>
-        {mode === "sign-in" && emailEnabled && <Link href="/forgot-password" className="text-muted-foreground text-center text-sm underline">Forgot password?</Link>}
+        {mode === "sign-in" && emailEnabled && (
+          <Link
+            href="/forgot-password"
+            className="text-muted-foreground text-center text-sm underline"
+          >
+            Forgot password?
+          </Link>
+        )}
       </form>
 
       {(googleEnabled || guestEnabled) && (
@@ -103,7 +140,13 @@ export function AuthForm({ initialMode, googleEnabled, emailEnabled = false, gue
             <Separator className="flex-1" /> or <Separator className="flex-1" />
           </div>
           {googleEnabled && (
-            <Button variant="outline" size="lg" onClick={() => authClient.signIn.social({ provider: "google", callbackURL: "/today" })}>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() =>
+                authClient.signIn.social({ provider: "google", callbackURL: "/today" })
+              }
+            >
               Continue with Google
             </Button>
           )}

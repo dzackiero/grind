@@ -13,7 +13,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     const db = await getDb();
     const body = await request.json();
-    if (z.object({ archived: z.literal(true) }).strict().safeParse(body).success) {
+    if (
+      z
+        .object({ archived: z.literal(true) })
+        .strict()
+        .safeParse(body).success
+    ) {
       await archiveHabit(db, user.id, id);
       return Response.json({ id, archived: true });
     }

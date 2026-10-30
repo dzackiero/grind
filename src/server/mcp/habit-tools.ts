@@ -16,13 +16,24 @@ export function registerHabitTools(server: McpServer, { db, userId, scopes }: Mc
       title: "Get habits",
       description:
         "The small daily habits the athlete tracks (stretching, sleep, water and so on): the days each is scheduled, how many were ticked this week, the current streak in days, and how well the last days went. Use it to see how they look after themselves between sessions, for example when recovery is poor or before adding load. You can read habits but not tick them off; the athlete does that in Grind.",
-      inputSchema: z.object({ days: z.number().int().min(7).max(60).default(28).describe("How many days back to judge adherence, up to 60") }),
+      inputSchema: z.object({
+        days: z
+          .number()
+          .int()
+          .min(7)
+          .max(60)
+          .default(28)
+          .describe("How many days back to judge adherence, up to 60"),
+      }),
       annotations: { readOnlyHint: true },
     },
     async ({ days }) =>
       guard(async () => {
         const today = todayIn(await getTimezone(db, userId));
-        const habits = await listHabits(db, userId, { from: addDays(today, -STREAK_LOOKBACK_DAYS), to: today });
+        const habits = await listHabits(db, userId, {
+          from: addDays(today, -STREAK_LOOKBACK_DAYS),
+          to: today,
+        });
         if (!habits.length) return text("The athlete doesn't track any habits yet.");
         return text({
           today,
@@ -41,7 +52,9 @@ export function registerHabitTools(server: McpServer, { db, userId, scopes }: Mc
                 days,
                 scheduled: window.scheduled,
                 done: window.done,
-                adherencePercent: window.scheduled ? Math.round((window.done / window.scheduled) * 100) : null,
+                adherencePercent: window.scheduled
+                  ? Math.round((window.done / window.scheduled) * 100)
+                  : null,
                 note: "Counts scheduled days since the habit was created, today excluded.",
               },
               tickedLast14Days: h.doneDates.filter((d) => d >= addDays(today, -13)),

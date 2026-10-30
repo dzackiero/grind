@@ -24,7 +24,11 @@ function jogPace(p: PaceZones): number {
 function stepPace(step: SimpleStep, p: PaceZones): number {
   const explicit = step.target?.pace;
   if (explicit) return (explicit.minSecPerKm + explicit.maxSecPerKm) / 2;
-  return step.kind === "recovery" ? jogPace(p) : step.target ? mid(p, step.target.zone) : mid(p, "E");
+  return step.kind === "recovery"
+    ? jogPace(p)
+    : step.target
+      ? mid(p, step.target.zone)
+      : mid(p, "E");
 }
 
 function simpleDistanceM(step: SimpleStep, p: PaceZones): number {
@@ -51,7 +55,8 @@ export function stepsDistanceKm(steps: Step[], p: PaceZones): number {
 export function stepsDurationMin(steps: Step[], p: PaceZones): number {
   let sec = 0;
   for (const s of steps) {
-    if (s.kind === "repeat") sec += s.times * s.steps.reduce((a, x) => a + simpleDurationSec(x, p), 0);
+    if (s.kind === "repeat")
+      sec += s.times * s.steps.reduce((a, x) => a + simpleDurationSec(x, p), 0);
     else sec += simpleDurationSec(s, p);
   }
   return sec / 60;
@@ -71,8 +76,16 @@ export function finishRun(draft: RunDraft, id: string, date: string, p: PaceZone
 function warmCool(level: PlanInput["experience"], p: PaceZones) {
   const short = level === "beginner";
   return {
-    warmup: { kind: "warmup", distanceM: short ? 1500 : 2000, target: target(p, "E") } satisfies SimpleStep,
-    cooldown: { kind: "cooldown", distanceM: short ? 1000 : 1500, target: target(p, "E") } satisfies SimpleStep,
+    warmup: {
+      kind: "warmup",
+      distanceM: short ? 1500 : 2000,
+      target: target(p, "E"),
+    } satisfies SimpleStep,
+    cooldown: {
+      kind: "cooldown",
+      distanceM: short ? 1000 : 1500,
+      target: target(p, "E"),
+    } satisfies SimpleStep,
   };
 }
 
@@ -92,7 +105,11 @@ export function easyRun(km: number, p: PaceZones): RunDraft {
   };
 }
 
-export function intervalRun(set: RepeatSet, level: PlanInput["experience"], p: PaceZones): RunDraft {
+export function intervalRun(
+  set: RepeatSet,
+  level: PlanInput["experience"],
+  p: PaceZones,
+): RunDraft {
   const reps = level === "beginner" ? Math.max(3, set.reps - 1) : set.reps;
   const { warmup, cooldown } = warmCool(level, p);
   return {
@@ -125,7 +142,11 @@ export function tempoRun(index: number, level: PlanInput["experience"], p: PaceZ
       type: "tempo",
       title: `${s.minutes} min Tempo Run`,
       description: `${s.minutes} minutes at threshold pace (${pace}). Comfortably hard: you can say a few words, not hold a conversation.`,
-      steps: [warmup, { kind: "work", durationSec: s.minutes * 60, target: target(p, "T") }, cooldown],
+      steps: [
+        warmup,
+        { kind: "work", durationSec: s.minutes * 60, target: target(p, "T") },
+        cooldown,
+      ],
     };
   }
   return {
@@ -172,7 +193,12 @@ export function hillRun(index: number, level: PlanInput["experience"], p: PaceZo
 }
 
 /** Short session at race pace for taper weeks. */
-export function sharpener(goal: PlanInput["goal"], raceWeek: boolean, level: PlanInput["experience"], p: PaceZones): RunDraft {
+export function sharpener(
+  goal: PlanInput["goal"],
+  raceWeek: boolean,
+  level: PlanInput["experience"],
+  p: PaceZones,
+): RunDraft {
   const reps = 3;
   const meters = raceWeek ? 1000 : { "5k": 800, "10k": 1000, half: 1600, marathon: 2000 }[goal];
   const { warmup, cooldown } = warmCool(level, p);

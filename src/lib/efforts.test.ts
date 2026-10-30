@@ -21,7 +21,7 @@ describe("bestEfforts", () => {
   });
 
   it("only reports distances the run is long enough for", () => {
-    const e = bestEfforts(...Object.values(steady(3, 360)) as [number[], number[]]);
+    const e = bestEfforts(...(Object.values(steady(3, 360)) as [number[], number[]]));
     expect(Object.keys(e)).toEqual(["1k", "1mi"]);
     expect(e["2mi"]).toBeUndefined();
   });
@@ -30,7 +30,11 @@ describe("bestEfforts", () => {
     // 3 km easy (6:00/km), then 1 km hard (4:30/km), then 3 km easy
     const time: number[] = [0];
     const distance: number[] = [0];
-    for (const [km, pace] of [[3, 360], [1, 270], [3, 360]] as const) {
+    for (const [km, pace] of [
+      [3, 360],
+      [1, 270],
+      [3, 360],
+    ] as const) {
       const start = time.length - 1;
       const secs = km * pace;
       for (let s = 1; s <= secs; s++) {

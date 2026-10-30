@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { applyChanges, buildChanges, generatePlan, PlanEditError, staleReason, validatePlan, type EditOp, type Plan, type PlanInput } from "./index";
+import {
+  applyChanges,
+  buildChanges,
+  generatePlan,
+  PlanEditError,
+  staleReason,
+  validatePlan,
+  type EditOp,
+  type Plan,
+  type PlanInput,
+} from "./index";
 
 const input: PlanInput = {
   goal: "half",
@@ -17,7 +27,8 @@ const input: PlanInput = {
 const plan: Plan = generatePlan(input);
 const ctx = { today: "2026-10-28", lockedIds: new Set<string>() };
 const all = plan.weeks.flatMap((w) => w.workouts);
-const find = (date: string, kind: "run" | "strength") => all.find((w) => w.date === date && w.kind === kind)!;
+const find = (date: string, kind: "run" | "strength") =>
+  all.find((w) => w.date === date && w.kind === kind)!;
 
 function edit(ops: EditOp[], context = ctx) {
   const changes = buildChanges(plan, ops, context);
@@ -64,7 +75,9 @@ describe("buildChanges", () => {
     const { next } = edit([{ op: "replace_run", workoutId: long.id, as: "easy", distanceKm: 4 }]);
     const w = next.weeks.flatMap((x) => x.workouts).find((x) => x.id === long.id)!;
     expect(w).toMatchObject({ kind: "run", type: "easy", distanceKm: 4 });
-    expect(w.kind === "run" && w.steps[0]).toMatchObject({ target: { zone: "E", pace: plan.paces.E } });
+    expect(w.kind === "run" && w.steps[0]).toMatchObject({
+      target: { zone: "E", pace: plan.paces.E },
+    });
   });
 
   it("builds a tempo or interval session at a chosen level", () => {
@@ -81,18 +94,28 @@ describe("buildChanges", () => {
       { op: "add_strength", date: "2026-11-06", focus: "full" },
     ]);
     const flat = next.weeks.flatMap((w) => w.workouts);
-    expect(flat.find((w) => w.id === "coach-2026-11-03-easy-1")).toMatchObject({ kind: "run", distanceKm: 5 });
-    expect(flat.find((w) => w.id === "coach-2026-11-06-str-full-1")).toMatchObject({ kind: "strength", focus: "full" });
+    expect(flat.find((w) => w.id === "coach-2026-11-03-easy-1")).toMatchObject({
+      kind: "run",
+      distanceKm: 5,
+    });
+    expect(flat.find((w) => w.id === "coach-2026-11-06-str-full-1")).toMatchObject({
+      kind: "strength",
+      focus: "full",
+    });
   });
 
   it("produces plans the validator accepts for ordinary edits", () => {
-    const { next } = edit([{ op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2026-10-31" }]);
+    const { next } = edit([
+      { op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2026-10-31" },
+    ]);
     expect(validatePlan(next).errors).toEqual([]);
   });
 
   it("lets the validator catch an edit that creates back-to-back hard days", () => {
     // Long run is Sunday Nov 1; hills on Wednesday. Moving hills to Saturday puts hard days side by side.
-    const { next } = edit([{ op: "move", workoutId: find("2026-10-28", "run").id, toDate: "2026-10-31" }]);
+    const { next } = edit([
+      { op: "move", workoutId: find("2026-10-28", "run").id, toDate: "2026-10-31" },
+    ]);
     expect(validatePlan(next).errors.map((e) => e.code)).toContain("BACK_TO_BACK_HARD");
   });
 });
@@ -101,24 +124,39 @@ describe("edits that are refused", () => {
   const refused = (ops: EditOp[], context = ctx) => expect(() => buildChanges(plan, ops, context));
 
   it("unknown ids", () => refused([{ op: "remove", workoutId: "nope" }]).toThrow(PlanEditError));
-  it("past dates", () => refused([{ op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2026-10-20" }]).toThrow(/past/));
-  it("dates after race day", () => refused([{ op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2027-02-01" }]).toThrow(/after race day/));
+  it("past dates", () =>
+    refused([
+      { op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2026-10-20" },
+    ]).toThrow(/past/));
+  it("dates after race day", () =>
+    refused([
+      { op: "move", workoutId: find("2026-10-30", "run").id, toDate: "2027-02-01" },
+    ]).toThrow(/after race day/));
   it("completed workouts", () => {
     const done = find("2026-10-28", "run");
-    refused([{ op: "remove", workoutId: done.id }], { ...ctx, lockedIds: new Set([done.id]) }).toThrow(/already done/);
+    refused([{ op: "remove", workoutId: done.id }], {
+      ...ctx,
+      lockedIds: new Set([done.id]),
+    }).toThrow(/already done/);
   });
   it("race day", () => {
     const race = all.find((w) => w.kind === "run" && w.type === "race")!;
     refused([{ op: "move", workoutId: race.id, toDate: "2027-01-16" }]).toThrow(/Race day/);
   });
   it("a distance on a structured session", () => {
-    refused([{ op: "replace_run", workoutId: find("2026-10-30", "run").id, as: "tempo", distanceKm: 8 }]).toThrow(/structure/);
+    refused([
+      { op: "replace_run", workoutId: find("2026-10-30", "run").id, as: "tempo", distanceKm: 8 },
+    ]).toThrow(/structure/);
   });
   it("a level the plan doesn't have", () => {
-    refused([{ op: "replace_run", workoutId: find("2026-10-30", "run").id, as: "hills", level: 9 }]).toThrow(/levels/);
+    refused([
+      { op: "replace_run", workoutId: find("2026-10-30", "run").id, as: "hills", level: 9 },
+    ]).toThrow(/levels/);
   });
   it("replacing a strength session with a run", () => {
-    refused([{ op: "replace_run", workoutId: find("2026-10-29", "strength").id, as: "easy" }]).toThrow(/strength session/);
+    refused([
+      { op: "replace_run", workoutId: find("2026-10-29", "strength").id, as: "easy" },
+    ]).toThrow(/strength session/);
   });
   it("swapping a workout with itself", () => {
     const w = find("2026-10-30", "run");

@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "oxlint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "plan:sample": "tsx scripts/sample-plan.ts",
@@ -17,7 +17,10 @@
     "smoke": "tsx scripts/smoke-test.mts",
     "intervals:check": "tsx scripts/intervals-check.mts",
     "mcp:smoke": "tsx scripts/mcp-smoke.mts",
-    "dev:seed": "tsx scripts/dev-seed-intervals.mts"
+    "dev:seed": "tsx scripts/dev-seed-intervals.mts",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck"
   },
   "dependencies": {
     "@better-auth/cimd": "1.7.7",
@@ -46,7 +49,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@shadcn/lint": "^0.2.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "8.15.5",
@@ -54,8 +57,9 @@
     "@types/react-dom": "^19",
     "dotenv": "17.2.1",
     "drizzle-kit": "0.31.10",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.28",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "shadcn": "^4.23.0",
     "tailwindcss": "^4",
     "tsx": "4.20.5",

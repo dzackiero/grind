@@ -4,7 +4,9 @@ import { createDb, type DB } from "../db/client";
 import { rateLimit } from "../db/schema";
 
 let db: DB;
-beforeAll(async () => { db = await createDb("memory://"); });
+beforeAll(async () => {
+  db = await createDb("memory://");
+});
 afterEach(() => vi.unstubAllEnvs());
 
 function setup() {

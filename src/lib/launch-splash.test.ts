@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { LAUNCH_SPLASH_FAILSAFE_MS, LAUNCH_SPLASH_KEY, LAUNCH_SPLASH_SCRIPT } from "./launch-splash";
+import {
+  LAUNCH_SPLASH_FAILSAFE_MS,
+  LAUNCH_SPLASH_KEY,
+  LAUNCH_SPLASH_SCRIPT,
+} from "./launch-splash";
 
 /** Runs the head script against a stand-in browser and reports what it did. */
-function run(env: { standalone?: boolean; iosStandalone?: boolean; reducedMotion?: boolean; alreadyShown?: boolean; storageThrows?: boolean }) {
+function run(env: {
+  standalone?: boolean;
+  iosStandalone?: boolean;
+  reducedMotion?: boolean;
+  alreadyShown?: boolean;
+  storageThrows?: boolean;
+}) {
   const attributes = new Map<string, string>();
   const timers: { fn: () => void; ms: number }[] = [];
   const store = new Map<string, string>(env.alreadyShown ? [[LAUNCH_SPLASH_KEY, "1"]] : []);
@@ -13,11 +23,29 @@ function run(env: { standalone?: boolean; iosStandalone?: boolean; reducedMotion
     },
     setItem: (k: string, v: string) => void store.set(k, v),
   };
-  const matchMedia = (query: string) => ({ matches: query.includes("standalone") ? !!env.standalone : query.includes("reduced-motion") ? !!env.reducedMotion : false });
-  const document = { documentElement: { setAttribute: (k: string, v: string) => void attributes.set(k, v), removeAttribute: (k: string) => void attributes.delete(k) } };
+  const matchMedia = (query: string) => ({
+    matches: query.includes("standalone")
+      ? !!env.standalone
+      : query.includes("reduced-motion")
+        ? !!env.reducedMotion
+        : false,
+  });
+  const document = {
+    documentElement: {
+      setAttribute: (k: string, v: string) => void attributes.set(k, v),
+      removeAttribute: (k: string) => void attributes.delete(k),
+    },
+  };
   const navigator = { standalone: env.iosStandalone };
   const setTimeout = (fn: () => void, ms: number) => void timers.push({ fn, ms });
-  new Function("document", "matchMedia", "navigator", "sessionStorage", "setTimeout", LAUNCH_SPLASH_SCRIPT)(document, matchMedia, navigator, sessionStorage, setTimeout);
+  new Function(
+    "document",
+    "matchMedia",
+    "navigator",
+    "sessionStorage",
+    "setTimeout",
+    LAUNCH_SPLASH_SCRIPT,
+  )(document, matchMedia, navigator, sessionStorage, setTimeout);
   return { attributes, timers, store };
 }
 
@@ -43,7 +71,9 @@ describe("launch splash script", () => {
   });
 
   it("skips it for people who ask for reduced motion", () => {
-    expect(run({ standalone: true, reducedMotion: true }).attributes.has("data-splash")).toBe(false);
+    expect(run({ standalone: true, reducedMotion: true }).attributes.has("data-splash")).toBe(
+      false,
+    );
   });
 
   it("removes the splash by itself if the app never starts", () => {
@@ -56,6 +86,8 @@ describe("launch splash script", () => {
 
   it("does nothing, and doesn't throw, when storage is blocked", () => {
     expect(() => run({ standalone: true, storageThrows: true })).not.toThrow();
-    expect(run({ standalone: true, storageThrows: true }).attributes.has("data-splash")).toBe(false);
+    expect(run({ standalone: true, storageThrows: true }).attributes.has("data-splash")).toBe(
+      false,
+    );
   });
 });

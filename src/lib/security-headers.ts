@@ -43,7 +43,20 @@ export function securityHeaders(isDev: boolean): { key: string; value: string }[
     // Nothing in the app uses these; clipboard-write (the MCP URL copy button) is left at its default
     {
       key: "Permissions-Policy",
-      value: ["camera", "microphone", "geolocation", "payment", "usb", "bluetooth", "serial", "midi", "magnetometer", "gyroscope", "accelerometer", "interest-cohort"]
+      value: [
+        "camera",
+        "microphone",
+        "geolocation",
+        "payment",
+        "usb",
+        "bluetooth",
+        "serial",
+        "midi",
+        "magnetometer",
+        "gyroscope",
+        "accelerometer",
+        "interest-cohort",
+      ]
         .map((feature) => `${feature}=()`)
         .join(", "),
     },

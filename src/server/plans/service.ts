@@ -22,7 +22,9 @@ import { personalizeGeneratedPlan } from "@/lib/plan/personalize";
 
 export class PlanValidationError extends Error {
   constructor(public readonly result: ValidationResult) {
-    super(`Plan failed ${result.errors.length} check(s): ${result.errors.map((e) => e.code).join(", ")}`);
+    super(
+      `Plan failed ${result.errors.length} check(s): ${result.errors.map((e) => e.code).join(", ")}`,
+    );
   }
 }
 
@@ -45,7 +47,11 @@ export interface SavedPlan {
 }
 
 /** Build a plan from the onboarding form and make it the user's active plan. */
-export async function createPlanFromInput(db: DB, userId: string, rawInput: unknown): Promise<SavedPlan> {
+export async function createPlanFromInput(
+  db: DB,
+  userId: string,
+  rawInput: unknown,
+): Promise<SavedPlan> {
   const input = PlanInputSchema.parse(rawInput);
   const coaching = await getCoachingProfile(db, userId);
   return savePlan(db, userId, personalizeGeneratedPlan(generatePlan(input), coaching.profile));
@@ -59,8 +65,15 @@ export async function savePlan(db: DB, userId: string, candidate: unknown): Prom
   let coachingWarnings: PlanIssue[] = [];
 
   const planId = await db.transaction(async (tx) => {
-    await tx.insert(athleteProfile).values({ userId }).onConflictDoNothing({ target: athleteProfile.userId });
-    await tx.select({ id: athleteProfile.userId }).from(athleteProfile).where(eq(athleteProfile.userId, userId)).for("update");
+    await tx
+      .insert(athleteProfile)
+      .values({ userId })
+      .onConflictDoNothing({ target: athleteProfile.userId });
+    await tx
+      .select({ id: athleteProfile.userId })
+      .from(athleteProfile)
+      .where(eq(athleteProfile.userId, userId))
+      .for("update");
     const coaching = await getCoachingProfile(tx as unknown as DB, userId);
     const rules = validateCoaching(plan, coaching.profile, plan.startDate);
     if (!rules.ok) throw new PlanValidationError(rules);
@@ -137,7 +150,11 @@ export async function getPlan(db: DB, userId: string, planId: string): Promise<S
     .where(and(eq(planTable.id, planId), eq(planTable.userId, userId)));
   if (!p) return null;
 
-  const weeks = await db.select().from(planWeek).where(eq(planWeek.planId, p.id)).orderBy(asc(planWeek.index));
+  const weeks = await db
+    .select()
+    .from(planWeek)
+    .where(eq(planWeek.planId, p.id))
+    .orderBy(asc(planWeek.index));
   const workouts = await db
     .select()
     .from(plannedWorkout)
@@ -174,7 +191,14 @@ export async function getPlan(db: DB, userId: string, planId: string): Promise<S
     };
   }
 
-  return { id: p.id, revision: p.revision, createdAt: p.createdAt.toISOString(), plan, progress, warnings: [] };
+  return {
+    id: p.id,
+    revision: p.revision,
+    createdAt: p.createdAt.toISOString(),
+    plan,
+    progress,
+    warnings: [],
+  };
 }
 
 /** Workouts of the active plan between two dates (inclusive), for Today and Calendar. */
@@ -204,7 +228,12 @@ export async function listWorkouts(db: DB, userId: string, from: string, to: str
 }
 
 /** Mark a workout of the active plan as done, skipped, or planned again. Returns false if not found. */
-export async function setWorkoutStatus(db: DB, userId: string, workoutKey: string, status: WorkoutStatus): Promise<boolean> {
+export async function setWorkoutStatus(
+  db: DB,
+  userId: string,
+  workoutKey: string,
+  status: WorkoutStatus,
+): Promise<boolean> {
   const [active] = await db
     .select({ id: planTable.id })
     .from(planTable)
@@ -214,7 +243,13 @@ export async function setWorkoutStatus(db: DB, userId: string, workoutKey: strin
   const updated = await db
     .update(plannedWorkout)
     .set({ status, completedAt: status === "completed" ? new Date() : null, updatedAt: new Date() })
-    .where(and(eq(plannedWorkout.planId, active.id), eq(plannedWorkout.workoutKey, workoutKey), eq(plannedWorkout.userId, userId)))
+    .where(
+      and(
+        eq(plannedWorkout.planId, active.id),
+        eq(plannedWorkout.workoutKey, workoutKey),
+        eq(plannedWorkout.userId, userId),
+      ),
+    )
     .returning({ id: plannedWorkout.id });
   return updated.length > 0;
 }

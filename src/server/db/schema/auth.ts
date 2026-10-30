@@ -1,4 +1,14 @@
-import { bigint, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 // Better Auth core tables (user, session, account, verification), plus the jwt and OAuth provider
 // tables the mcp() plugin needs. Property names must match Better Auth's field names; column names are ours.
@@ -161,7 +171,11 @@ export const oauthRefreshToken = pgTable(
     confirmation: jsonb("confirmation"),
     scopes: text("scopes").array().notNull(),
   },
-  (t) => [index("oauth_refresh_token_client").on(t.clientId), index("oauth_refresh_token_user").on(t.userId), index("oauth_refresh_token_session").on(t.sessionId)],
+  (t) => [
+    index("oauth_refresh_token_client").on(t.clientId),
+    index("oauth_refresh_token_user").on(t.userId),
+    index("oauth_refresh_token_session").on(t.sessionId),
+  ],
 );
 
 export const oauthAccessToken = pgTable(
@@ -185,7 +199,11 @@ export const oauthAccessToken = pgTable(
     confirmation: jsonb("confirmation"),
     scopes: text("scopes").array().notNull(),
   },
-  (t) => [index("oauth_access_token_client").on(t.clientId), index("oauth_access_token_user").on(t.userId), index("oauth_access_token_refresh").on(t.refreshId)],
+  (t) => [
+    index("oauth_access_token_client").on(t.clientId),
+    index("oauth_access_token_user").on(t.userId),
+    index("oauth_access_token_refresh").on(t.refreshId),
+  ],
 );
 
 /** What the user approved for each client. */

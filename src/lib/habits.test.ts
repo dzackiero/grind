@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { adherence, HabitInputSchema, isIsoDate, scheduleLabel, streak, weekDays, weekProgress } from "./habits";
+import {
+  adherence,
+  HabitInputSchema,
+  isIsoDate,
+  scheduleLabel,
+  streak,
+  weekDays,
+  weekProgress,
+} from "./habits";
 import type { Weekday } from "./plan/dates";
 
 // 2026-10-28 is a Wednesday; the week runs Mon 26 Oct to Sun 1 Nov
@@ -17,7 +25,9 @@ describe("HabitInputSchema", () => {
   it("refuses an empty name, no days, an unknown icon and a very long name", () => {
     expect(HabitInputSchema.safeParse({ name: "  ", days: ["mon"] }).success).toBe(false);
     expect(HabitInputSchema.safeParse({ name: "x", days: [] }).success).toBe(false);
-    expect(HabitInputSchema.safeParse({ name: "x", days: ["mon"], icon: "rocket" }).success).toBe(false);
+    expect(HabitInputSchema.safeParse({ name: "x", days: ["mon"], icon: "rocket" }).success).toBe(
+      false,
+    );
     expect(HabitInputSchema.safeParse({ name: "x".repeat(41), days: ["mon"] }).success).toBe(false);
     expect(HabitInputSchema.safeParse({ name: "x", days: ["funday"] }).success).toBe(false);
   });
@@ -34,11 +44,17 @@ describe("scheduleLabel", () => {
 
 describe("weekProgress", () => {
   it("counts ticks in the Monday to Sunday week against the number of scheduled days", () => {
-    expect(weekProgress(MWF, done("2026-10-26", "2026-10-28"), TODAY)).toEqual({ done: 2, target: 3 });
+    expect(weekProgress(MWF, done("2026-10-26", "2026-10-28"), TODAY)).toEqual({
+      done: 2,
+      target: 3,
+    });
   });
 
   it("ignores ticks from other weeks and counts a tick on an unscheduled day", () => {
-    expect(weekProgress(MWF, done("2026-10-25", "2026-11-02", "2026-10-27"), TODAY)).toEqual({ done: 1, target: 3 });
+    expect(weekProgress(MWF, done("2026-10-25", "2026-11-02", "2026-10-27"), TODAY)).toEqual({
+      done: 1,
+      target: 3,
+    });
   });
 });
 
@@ -80,7 +96,10 @@ describe("streak", () => {
 describe("adherence", () => {
   it("counts scheduled days since the habit began, leaving today out", () => {
     // Window of 7 days before Wed 28 Oct: Wed 21 .. Tue 27. Mon/Wed/Fri scheduled: Wed 21, Fri 23, Mon 26
-    expect(adherence(MWF, done("2026-10-21", "2026-10-26"), TODAY, "2026-09-01", 7)).toEqual({ scheduled: 3, done: 2 });
+    expect(adherence(MWF, done("2026-10-21", "2026-10-26"), TODAY, "2026-09-01", 7)).toEqual({
+      scheduled: 3,
+      done: 2,
+    });
   });
 
   it("doesn't count days before the habit was created", () => {

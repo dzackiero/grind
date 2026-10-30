@@ -1,7 +1,13 @@
 "use client";
 
 import { cn } from "cn";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -32,9 +38,19 @@ export function DurationPicker({
   const update = (nh: number, nm: number, ns: number) => onChange(nh * 3600 + nm * 60 + ns);
   const unset = value === null;
 
-  const part = (label: string, current: number, options: number[], set: (v: number) => void, suffix: string) => (
+  const part = (
+    label: string,
+    current: number,
+    options: number[],
+    set: (v: number) => void,
+    suffix: string,
+  ) => (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <Select disabled={disabled} value={unset ? undefined : String(current)} onValueChange={(v) => set(Number(v))}>
+      <Select
+        disabled={disabled}
+        value={unset ? undefined : String(current)}
+        onValueChange={(v) => set(Number(v))}
+      >
         <SelectTrigger aria-label={label} className="w-full justify-between font-mono tabular-nums">
           <SelectValue placeholder="--" />
         </SelectTrigger>

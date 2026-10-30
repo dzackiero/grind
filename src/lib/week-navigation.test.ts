@@ -21,11 +21,15 @@ describe("adjacentWeekDate", () => {
   });
 
   it("moves from a partial first week using its Monday start", () => {
-    expect(adjacentWeekDate({ index: 1, startDate: "2026-10-26" }, 4, "2026-10-28", 1)).toBe("2026-11-04");
+    expect(adjacentWeekDate({ index: 1, startDate: "2026-10-26" }, 4, "2026-10-28", 1)).toBe(
+      "2026-11-04",
+    );
   });
 
   it("handles year boundaries and invalid date input", () => {
-    expect(adjacentWeekDate({ index: 2, startDate: "2026-12-28" }, 4, "2026-12-31", 1)).toBe("2027-01-07");
+    expect(adjacentWeekDate({ index: 2, startDate: "2026-12-28" }, 4, "2026-12-31", 1)).toBe(
+      "2027-01-07",
+    );
     expect(adjacentWeekDate(week, 4, "2026-99-99", 1)).toBe("2026-11-09");
   });
 });

@@ -33,7 +33,10 @@ export const RECORD_ACTIVITY_TYPES = new Set(["Run", "TrailRun"]);
  * Best time in seconds for every distance the run is long enough for.
  * `time` is seconds since the start, `distance` is cumulative metres; both one value per sample.
  */
-export function bestEfforts(time: readonly (number | null)[], distance: readonly (number | null)[]): Partial<Record<EffortKey, number>> {
+export function bestEfforts(
+  time: readonly (number | null)[],
+  distance: readonly (number | null)[],
+): Partial<Record<EffortKey, number>> {
   const n = Math.min(time.length, distance.length);
 
   // Clean: keep samples where both values exist and time moves forward, and cap each step's speed.
@@ -89,5 +92,7 @@ export function formatEffort(seconds: number) {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+    : `${m}:${String(sec).padStart(2, "0")}`;
 }

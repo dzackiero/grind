@@ -6,5 +6,11 @@ config({ path: [".env.local", ".env"], quiet: true });
 const { sendEmail } = await import("../src/server/email/transport.ts");
 const { accountEmail } = await import("../src/server/email/templates.ts");
 const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-await sendEmail({ to: "delivered@resend.dev", ...accountEmail("welcome", "Delivery check", `${baseUrl}/onboarding`) }, `grind-check-${randomUUID()}`);
+await sendEmail(
+  {
+    to: "delivered@resend.dev",
+    ...accountEmail("welcome", "Delivery check", `${baseUrl}/onboarding`),
+  },
+  `grind-check-${randomUUID()}`,
+);
 console.log("Resend accepted the template using the configured sender and delivery simulator.");

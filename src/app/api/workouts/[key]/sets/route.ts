@@ -15,7 +15,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ key:
     const user = await requireUser();
     const { key } = await params;
     const db = await getDb();
-    const result = await saveExerciseSets(db, user.id, decodeURIComponent(key), await request.json(), todayIn(await getTimezone(db, user.id)));
+    const result = await saveExerciseSets(
+      db,
+      user.id,
+      decodeURIComponent(key),
+      await request.json(),
+      todayIn(await getTimezone(db, user.id)),
+    );
     return Response.json(result);
   } catch (error) {
     return errorResponse(error);

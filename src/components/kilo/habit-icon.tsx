@@ -1,4 +1,15 @@
-import { Apple, BookOpen, Check, Droplets, Footprints, Heart, Moon, PersonStanding, Pill, type LucideIcon } from "lucide-react";
+import {
+  Apple,
+  BookOpen,
+  Check,
+  Droplets,
+  Footprints,
+  Heart,
+  Moon,
+  PersonStanding,
+  Pill,
+  type LucideIcon,
+} from "lucide-react";
 import type { HabitIcon } from "@/lib/habits";
 
 const ICONS: Record<HabitIcon, { icon: LucideIcon; label: string }> = {

@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    ".next/**",
+    ".data/**",
+    "drizzle/**",
+    "public/**",
+    "grind-ds/**",
+    "promo/**",
+    "pnpm-lock.yaml",
+    "docs/**"
+  ]
+}

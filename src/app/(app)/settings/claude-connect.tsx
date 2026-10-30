@@ -28,7 +28,15 @@ export interface ConnectedApp {
   lastConnected: string;
 }
 
-export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLocal: boolean; apps: ConnectedApp[] }) {
+export function ClaudeConnect({
+  mcpUrl,
+  isLocal,
+  apps,
+}: {
+  mcpUrl: string;
+  isLocal: boolean;
+  apps: ConnectedApp[];
+}) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -45,7 +53,9 @@ export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLoc
 
   const disconnect = (app: ConnectedApp) =>
     startTransition(async () => {
-      const res = await fetch(`/api/mcp-connections/${encodeURIComponent(app.clientId)}`, { method: "DELETE" });
+      const res = await fetch(`/api/mcp-connections/${encodeURIComponent(app.clientId)}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         toast.error("Couldn't disconnect. Try again.");
         return;
@@ -58,20 +68,30 @@ export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLoc
     <div className="flex flex-col gap-5">
       <ol className="text-muted-foreground list-decimal space-y-1 pl-5 text-sm">
         <li>
-          In Claude, open <b className="text-foreground">Settings → Connectors → Add custom connector</b>
+          In Claude, open{" "}
+          <b className="text-foreground">Settings → Connectors → Add custom connector</b>
         </li>
         <li>Paste this address and connect</li>
         <li>Sign in to Grind and choose what Claude can do</li>
       </ol>
       <div className="flex gap-2">
-        <Input readOnly value={mcpUrl} aria-label="Grind connector address" className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+        <Input
+          readOnly
+          value={mcpUrl}
+          aria-label="Grind connector address"
+          className="font-mono text-xs"
+          onFocus={(e) => e.currentTarget.select()}
+        />
         <Button variant="outline" size="icon" onClick={copy} aria-label="Copy address">
           {copied ? <Check /> : <Copy />}
         </Button>
       </div>
       {isLocal && (
         <Alert>
-          <AlertDescription>This address only works on your computer. Claude needs a public https address, so connect it after Grind is deployed.</AlertDescription>
+          <AlertDescription>
+            This address only works on your computer. Claude needs a public https address, so
+            connect it after Grind is deployed.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -80,22 +100,37 @@ export function ClaudeConnect({ mcpUrl, isLocal, apps }: { mcpUrl: string; isLoc
           <h3 className="kilo-label">Connected</h3>
           <ul className="flex flex-col gap-2">
             {apps.map((app) => (
-              <li key={app.clientId} className="bg-secondary flex items-center gap-3 rounded-md py-2 pr-2 pl-3">
+              <li
+                key={app.clientId}
+                className="bg-secondary flex items-center gap-3 rounded-md py-2 pr-2 pl-3"
+              >
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-semibold">{app.name}</span>
-                  <span className="text-muted-foreground text-xs">Last connected {timeAgo(app.lastConnected)}</span>
+                  <span className="text-muted-foreground text-xs">
+                    Last connected {timeAgo(app.lastConnected)}
+                  </span>
                 </span>
-                <Badge variant="secondary">{app.canEdit ? "Plan and coaching edits" : "Read only"}</Badge>
+                <Badge variant="secondary">
+                  {app.canEdit ? "Plan and coaching edits" : "Read only"}
+                </Badge>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={pending} aria-label={`Disconnect ${app.name}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={pending}
+                      aria-label={`Disconnect ${app.name}`}
+                    >
                       <Unplug />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Disconnect {app.name}?</AlertDialogTitle>
-                      <AlertDialogDescription>It loses access to your plan and training data straight away. You can connect it again later.</AlertDialogDescription>
+                      <AlertDialogDescription>
+                        It loses access to your plan and training data straight away. You can
+                        connect it again later.
+                      </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Keep connected</AlertDialogCancel>

@@ -15,7 +15,19 @@ export const IntensitySchema = z.enum(["steady", "balanced", "push"]);
 export const PhaseSchema = z.enum(["base", "build", "peak", "taper", "recovery"]);
 
 export const RunTypeSchema = z.enum(["easy", "tempo", "intervals", "hills", "long", "race"]);
-export const StrengthFocusSchema = z.enum(["legs_core", "upper", "full", "lower", "push", "pull", "legs", "core", "posterior_chain", "chest_back", "shoulders_arms"]);
+export const StrengthFocusSchema = z.enum([
+  "legs_core",
+  "upper",
+  "full",
+  "lower",
+  "push",
+  "pull",
+  "legs",
+  "core",
+  "posterior_chain",
+  "chest_back",
+  "shoulders_arms",
+]);
 export const PaceZoneSchema = z.enum(["E", "M", "T", "I", "R", "race"]);
 
 // ---------- Onboarding form ----------
@@ -28,15 +40,24 @@ export const PlanInputSchema = z
     /** First day the athlete can train. Defaults to today. */
     startDate: isoDate,
     experience: ExperienceSchema,
-    currentWeeklyKm: z.number().min(0, "Weekly distance can't be negative.").max(250, "Weekly distance must be 250 km or less."),
+    currentWeeklyKm: z
+      .number()
+      .min(0, "Weekly distance can't be negative.")
+      .max(250, "Weekly distance must be 250 km or less."),
     /** Recent race or time trial, used for paces. Leave out to estimate from experience. */
     recentRace: z
       .object({
         distanceM: z.number().min(1000).max(42195),
-        timeSec: z.number().min(150).max(8 * 3600),
+        timeSec: z
+          .number()
+          .min(150)
+          .max(8 * 3600),
       })
       .optional(),
-    runDays: z.array(WeekdaySchema).min(1, "Pick at least 1 run day.").max(7, "A week only has 7 days."),
+    runDays: z
+      .array(WeekdaySchema)
+      .min(1, "Pick at least 1 run day.")
+      .max(7, "A week only has 7 days."),
     longRunDay: WeekdaySchema,
     strength: z.object({
       sessionsPerWeek: z.number().int().min(0).max(5, "Pick at most 5 strength sessions a week."),
@@ -49,7 +70,11 @@ export const PlanInputSchema = z
     if (new Set(v.runDays).size !== v.runDays.length)
       ctx.addIssue({ code: "custom", path: ["runDays"], message: "Each run day can appear once." });
     if (!v.runDays.includes(v.longRunDay))
-      ctx.addIssue({ code: "custom", path: ["longRunDay"], message: "The long run day must be one of the run days." });
+      ctx.addIssue({
+        code: "custom",
+        path: ["longRunDay"],
+        message: "The long run day must be one of the run days.",
+      });
     if (v.strength.days.length < v.strength.sessionsPerWeek)
       ctx.addIssue({
         code: "custom",
@@ -57,7 +82,11 @@ export const PlanInputSchema = z
         message: `Pick ${v.strength.sessionsPerWeek} strength days.`,
       });
     if (v.raceDate && v.raceDate <= v.startDate)
-      ctx.addIssue({ code: "custom", path: ["raceDate"], message: "Race day must be after the start date." });
+      ctx.addIssue({
+        code: "custom",
+        path: ["raceDate"],
+        message: "Race day must be after the start date.",
+      });
   });
 export type PlanInput = z.infer<typeof PlanInputSchema>;
 
@@ -94,7 +123,11 @@ export const SimpleStepSchema = z
   .object({
     kind: z.enum(["warmup", "work", "recovery", "cooldown", "steady"]),
     distanceM: z.number().positive().max(42195).optional(),
-    durationSec: z.number().positive().max(6 * 3600).optional(),
+    durationSec: z
+      .number()
+      .positive()
+      .max(6 * 3600)
+      .optional(),
     target: TargetSchema.optional(),
     /** Recovery as walk or jog */
     note: z.string().max(80).optional(),
@@ -137,24 +170,26 @@ export const RunWorkoutSchema = z.object({
 });
 export type RunWorkout = z.infer<typeof RunWorkoutSchema>;
 
-export const ExerciseSchema = z.object({
-  id: z.string().min(1).max(60),
-  name: z.string().min(1).max(60),
-  /** Superset group shown as A1, A2, B1… */
-  group: z.enum(["A", "B", "C", "D"]),
-  sets: z.number().int().min(1).max(8),
-  reps: z.number().int().min(1).max(50).optional(),
-  durationSec: z.number().int().min(5).max(600).optional(),
-  perSide: z.boolean().default(false),
-  restSec: z.number().int().min(0).max(300),
-  /** Effort guide: reps in reserve style */
-  load: z.enum(["bodyweight", "light", "moderate", "heavy"]),
-  /** Optional target repetitions left in reserve. */
-  rir: z.number().int().min(0).max(5).optional(),
-  cue: z.string().max(160).optional(),
-}).refine((exercise) => exercise.reps !== undefined || exercise.durationSec !== undefined, {
-  message: "An exercise needs repetitions or a duration.",
-});
+export const ExerciseSchema = z
+  .object({
+    id: z.string().min(1).max(60),
+    name: z.string().min(1).max(60),
+    /** Superset group shown as A1, A2, B1… */
+    group: z.enum(["A", "B", "C", "D"]),
+    sets: z.number().int().min(1).max(8),
+    reps: z.number().int().min(1).max(50).optional(),
+    durationSec: z.number().int().min(5).max(600).optional(),
+    perSide: z.boolean().default(false),
+    restSec: z.number().int().min(0).max(300),
+    /** Effort guide: reps in reserve style */
+    load: z.enum(["bodyweight", "light", "moderate", "heavy"]),
+    /** Optional target repetitions left in reserve. */
+    rir: z.number().int().min(0).max(5).optional(),
+    cue: z.string().max(160).optional(),
+  })
+  .refine((exercise) => exercise.reps !== undefined || exercise.durationSec !== undefined, {
+    message: "An exercise needs repetitions or a duration.",
+  });
 export type Exercise = z.infer<typeof ExerciseSchema>;
 
 export const StrengthWorkoutSchema = z.object({
@@ -167,7 +202,10 @@ export const StrengthWorkoutSchema = z.object({
 });
 export type StrengthWorkout = z.infer<typeof StrengthWorkoutSchema>;
 
-export const WorkoutSchema = z.discriminatedUnion("kind", [RunWorkoutSchema, StrengthWorkoutSchema]);
+export const WorkoutSchema = z.discriminatedUnion("kind", [
+  RunWorkoutSchema,
+  StrengthWorkoutSchema,
+]);
 export type Workout = z.infer<typeof WorkoutSchema>;
 
 // ---------- Plan ----------

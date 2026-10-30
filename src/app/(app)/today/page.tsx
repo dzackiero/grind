@@ -15,12 +15,36 @@ import { RecoveryCard } from "@/components/kilo/recovery-card";
 import { actualKm, nextWorkout, statusOf, weekFor, weekStats, workoutsOn } from "@/lib/plan-view";
 import { HabitsCard } from "@/components/kilo/habits-card";
 import { isIsoDate } from "@/lib/habits";
-import { getViewerActuals, getViewerAdditionalTraining, getViewerHabits, getViewerIntervals, getViewerPendingChanges, getViewerToday, getViewerWellness, requireViewer, requireViewerPlan } from "@/server/queries";
+import {
+  getViewerActuals,
+  getViewerAdditionalTraining,
+  getViewerHabits,
+  getViewerIntervals,
+  getViewerPendingChanges,
+  getViewerToday,
+  getViewerWellness,
+  requireViewer,
+  requireViewerPlan,
+} from "@/server/queries";
 
 export const metadata = { title: "Today · Grind" };
 
-export default async function TodayPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
-  const [{ plan, progress }, today, { date }, actuals, wellness, intervals, suggestions, habits, viewer] = await Promise.all([
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
+  const [
+    { plan, progress },
+    today,
+    { date },
+    actuals,
+    wellness,
+    intervals,
+    suggestions,
+    habits,
+    viewer,
+  ] = await Promise.all([
     requireViewerPlan(),
     getViewerToday(),
     searchParams,
@@ -35,11 +59,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const week = weekFor(plan, selected);
   const weekEnd = addDaysIso(week.startDate, 6);
   const additional = await getViewerAdditionalTraining(week.startDate, weekEnd);
-  const recorded = selected < week.startDate || selected > weekEnd
-    ? await getViewerAdditionalTraining(selected, selected)
-    : additional.filter((entry) => entry.date === selected);
+  const recorded =
+    selected < week.startDate || selected > weekEnd
+      ? await getViewerAdditionalTraining(selected, selected)
+      : additional.filter((entry) => entry.date === selected);
   const additionalCounts: Record<string, number> = {};
-  for (const entry of additional) additionalCounts[entry.date] = (additionalCounts[entry.date] ?? 0) + 1;
+  for (const entry of additional)
+    additionalCounts[entry.date] = (additionalCounts[entry.date] ?? 0) + 1;
   const workouts = workoutsOn(plan, selected);
   const stats = weekStats(week, progress, actualKm(actuals));
   const upNext = nextWorkout(plan, progress, selected);
@@ -49,13 +75,25 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   return (
     <div className="-mt-5 flex flex-col gap-6">
       {viewer.isAnonymous && <GuestBanner />}
-      <WeekStrip week={week} totalWeeks={plan.weeks.length} progress={progress} today={today} selected={selected} additionalCounts={additionalCounts} />
+      <WeekStrip
+        week={week}
+        totalWeeks={plan.weeks.length}
+        progress={progress}
+        today={today}
+        selected={selected}
+        additionalCounts={additionalCounts}
+      />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)]">
         <div className="flex flex-col gap-6">
           {suggestions[0] && <PlanChangeCard change={suggestions[0]} />}
 
-          <section className="flex flex-col gap-3" aria-label={selected === today ? "Today's workouts" : `Workouts on ${longDate(selected)}`}>
+          <section
+            className="flex flex-col gap-3"
+            aria-label={
+              selected === today ? "Today's workouts" : `Workouts on ${longDate(selected)}`
+            }
+          >
             {selected !== today && (
               <div className="flex items-center justify-between">
                 <h2 className="kilo-label">{longDate(selected)}</h2>
@@ -65,7 +103,14 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
               </div>
             )}
             {workouts.length ? (
-              workouts.map((w) => <WorkoutCard key={w.id} workout={w} status={statusOf(progress, w)} actual={actuals[w.id]} />)
+              workouts.map((w) => (
+                <WorkoutCard
+                  key={w.id}
+                  workout={w}
+                  status={statusOf(progress, w)}
+                  actual={actuals[w.id]}
+                />
+              ))
             ) : !recorded.length ? (
               <Card>
                 <CardHeader>
@@ -73,15 +118,21 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
                     <Coffee className="size-4" /> {beforeStart ? "Plan starts soon" : "Rest day"}
                   </div>
                   <CardTitle className="font-display text-[22px] leading-[26px] font-extrabold">
-                    {beforeStart ? `Your plan starts ${longDate(plan.startDate)}` : "Nothing planned. Recover well."}
+                    {beforeStart
+                      ? `Your plan starts ${longDate(plan.startDate)}`
+                      : "Nothing planned. Recover well."}
                   </CardTitle>
                   <CardDescription>
-                    {beforeStart ? "Keep moving easy until then." : "An easy walk or some mobility is fine. Sleep and food do the rest."}
+                    {beforeStart
+                      ? "Keep moving easy until then."
+                      : "An easy walk or some mobility is fine. Sleep and food do the rest."}
                   </CardDescription>
                 </CardHeader>
               </Card>
             ) : null}
-            {recorded.map((entry) => <RecordedWorkoutCard key={entry.id} entry={entry} contextLabel="Outside plan" />)}
+            {recorded.map((entry) => (
+              <RecordedWorkoutCard key={entry.id} entry={entry} contextLabel="Outside plan" />
+            ))}
           </section>
 
           <HabitsCard habits={habits} date={selected} today={today} />
@@ -92,7 +143,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             <Card className="group-hover:border-line-strong">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-base font-semibold">
-                  Week {week.index} overview <ChevronRight className="text-muted-foreground size-5" />
+                  Week {week.index} overview{" "}
+                  <ChevronRight className="text-muted-foreground size-5" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
@@ -120,7 +172,12 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
 
           <Card>
             <CardContent className="grid grid-cols-2 gap-4">
-              <Stat label="Race day" value={toRace > 0 ? toRace : "Today"} unit={toRace > 0 ? (toRace === 1 ? "day" : "days") : undefined} hint={longDate(plan.raceDate)} />
+              <Stat
+                label="Race day"
+                value={toRace > 0 ? toRace : "Today"}
+                unit={toRace > 0 ? (toRace === 1 ? "day" : "days") : undefined}
+                hint={longDate(plan.raceDate)}
+              />
               <Stat
                 label="Estimate"
                 value={formatDuration(plan.estimatedRaceTimeSec.low)}
@@ -132,12 +189,16 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           {upNext && (
             <section className="flex flex-col gap-3">
               <h2 className="kilo-label">Up next</h2>
-              <Link href={`/workouts/${encodeURIComponent(upNext.id)}`} className="bg-card hover:border-line-strong flex items-center gap-3 rounded-xl border border-transparent p-4">
+              <Link
+                href={`/workouts/${encodeURIComponent(upNext.id)}`}
+                className="bg-card hover:border-line-strong flex items-center gap-3 rounded-xl border border-transparent p-4"
+              >
                 <TypeTag type={upNext.type} />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-semibold">{upNext.title}</span>
                   <span className="text-muted-foreground text-[13px]">
-                    {upNext.date === addDaysIso(selected, 1) ? "Tomorrow" : longDate(upNext.date)} · {workoutSummary(upNext)}
+                    {upNext.date === addDaysIso(selected, 1) ? "Tomorrow" : longDate(upNext.date)} ·{" "}
+                    {workoutSummary(upNext)}
                   </span>
                 </span>
                 <ChevronRight className="text-muted-foreground size-5" />

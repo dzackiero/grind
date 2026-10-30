@@ -24,16 +24,31 @@ function formLabel(form: number) {
   return { text: "Very tired", tone: "text-destructive" };
 }
 
-function delta(value: number | null, baseline: number | null, unit: string, higherIsBetter: boolean) {
+function delta(
+  value: number | null,
+  baseline: number | null,
+  unit: string,
+  higherIsBetter: boolean,
+) {
   if (value == null || baseline == null) return null;
   const d = Math.round(value - baseline);
   if (d === 0) return "same as your 7-day average";
   const good = higherIsBetter ? d > 0 : d < 0;
-  return <span className={good ? "text-success" : "text-warning"}>{`${d > 0 ? "+" : ""}${d} ${unit} vs 7-day average`}</span>;
+  return (
+    <span
+      className={good ? "text-success" : "text-warning"}
+    >{`${d > 0 ? "+" : ""}${d} ${unit} vs 7-day average`}</span>
+  );
 }
 
 /** Recovery from intervals.icu wellness: resting HR, form, and HRV/sleep when the watch provides them. */
-export function RecoveryCard({ wellness, connected }: { wellness: WellnessSummary | null; connected: boolean }) {
+export function RecoveryCard({
+  wellness,
+  connected,
+}: {
+  wellness: WellnessSummary | null;
+  connected: boolean;
+}) {
   if (!connected) {
     return (
       <Link href="/settings" className="group">
@@ -42,7 +57,10 @@ export function RecoveryCard({ wellness, connected }: { wellness: WellnessSummar
             <CardTitle className="flex items-center justify-between text-base font-semibold">
               Connect intervals.icu <ChevronRight className="text-muted-foreground size-5" />
             </CardTitle>
-            <CardDescription>Bring in your Huawei runs, resting heart rate and training load. Workouts tick off automatically.</CardDescription>
+            <CardDescription>
+              Bring in your Huawei runs, resting heart rate and training load. Workouts tick off
+              automatically.
+            </CardDescription>
           </CardHeader>
         </Card>
       </Link>
@@ -53,14 +71,19 @@ export function RecoveryCard({ wellness, connected }: { wellness: WellnessSummar
   // Real-world fitness (CTL) stays under ~200. Far above that, intervals.icu's load settings are off
   // (usually threshold pace), so the number would mislead.
   const loadLooksWrong = wellness.ctl != null && wellness.ctl > 250;
-  const form = !loadLooksWrong && wellness.ctl != null && wellness.atl != null ? Math.round(wellness.ctl - wellness.atl) : null;
+  const form =
+    !loadLooksWrong && wellness.ctl != null && wellness.atl != null
+      ? Math.round(wellness.ctl - wellness.atl)
+      : null;
   const label = form != null ? formLabel(form) : null;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-semibold">Recovery</CardTitle>
-        <CardDescription>From your watch via intervals.icu · {shortDate(wellness.date)}</CardDescription>
+        <CardDescription>
+          From your watch via intervals.icu · {shortDate(wellness.date)}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4">
         {wellness.restingHr != null && (
@@ -87,12 +110,20 @@ export function RecoveryCard({ wellness, connected }: { wellness: WellnessSummar
             }
             hint={
               <>
-                <span className={label.tone}>{label.text}</span> · fitness {Math.round(wellness.ctl!)}, fatigue {Math.round(wellness.atl!)}
+                <span className={label.tone}>{label.text}</span> · fitness{" "}
+                {Math.round(wellness.ctl!)}, fatigue {Math.round(wellness.atl!)}
               </>
             }
           />
         )}
-        {wellness.hrv != null && <Stat label="HRV" value={Math.round(wellness.hrv)} unit="ms" hint={delta(wellness.hrv, wellness.hrvBaseline, "ms", true)} />}
+        {wellness.hrv != null && (
+          <Stat
+            label="HRV"
+            value={Math.round(wellness.hrv)}
+            unit="ms"
+            hint={delta(wellness.hrv, wellness.hrvBaseline, "ms", true)}
+          />
+        )}
         {wellness.sleepSecs != null && (
           <Stat
             label="Sleep"
@@ -103,13 +134,16 @@ export function RecoveryCard({ wellness, connected }: { wellness: WellnessSummar
               </span>
             }
             unit="h"
-            hint={wellness.sleepScore != null ? `Score ${Math.round(wellness.sleepScore)}` : undefined}
+            hint={
+              wellness.sleepScore != null ? `Score ${Math.round(wellness.sleepScore)}` : undefined
+            }
           />
         )}
         {loadLooksWrong && (
           <p className="text-muted-foreground col-span-2 text-xs">
-            Fitness and form are hidden: intervals.icu reports a fitness of {Math.round(wellness.ctl!)}, which usually means the threshold pace in
-            intervals.icu → Settings → Run is set too fast. Fix it there and run a recalculation.
+            Fitness and form are hidden: intervals.icu reports a fitness of{" "}
+            {Math.round(wellness.ctl!)}, which usually means the threshold pace in intervals.icu →
+            Settings → Run is set too fast. Fix it there and run a recalculation.
           </p>
         )}
       </CardContent>

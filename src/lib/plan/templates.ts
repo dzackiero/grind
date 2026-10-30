@@ -33,7 +33,9 @@ export const GOAL_TEMPLATES: Record<Goal, GoalTemplate> = {
     peakKm: { beginner: 25, intermediate: 35, advanced: 50 },
     floorKm: 10,
     maxLongKm: { beginner: 10, intermediate: 13, advanced: 16 },
-    minLongKm: 4, maxLongShare: 0.4, longStepFactor: 1,
+    minLongKm: 4,
+    maxLongShare: 0.4,
+    longStepFactor: 1,
   },
   "10k": {
     label: "10K",
@@ -44,7 +46,9 @@ export const GOAL_TEMPLATES: Record<Goal, GoalTemplate> = {
     peakKm: { beginner: 30, intermediate: 42, advanced: 60 },
     floorKm: 12,
     maxLongKm: { beginner: 13, intermediate: 16, advanced: 19 },
-    minLongKm: 5, maxLongShare: 0.4, longStepFactor: 1,
+    minLongKm: 5,
+    maxLongShare: 0.4,
+    longStepFactor: 1,
   },
   half: {
     label: "Half Marathon",
@@ -55,7 +59,9 @@ export const GOAL_TEMPLATES: Record<Goal, GoalTemplate> = {
     peakKm: { beginner: 35, intermediate: 48, advanced: 65 },
     floorKm: 15,
     maxLongKm: { beginner: 18, intermediate: 20, advanced: 22 },
-    minLongKm: 6, maxLongShare: 0.42, longStepFactor: 1.2,
+    minLongKm: 6,
+    maxLongShare: 0.42,
+    longStepFactor: 1.2,
   },
   marathon: {
     label: "Marathon",
@@ -66,7 +72,9 @@ export const GOAL_TEMPLATES: Record<Goal, GoalTemplate> = {
     peakKm: { beginner: 45, intermediate: 60, advanced: 80 },
     floorKm: 20,
     maxLongKm: { beginner: 30, intermediate: 32, advanced: 34 },
-    minLongKm: 8, maxLongShare: 0.5, longStepFactor: 1.5,
+    minLongKm: 8,
+    maxLongShare: 0.5,
+    longStepFactor: 1.5,
   },
 };
 
@@ -134,7 +142,9 @@ export const INTERVALS: Record<Goal, RepeatSet[]> = {
   ],
 };
 
-export type TempoSession = { kind: "continuous"; minutes: number } | { kind: "cruise"; reps: number; minutes: number; recoverySec: number };
+export type TempoSession =
+  | { kind: "continuous"; minutes: number }
+  | { kind: "cruise"; reps: number; minutes: number; recoverySec: number };
 
 export const TEMPO: TempoSession[] = [
   { kind: "continuous", minutes: 15 },
@@ -156,7 +166,11 @@ export const HILLS: { reps: number; seconds: number }[] = [
 ];
 
 /** Hardest entry a level reaches, as an index into the lists above */
-export const PROGRESSION_CAP: Record<Level, number> = { beginner: 3, intermediate: 6, advanced: 99 };
+export const PROGRESSION_CAP: Record<Level, number> = {
+  beginner: 3,
+  intermediate: 6,
+  advanced: 99,
+};
 
 export const PHASE_FOCUS = {
   base: "Build the habit and your aerobic base. Most running is easy.",

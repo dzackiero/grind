@@ -8,7 +8,11 @@ const c = MARK.size / 2;
 
 /** The static files can't import the numbers, so this keeps them honest: change the mark in one place, fail here until all agree. */
 describe("static logo files match the mark", () => {
-  const colourFiles = ["public/brand/grind-mark.svg", "public/brand/grind-icon.svg", "src/app/icon.svg"];
+  const colourFiles = [
+    "public/brand/grind-mark.svg",
+    "public/brand/grind-icon.svg",
+    "src/app/icon.svg",
+  ];
 
   it.each(colourFiles)("%s draws the same disc, teeth, groove and hub", (file) => {
     const svg = read(file);
@@ -60,7 +64,12 @@ describe("static logo files match the mark", () => {
 });
 
 describe("every SVG is well formed", () => {
-  it.each(["public/brand/grind-mark.svg", "public/brand/grind-icon.svg", "public/brand/grind-mark-mono.svg", "src/app/icon.svg"])("%s has a root element and no stray text", (file) => {
+  it.each([
+    "public/brand/grind-mark.svg",
+    "public/brand/grind-icon.svg",
+    "public/brand/grind-mark-mono.svg",
+    "src/app/icon.svg",
+  ])("%s has a root element and no stray text", (file) => {
     const svg = read(file).trim();
     expect(svg.startsWith("<svg ")).toBe(true);
     expect(svg.endsWith("</svg>")).toBe(true);

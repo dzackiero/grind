@@ -17,5 +17,11 @@ export const STRENGTH_FOCUS_LABELS: Record<Focus, string> = {
 };
 
 export function strengthUsesLegs(focus: Focus): boolean {
-  return focus === "legs_core" || focus === "full" || focus === "lower" || focus === "legs" || focus === "posterior_chain";
+  return (
+    focus === "legs_core" ||
+    focus === "full" ||
+    focus === "lower" ||
+    focus === "legs" ||
+    focus === "posterior_chain"
+  );
 }

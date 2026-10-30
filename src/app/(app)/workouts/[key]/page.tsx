@@ -14,7 +14,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { distanceScore, findWorkout, statusOf } from "@/lib/plan-view";
 import { StrengthLog } from "@/components/kilo/strength-log";
 import { getDb } from "@/server/db";
-import { getViewerActuals, getViewerToday, requireViewer, requireViewerPlan } from "@/server/queries";
+import {
+  getViewerActuals,
+  getViewerToday,
+  requireViewer,
+  requireViewerPlan,
+} from "@/server/queries";
 import { lastPerformance, listWorkoutSets } from "@/server/strength/service";
 
 export async function generateMetadata({ params }: { params: Promise<{ key: string }> }) {
@@ -26,7 +31,10 @@ export async function generateMetadata({ params }: { params: Promise<{ key: stri
 
 export default async function WorkoutPage({ params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
-  const [{ plan, progress }, actuals] = await Promise.all([requireViewerPlan(), getViewerActuals()]);
+  const [{ plan, progress }, actuals] = await Promise.all([
+    requireViewerPlan(),
+    getViewerActuals(),
+  ]);
   const found = findWorkout(plan, decodeURIComponent(key));
   if (!found) notFound();
   const { workout, week } = found;
@@ -34,7 +42,8 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
   const pace = mainPace(workout);
   const actual = actuals[workout.id];
   const actualPace = actual ? paceFrom(actual.distanceM, actual.movingTimeSec) : null;
-  const score = actual && workout.kind === "run" ? distanceScore(workout.distanceKm, actual.distanceM) : null;
+  const score =
+    actual && workout.kind === "run" ? distanceScore(workout.distanceKm, actual.distanceM) : null;
 
   // Strength sessions can log sets once the day has come: what was saved, and what was lifted last time
   const [today, user] = await Promise.all([getViewerToday(), requireViewer()]);
@@ -42,7 +51,15 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
   const db = await getDb();
   const [logged, last] =
     workout.kind === "strength" && canLog
-      ? await Promise.all([listWorkoutSets(db, user.id, workout.id), lastPerformance(db, user.id, workout.exercises.map((e) => e.name), workout.date)])
+      ? await Promise.all([
+          listWorkoutSets(db, user.id, workout.id),
+          lastPerformance(
+            db,
+            user.id,
+            workout.exercises.map((e) => e.name),
+            workout.date,
+          ),
+        ])
       : [[], {}];
 
   return (
@@ -55,7 +72,9 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={`${WORKOUT_TYPES[workout.type].fill} text-on-type`}>{WORKOUT_TYPES[workout.type].label}</Badge>
+          <Badge className={`${WORKOUT_TYPES[workout.type].fill} text-on-type`}>
+            {WORKOUT_TYPES[workout.type].label}
+          </Badge>
           <Badge variant="secondary">Week {week.index}</Badge>
           {status === "completed" && <Badge className="bg-accent-soft text-foreground">Done</Badge>}
         </div>
@@ -73,7 +92,11 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
             </>
           ) : (
             <>
-              <Stat label="Duration" value={`${workout.durationMin[0]}–${workout.durationMin[1]}`} unit="min" />
+              <Stat
+                label="Duration"
+                value={`${workout.durationMin[0]}–${workout.durationMin[1]}`}
+                unit="min"
+              />
               <Stat label="Exercises" value={workout.exercises.length} />
               <Stat label="Focus" value={workout.title.split(" ")[0]} />
             </>
@@ -85,29 +108,52 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
         <Card className="border-line-strong">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Watch className="text-accent-ink size-5" /> {workout.kind === "run" ? "Your run" : "Your session"}
+              <Watch className="text-accent-ink size-5" />{" "}
+              {workout.kind === "run" ? "Your run" : "Your session"}
             </CardTitle>
             <CardDescription>
               {actual.name ?? "Activity"} · synced from intervals.icu
               {score != null && (
                 <>
                   {" · "}
-                  <span className={score >= 90 ? "text-success" : score >= 70 ? "text-warning" : "text-destructive"}>{score}% of planned distance</span>
+                  <span
+                    className={
+                      score >= 90
+                        ? "text-success"
+                        : score >= 70
+                          ? "text-warning"
+                          : "text-destructive"
+                    }
+                  >
+                    {score}% of planned distance
+                  </span>
                 </>
               )}
             </CardDescription>
             <Button asChild variant="outline" size="sm" className="mt-2 self-start">
-              <Link href={`/activities/${encodeURIComponent(actual.activityId)}`}>See map, splits and charts</Link>
+              <Link href={`/activities/${encodeURIComponent(actual.activityId)}`}>
+                See map, splits and charts
+              </Link>
             </Button>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-4">
-            {actual.distanceM != null && <Stat label="Distance" value={km(Math.round(actual.distanceM / 100) / 10)} />}
-            {actual.movingTimeSec != null && <Stat label="Time" value={Math.round(actual.movingTimeSec / 60)} unit="min" />}
+            {actual.distanceM != null && (
+              <Stat label="Distance" value={km(Math.round(actual.distanceM / 100) / 10)} />
+            )}
+            {actual.movingTimeSec != null && (
+              <Stat label="Time" value={Math.round(actual.movingTimeSec / 60)} unit="min" />
+            )}
             {workout.kind === "run" && actualPace && <Stat label="Pace /km" value={actualPace} />}
-            {actual.avgHr != null && <Stat label="Avg HR" value={Math.round(actual.avgHr)} unit="bpm" />}
+            {actual.avgHr != null && (
+              <Stat label="Avg HR" value={Math.round(actual.avgHr)} unit="bpm" />
+            )}
             {/* A single session rarely scores over 500; above that intervals.icu's threshold settings are off */}
-            {actual.trainingLoad != null && actual.trainingLoad <= 500 && <Stat label="Load" value={Math.round(actual.trainingLoad)} />}
-            {actual.elevationGainM != null && actual.elevationGainM > 0 && <Stat label="Climb" value={Math.round(actual.elevationGainM)} unit="m" />}
+            {actual.trainingLoad != null && actual.trainingLoad <= 500 && (
+              <Stat label="Load" value={Math.round(actual.trainingLoad)} />
+            )}
+            {actual.elevationGainM != null && actual.elevationGainM > 0 && (
+              <Stat label="Climb" value={Math.round(actual.elevationGainM)} unit="m" />
+            )}
           </CardContent>
         </Card>
       )}
@@ -122,10 +168,24 @@ export default async function WorkoutPage({ params }: { params: Promise<{ key: s
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">{workout.kind === "run" ? "Steps" : "Exercises"}</CardTitle>
-          {workout.kind === "run" && <CardDescription>Set these up in your watch&apos;s workout editor, in this order.</CardDescription>}
+          <CardTitle className="text-base font-semibold">
+            {workout.kind === "run" ? "Steps" : "Exercises"}
+          </CardTitle>
+          {workout.kind === "run" && (
+            <CardDescription>
+              Set these up in your watch&apos;s workout editor, in this order.
+            </CardDescription>
+          )}
         </CardHeader>
-        <CardContent>{workout.kind === "run" ? <StepList workout={workout} /> : canLog ? <StrengthLog workout={workout} initial={logged} last={last} /> : <ExerciseList workout={workout} />}</CardContent>
+        <CardContent>
+          {workout.kind === "run" ? (
+            <StepList workout={workout} />
+          ) : canLog ? (
+            <StrengthLog workout={workout} initial={logged} last={last} />
+          ) : (
+            <ExerciseList workout={workout} />
+          )}
+        </CardContent>
       </Card>
 
       <DoneButton workoutKey={workout.id} status={status} />

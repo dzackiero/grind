@@ -1,5 +1,11 @@
 // Prints a generated plan as a readable table. Run: pnpm plan:sample [goal]
-import { formatDuration, formatPace, generatePlan, validatePlan, type PlanInput } from "../src/lib/plan";
+import {
+  formatDuration,
+  formatPace,
+  generatePlan,
+  validatePlan,
+  type PlanInput,
+} from "../src/lib/plan";
 
 const goal = (process.argv[2] as PlanInput["goal"]) ?? "half";
 
@@ -17,7 +23,9 @@ const plan = generatePlan({
 });
 
 console.log(`${plan.title} · race ${plan.raceDate} · fitness ${plan.fitnessScore}`);
-console.log(`Estimate: ${formatDuration(plan.estimatedRaceTimeSec.low)} – ${formatDuration(plan.estimatedRaceTimeSec.high)}`);
+console.log(
+  `Estimate: ${formatDuration(plan.estimatedRaceTimeSec.low)} – ${formatDuration(plan.estimatedRaceTimeSec.high)}`,
+);
 console.log(
   "Paces /km: " +
     Object.entries(plan.paces)
@@ -28,10 +36,16 @@ for (const w of plan.weeks) {
   console.log(`\nWeek ${w.index} (${w.startDate}) ${w.phase.toUpperCase()} · ${w.targetKm} km`);
   for (const wo of w.workouts) {
     const day = new Date(wo.date + "T00:00:00Z").toUTCString().slice(0, 3);
-    const extra = wo.kind === "run" ? `${wo.distanceKm} km · ~${wo.estDurationMin} min` : `${wo.durationMin.join("–")} min · ${wo.exercises.length} exercises`;
+    const extra =
+      wo.kind === "run"
+        ? `${wo.distanceKm} km · ~${wo.estDurationMin} min`
+        : `${wo.durationMin.join("–")} min · ${wo.exercises.length} exercises`;
     console.log(`  ${day} ${wo.date}  [${wo.type}] ${wo.title} — ${extra}`);
   }
 }
 const result = validatePlan(plan);
-console.log(`\nValidation: ${result.ok ? "OK" : "FAILED"} · ${result.errors.length} errors · ${result.warnings.length} warnings`);
-for (const i of [...result.errors, ...result.warnings]) console.log(`  ${i.severity} ${i.code}: ${i.message}`);
+console.log(
+  `\nValidation: ${result.ok ? "OK" : "FAILED"} · ${result.errors.length} errors · ${result.warnings.length} warnings`,
+);
+for (const i of [...result.errors, ...result.warnings])
+  console.log(`  ${i.severity} ${i.code}: ${i.message}`);

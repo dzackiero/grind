@@ -17,7 +17,8 @@ export function createAutoSync(options: AutoSyncOptions) {
   let request: AbortController | null = null;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const active = () => !stopped && options.document.visibilityState === "visible" && options.isOnline();
+  const active = () =>
+    !stopped && options.document.visibilityState === "visible" && options.isOnline();
   const clearTimer = () => {
     clearTimeout(timer);
     timer = undefined;
@@ -32,7 +33,10 @@ export function createAutoSync(options: AutoSyncOptions) {
   async function sync() {
     request = new AbortController();
     try {
-      const response = await fetch("/api/intervals/sync", { method: "POST", signal: request.signal });
+      const response = await fetch("/api/intervals/sync", {
+        method: "POST",
+        signal: request.signal,
+      });
       if (!response.ok) throw new Error("Automatic sync failed");
       const result: { matched: number } = await response.json();
       if (stopped) return;
@@ -63,7 +67,10 @@ export function createAutoSync(options: AutoSyncOptions) {
     updateLastSyncedAt(value: string | null) {
       const timestamp = value ? Date.parse(value) : NaN;
       // Refreshed server props may lag behind a just-completed local request.
-      if (Number.isFinite(timestamp) && (!Number.isFinite(lastSuccess) || timestamp > lastSuccess)) {
+      if (
+        Number.isFinite(timestamp) &&
+        (!Number.isFinite(lastSuccess) || timestamp > lastSuccess)
+      ) {
         lastSuccess = timestamp;
         retryAt = 0;
         check();
@@ -74,7 +81,8 @@ export function createAutoSync(options: AutoSyncOptions) {
       clearTimer();
       request?.abort();
       options.document.removeEventListener("visibilitychange", check);
-      for (const event of ["focus", "online", "offline"]) options.window.removeEventListener(event, check);
+      for (const event of ["focus", "online", "offline"])
+        options.window.removeEventListener(event, check);
     },
   };
 }

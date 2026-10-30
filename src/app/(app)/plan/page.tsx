@@ -23,10 +23,18 @@ const ZONES = [
 ] as const;
 
 export default async function PlanPage() {
-  const [{ plan, progress }, today, actuals] = await Promise.all([requireViewerPlan(), getViewerToday(), getViewerActuals()]);
+  const [{ plan, progress }, today, actuals] = await Promise.all([
+    requireViewerPlan(),
+    getViewerToday(),
+    getViewerActuals(),
+  ]);
   const current = weekFor(plan, today);
   const real = actualKm(actuals);
-  const chart = plan.weeks.map((w) => ({ week: w.index, planned: w.targetKm, done: weekStats(w, progress, real).kmDone }));
+  const chart = plan.weeks.map((w) => ({
+    week: w.index,
+    planned: w.targetKm,
+    done: weekStats(w, progress, real).kmDone,
+  }));
   const totalKm = plan.weeks.reduce((s, w) => s + w.targetKm, 0);
   const doneKm = chart.reduce((s, w) => s + w.done, 0);
   const totalWorkouts = plan.weeks.reduce((s, w) => s + w.workouts.length, 0);
@@ -44,12 +52,24 @@ export default async function PlanPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="grid grid-cols-2 gap-4">
-              <Stat label="Estimated finish" value={formatDuration(plan.estimatedRaceTimeSec.low)} hint={`to ${formatDuration(plan.estimatedRaceTimeSec.high)} in ${plan.weeks.length} weeks`} />
-              <Stat label="Plan progress" value={`${doneWorkouts}/${totalWorkouts}`} hint={`${Math.round(doneKm)} of ${Math.round(totalKm)} km`} />
+              <Stat
+                label="Estimated finish"
+                value={formatDuration(plan.estimatedRaceTimeSec.low)}
+                hint={`to ${formatDuration(plan.estimatedRaceTimeSec.high)} in ${plan.weeks.length} weeks`}
+              />
+              <Stat
+                label="Plan progress"
+                value={`${doneWorkouts}/${totalWorkouts}`}
+                hint={`${Math.round(doneKm)} of ${Math.round(totalKm)} km`}
+              />
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{plan.input.runDays.length} runs a week</Badge>
-              {plan.input.strength.sessionsPerWeek > 0 && <Badge variant="secondary">{plan.input.strength.sessionsPerWeek} strength sessions</Badge>}
+              {plan.input.strength.sessionsPerWeek > 0 && (
+                <Badge variant="secondary">
+                  {plan.input.strength.sessionsPerWeek} strength sessions
+                </Badge>
+              )}
               <Badge variant="secondary" className="capitalize">
                 {plan.input.intensity === "push" ? "Push me" : plan.input.intensity}
               </Badge>
@@ -65,7 +85,9 @@ export default async function PlanPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Plan overview</CardTitle>
-            <CardDescription>Kilometers per week. Lime shows what you&apos;ve done.</CardDescription>
+            <CardDescription>
+              Kilometers per week. Lime shows what you&apos;ve done.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <WeeklyKmChart data={chart} />
@@ -84,7 +106,8 @@ export default async function PlanPage() {
               <div key={z.key} className="flex flex-col">
                 <dt className="kilo-label">{z.label}</dt>
                 <dd className="font-mono text-sm tabular-nums">
-                  {formatPace(plan.paces[z.key].minSecPerKm)}–{formatPace(plan.paces[z.key].maxSecPerKm)}
+                  {formatPace(plan.paces[z.key].minSecPerKm)}–
+                  {formatPace(plan.paces[z.key].maxSecPerKm)}
                 </dd>
               </div>
             ))}
@@ -94,10 +117,19 @@ export default async function PlanPage() {
 
       <section className="flex flex-col gap-4" aria-label="Weeks">
         {plan.weeks.map((w) => (
-          <WeekCard key={w.index} week={w} progress={progress} current={w.index === current.index} totalWeeks={plan.weeks.length} actualKm={real} />
+          <WeekCard
+            key={w.index}
+            week={w}
+            progress={progress}
+            current={w.index === current.index}
+            totalWeeks={plan.weeks.length}
+            actualKm={real}
+          />
         ))}
       </section>
-      <p className="text-muted-foreground text-center text-xs">Total {km(Math.round(totalKm))} over {plan.weeks.length} weeks.</p>
+      <p className="text-muted-foreground text-center text-xs">
+        Total {km(Math.round(totalKm))} over {plan.weeks.length} weeks.
+      </p>
     </div>
   );
 }

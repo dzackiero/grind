@@ -22,16 +22,16 @@ pnpm dev
 
 Without `DATABASE_URL` the app uses an embedded local Postgres (PGlite) stored in `.data/`.
 
-| Variable | What it is |
-|---|---|
-| `DATABASE_URL` | Pooled Postgres URL (Neon). Used by the app. |
-| `DATABASE_URL_UNPOOLED` | Direct Postgres URL. Used by migrations. |
-| `BETTER_AUTH_SECRET` | Random secret, `openssl rand -base64 32`. |
-| `BETTER_AUTH_URL` | The address the app is served from. It is also the OAuth issuer and the base of the MCP address. |
-| `ENCRYPTION_KEY` | 32 random bytes, base64. Encrypts stored intervals.icu API keys. |
-| `RESEND_API_KEY` | Server-only Resend key. Never use a `NEXT_PUBLIC_` prefix. |
-| `EMAIL_FROM` | Sender on a verified Resend domain, e.g. `Grind <noreply@example.com>`. |
-| `CRON_SECRET` | Random secret (at least 32 bytes) authorizing the email cron endpoint. |
+| Variable                | What it is                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`          | Pooled Postgres URL (Neon). Used by the app.                                                     |
+| `DATABASE_URL_UNPOOLED` | Direct Postgres URL. Used by migrations.                                                         |
+| `BETTER_AUTH_SECRET`    | Random secret, `openssl rand -base64 32`.                                                        |
+| `BETTER_AUTH_URL`       | The address the app is served from. It is also the OAuth issuer and the base of the MCP address. |
+| `ENCRYPTION_KEY`        | 32 random bytes, base64. Encrypts stored intervals.icu API keys.                                 |
+| `RESEND_API_KEY`        | Server-only Resend key. Never use a `NEXT_PUBLIC_` prefix.                                       |
+| `EMAIL_FROM`            | Sender on a verified Resend domain, e.g. `Grind <noreply@example.com>`.                          |
+| `CRON_SECRET`           | Random secret (at least 32 bytes) authorizing the email cron endpoint.                           |
 
 ## Account and training emails
 
@@ -55,14 +55,14 @@ To check the sender/key/template safely, run `node --conditions=react-server --i
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `pnpm test` | Unit tests (plan engine, sync, matching, plan edits, auth). |
-| `pnpm typecheck` / `pnpm lint` | Type check and lint. |
-| `pnpm db:generate` / `pnpm db:migrate` | Create and apply Drizzle migrations. |
-| `pnpm plan:sample half` | Print a generated plan. |
-| `pnpm smoke` | End-to-end check of sign-up, plans and workouts against a running app. |
-| `pnpm mcp:smoke` | End-to-end check of the OAuth flow and every MCP tool against a running app. |
+| Command                                | What it does                                                                 |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| `pnpm test`                            | Unit tests (plan engine, sync, matching, plan edits, auth).                  |
+| `pnpm typecheck` / `pnpm lint`         | Type check and lint.                                                         |
+| `pnpm db:generate` / `pnpm db:migrate` | Create and apply Drizzle migrations.                                         |
+| `pnpm plan:sample half`                | Print a generated plan.                                                      |
+| `pnpm smoke`                           | End-to-end check of sign-up, plans and workouts against a running app.       |
+| `pnpm mcp:smoke`                       | End-to-end check of the OAuth flow and every MCP tool against a running app. |
 
 ## CI/CD
 

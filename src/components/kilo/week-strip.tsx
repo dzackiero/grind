@@ -18,13 +18,37 @@ function PlanRing({ value }: { value: number }) {
   return (
     <svg viewBox="0 0 22 22" className="size-[22px]" aria-hidden>
       <circle cx="11" cy="11" r={r} fill="none" strokeWidth="3" className="stroke-secondary" />
-      <circle cx="11" cy="11" r={r} fill="none" strokeWidth="3" strokeLinecap="round" className="stroke-primary" strokeDasharray={`${c * value} ${c}`} transform="rotate(-90 11 11)" />
+      <circle
+        cx="11"
+        cy="11"
+        r={r}
+        fill="none"
+        strokeWidth="3"
+        strokeLinecap="round"
+        className="stroke-primary"
+        strokeDasharray={`${c * value} ${c}`}
+        transform="rotate(-90 11 11)"
+      />
     </svg>
   );
 }
 
 /** Header strip on Today: the plan week, seven days and one dot per workout. Days link to ?date=. */
-export function WeekStrip({ week, totalWeeks, progress, today, selected, additionalCounts = {} }: { week: Week; totalWeeks: number; progress: Progress; today: string; selected: string; additionalCounts?: Record<string, number> }) {
+export function WeekStrip({
+  week,
+  totalWeeks,
+  progress,
+  today,
+  selected,
+  additionalCounts = {},
+}: {
+  week: Week;
+  totalWeeks: number;
+  progress: Progress;
+  today: string;
+  selected: string;
+  additionalCounts?: Record<string, number>;
+}) {
   const router = useRouter();
   const gesture = useRef<{ x: number; y: number; vertical: boolean } | null>(null);
   const suppressClickUntil = useRef(0);
@@ -42,7 +66,10 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected, additio
       onTouchStart={(event) => {
         suppressClickUntil.current = 0;
         const touch = event.touches[0];
-        gesture.current = event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY, vertical: false } : null;
+        gesture.current =
+          event.touches.length === 1
+            ? { x: touch.clientX, y: touch.clientY, vertical: false }
+            : null;
       }}
       onTouchMove={(event) => {
         const start = gesture.current;
@@ -54,7 +81,8 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected, additio
         const dx = event.touches[0].clientX - start.x;
         const dy = event.touches[0].clientY - start.y;
         if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) start.vertical = true;
-        if (!start.vertical && swipeDirection(dx, dy)) suppressClickUntil.current = Date.now() + 500;
+        if (!start.vertical && swipeDirection(dx, dy))
+          suppressClickUntil.current = Date.now() + 500;
       }}
       onTouchEnd={(event) => {
         const start = gesture.current;
@@ -67,7 +95,9 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected, additio
           navigate(direction);
         }
       }}
-      onTouchCancel={() => { gesture.current = null; }}
+      onTouchCancel={() => {
+        gesture.current = null;
+      }}
       onClickCapture={(event) => {
         if (event.detail > 0 && Date.now() < suppressClickUntil.current) {
           event.preventDefault();
@@ -76,25 +106,45 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected, additio
       }}
     >
       <div className="mb-3 flex items-center justify-between text-[15px] font-bold">
-        <button type="button" aria-label="Previous week" disabled={!previous} onClick={() => navigate(-1)} className="grid size-9 place-items-center rounded-md hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default disabled:opacity-30">
+        <button
+          type="button"
+          aria-label="Previous week"
+          disabled={!previous}
+          onClick={() => navigate(-1)}
+          className="grid size-9 place-items-center rounded-md hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default disabled:opacity-30"
+        >
           <ChevronLeft className="size-5" aria-hidden />
         </button>
         <span className="flex items-center gap-2">
           <PlanRing value={week.index / totalWeeks} />
           Week {week.index} / {totalWeeks}
         </span>
-        <button type="button" aria-label="Next week" disabled={!next} onClick={() => navigate(1)} className="grid size-9 place-items-center rounded-md hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default disabled:opacity-30">
+        <button
+          type="button"
+          aria-label="Next week"
+          disabled={!next}
+          onClick={() => navigate(1)}
+          className="grid size-9 place-items-center rounded-md hover:bg-secondary focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-default disabled:opacity-30"
+        >
           <ChevronRight className="size-5" aria-hidden />
         </button>
       </div>
       <ol className="grid grid-cols-7 gap-0.5 text-center">
         {days.map((d) => {
           const workouts = week.workouts.filter((w) => w.date === d);
-          const allDone = workouts.length > 0 && workouts.every((w) => statusOf(progress, w) === "completed");
+          const allDone =
+            workouts.length > 0 && workouts.every((w) => statusOf(progress, w) === "completed");
           return (
             <li key={d}>
-              <Link href={`/today?date=${d}`} scroll={false} className="flex flex-col items-center gap-1.5 rounded-md py-1" aria-current={d === selected ? "date" : undefined}>
-                <span className="text-subtle text-[11px] font-semibold tracking-[0.06em] uppercase">{weekdayShort(d)}</span>
+              <Link
+                href={`/today?date=${d}`}
+                scroll={false}
+                className="flex flex-col items-center gap-1.5 rounded-md py-1"
+                aria-current={d === selected ? "date" : undefined}
+              >
+                <span className="text-subtle text-[11px] font-semibold tracking-[0.06em] uppercase">
+                  {weekdayShort(d)}
+                </span>
                 <span
                   className={cn(
                     "grid size-[34px] place-items-center rounded-full text-[15px] font-bold tabular-nums",
@@ -109,7 +159,14 @@ export function WeekStrip({ week, totalWeeks, progress, today, selected, additio
                   {workouts.slice(0, 3).map((w) => (
                     <TypeDot key={w.id} type={w.type} />
                   ))}
-                  {additionalCounts[d] > 0 && <span role="img" aria-label={`${additionalCounts[d]} recorded outside plan`} title={`${additionalCounts[d]} recorded outside plan`} className="bg-success size-1.5 rounded-full" />}
+                  {additionalCounts[d] > 0 && (
+                    <span
+                      role="img"
+                      aria-label={`${additionalCounts[d]} recorded outside plan`}
+                      title={`${additionalCounts[d]} recorded outside plan`}
+                      className="bg-success size-1.5 rounded-full"
+                    />
+                  )}
                 </span>
               </Link>
             </li>

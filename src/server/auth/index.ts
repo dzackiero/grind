@@ -8,7 +8,9 @@ import { createAuth, type Auth } from "./create-auth";
 const globalForAuth = globalThis as unknown as { kiloAuth?: Promise<Auth> };
 
 export function getAuth(): Promise<Auth> {
-  globalForAuth.kiloAuth ??= getDb().then((db) => createAuth(db, [nextCookies()], (task) => waitUntil(task)));
+  globalForAuth.kiloAuth ??= getDb().then((db) =>
+    createAuth(db, [nextCookies()], (task) => waitUntil(task)),
+  );
   return globalForAuth.kiloAuth;
 }
 

@@ -2,7 +2,12 @@ import { z } from "zod";
 import { requireUser } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { errorResponse } from "@/server/http";
-import { connectIntervals, disconnectIntervals, getIntervalsStatus, syncIntervals } from "@/server/intervals/sync";
+import {
+  connectIntervals,
+  disconnectIntervals,
+  getIntervalsStatus,
+  syncIntervals,
+} from "@/server/intervals/sync";
 import { getTimezone, todayIn } from "@/server/profile/service";
 
 export const runtime = "nodejs";

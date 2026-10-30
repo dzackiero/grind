@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { pointsSummary, tierFor, workoutPoints, WEEK_BONUS, type PointRow } from "./points";
 
-const row = (week: number, status: PointRow["status"], type = "easy", km: number | null = 5, planId = "p1"): PointRow => ({
+const row = (
+  week: number,
+  status: PointRow["status"],
+  type = "easy",
+  km: number | null = 5,
+  planId = "p1",
+): PointRow => ({
   planId,
   weekIndex: week,
   weekStart: `2026-11-${String(2 + (week - 1) * 7).padStart(2, "0")}`,
@@ -19,8 +25,12 @@ describe("workoutPoints", () => {
     expect(workoutPoints({ type: "strength", distanceKm: 99 })).toBe(150);
   });
   it("rewards harder and longer sessions more than easy ones", () => {
-    expect(workoutPoints({ type: "long", distanceKm: 8 })).toBeGreaterThan(workoutPoints({ type: "easy", distanceKm: 8 }));
-    expect(workoutPoints({ type: "race", distanceKm: 21 })).toBeGreaterThan(workoutPoints({ type: "long", distanceKm: 21 }));
+    expect(workoutPoints({ type: "long", distanceKm: 8 })).toBeGreaterThan(
+      workoutPoints({ type: "easy", distanceKm: 8 }),
+    );
+    expect(workoutPoints({ type: "race", distanceKm: 21 })).toBeGreaterThan(
+      workoutPoints({ type: "long", distanceKm: 21 }),
+    );
   });
   it("gives something for a type it doesn't know", () => {
     expect(workoutPoints({ type: "mystery", distanceKm: null })).toBe(100);
@@ -29,12 +39,28 @@ describe("workoutPoints", () => {
 
 describe("pointsSummary", () => {
   it("counts only completed workouts", () => {
-    const s = pointsSummary([row(1, "completed"), row(1, "planned"), row(1, "skipped")], "p1", "2026-11-03");
-    expect(s).toMatchObject({ workoutPoints: 160, bonusPoints: 0, points: 160, completedWorkouts: 1, weeksHit: 0 });
+    const s = pointsSummary(
+      [row(1, "completed"), row(1, "planned"), row(1, "skipped")],
+      "p1",
+      "2026-11-03",
+    );
+    expect(s).toMatchObject({
+      workoutPoints: 160,
+      bonusPoints: 0,
+      points: 160,
+      completedWorkouts: 1,
+      weeksHit: 0,
+    });
   });
 
   it("adds a bonus for each week with at least 80% done", () => {
-    const week1 = [row(1, "completed"), row(1, "completed"), row(1, "completed"), row(1, "completed"), row(1, "planned")]; // 4 of 5 = 80%
+    const week1 = [
+      row(1, "completed"),
+      row(1, "completed"),
+      row(1, "completed"),
+      row(1, "completed"),
+      row(1, "planned"),
+    ]; // 4 of 5 = 80%
     const week2 = [row(2, "completed"), row(2, "planned")]; // 50%
     const s = pointsSummary([...week1, ...week2], "p1", "2026-11-20");
     expect(s.weeksHit).toBe(1);
@@ -43,7 +69,11 @@ describe("pointsSummary", () => {
   });
 
   it("counts points from earlier plans too", () => {
-    const s = pointsSummary([row(1, "completed", "easy", 5, "old"), row(1, "completed", "easy", 5, "p1")], "p1", "2026-11-03");
+    const s = pointsSummary(
+      [row(1, "completed", "easy", 5, "old"), row(1, "completed", "easy", 5, "p1")],
+      "p1",
+      "2026-11-03",
+    );
     expect(s.completedWorkouts).toBe(2);
   });
 
@@ -53,22 +83,36 @@ describe("pointsSummary", () => {
 
     it("counts finished weeks in a row", () => {
       // Weeks 1-3 start Nov 2, 9, 16 and end Nov 8, 15, 22
-      expect(pointsSummary([...hitWeek(1), ...hitWeek(2), ...hitWeek(3)], "p1", "2026-11-23").streak).toBe(3);
+      expect(
+        pointsSummary([...hitWeek(1), ...hitWeek(2), ...hitWeek(3)], "p1", "2026-11-23").streak,
+      ).toBe(3);
     });
     it("stops at the first miss, counting back from the latest finished week", () => {
-      expect(pointsSummary([...hitWeek(1), ...missWeek(2), ...hitWeek(3)], "p1", "2026-11-23").streak).toBe(1);
-      expect(pointsSummary([...hitWeek(1), ...hitWeek(2), ...missWeek(3)], "p1", "2026-11-23").streak).toBe(0);
+      expect(
+        pointsSummary([...hitWeek(1), ...missWeek(2), ...hitWeek(3)], "p1", "2026-11-23").streak,
+      ).toBe(1);
+      expect(
+        pointsSummary([...hitWeek(1), ...hitWeek(2), ...missWeek(3)], "p1", "2026-11-23").streak,
+      ).toBe(0);
     });
     it("doesn't let the week in progress break it", () => {
       // Today is Wednesday Nov 18, inside week 3 (Nov 16-22), which is barely started
-      const s = pointsSummary([...hitWeek(1), ...hitWeek(2), row(3, "planned"), row(3, "planned")], "p1", "2026-11-18");
+      const s = pointsSummary(
+        [...hitWeek(1), ...hitWeek(2), row(3, "planned"), row(3, "planned")],
+        "p1",
+        "2026-11-18",
+      );
       expect(s.streak).toBe(2);
     });
     it("only follows the active plan", () => {
       expect(pointsSummary([...hitWeek(1), ...hitWeek(2)], "another", "2026-11-23").streak).toBe(0);
     });
     it("is zero with no plan", () => {
-      expect(pointsSummary([], null, "2026-11-23")).toMatchObject({ points: 0, streak: 0, weeksHit: 0 });
+      expect(pointsSummary([], null, "2026-11-23")).toMatchObject({
+        points: 0,
+        streak: 0,
+        weeksHit: 0,
+      });
     });
   });
 });

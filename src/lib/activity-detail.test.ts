@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { analyseElevation, analysePace, buildRoute, computeSplits, gradeFactor, stepsPerMinute } from "./activity-detail";
+import {
+  analyseElevation,
+  analysePace,
+  buildRoute,
+  computeSplits,
+  gradeFactor,
+  stepsPerMinute,
+} from "./activity-detail";
 
 /** One sample per second at a constant speed given as seconds per km. */
 function steady(totalKm: number, paceSec: number) {
@@ -27,7 +34,9 @@ describe("computeSplits", () => {
   it("reports faster splits as a positive gain", () => {
     const time = Array.from({ length: 1001 }, (_, i) => i);
     // First km at 6:00/km, second at 5:00/km
-    const distance = time.map((t) => (t <= 360 ? (t * 1000) / 360 : 1000 + ((t - 360) * 1000) / 300));
+    const distance = time.map((t) =>
+      t <= 360 ? (t * 1000) / 360 : 1000 + ((t - 360) * 1000) / 300,
+    );
     const splits = computeSplits({ time, distance });
     expect(splits[1].gainSec).toBeCloseTo(60, 0);
   });
@@ -84,7 +93,9 @@ describe("analysePace", () => {
 
   it("finds the fastest stretch", () => {
     const time = Array.from({ length: 801 }, (_, i) => i);
-    const distance = time.map((t) => (t <= 400 ? (t * 1000) / 400 : 1000 + ((t - 400) * 1000) / 200));
+    const distance = time.map((t) =>
+      t <= 400 ? (t * 1000) / 400 : 1000 + ((t - 400) * 1000) / 200,
+    );
     const result = analysePace({ time, distance, altitude: null, grade: null });
     expect(result.maxPaceSec!).toBeLessThan(260);
   });
@@ -101,13 +112,20 @@ describe("analyseElevation", () => {
   });
 
   it("is empty without altitude", () => {
-    expect(analyseElevation({ ...steady(1, 360), altitude: null })).toEqual({ series: [], maxM: null });
+    expect(analyseElevation({ ...steady(1, 360), altitude: null })).toEqual({
+      series: [],
+      maxM: null,
+    });
   });
 });
 
 describe("buildRoute", () => {
   it("draws a path inside a 0–100 box", () => {
-    const route = buildRoute([[-6.37, 106.96], [-6.368, 106.961], [-6.366, 106.96]])!;
+    const route = buildRoute([
+      [-6.37, 106.96],
+      [-6.368, 106.961],
+      [-6.366, 106.96],
+    ])!;
     expect(route.path.startsWith("M")).toBe(true);
     const numbers = route.path.match(/-?\d+(\.\d+)?/g)!.map(Number);
     expect(Math.min(...numbers)).toBeGreaterThanOrEqual(0);

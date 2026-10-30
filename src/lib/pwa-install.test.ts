@@ -29,10 +29,14 @@ describe("PWA install lifecycle", () => {
     const { pwaInstall } = await import("./pwa-install");
     const stop = pwaInstall.start();
     let calls = 0;
-    browser.dispatchEvent(Object.assign(new Event("beforeinstallprompt"), {
-      prompt: async () => { calls++; },
-      userChoice: Promise.resolve({ outcome: "dismissed" }),
-    }));
+    browser.dispatchEvent(
+      Object.assign(new Event("beforeinstallprompt"), {
+        prompt: async () => {
+          calls++;
+        },
+        userChoice: Promise.resolve({ outcome: "dismissed" }),
+      }),
+    );
     await Promise.all([pwaInstall.install(), pwaInstall.install()]);
     expect(calls).toBe(1);
     expect(pwaInstall.getSnapshot()).toEqual({ prompt: null, installed: false });
@@ -42,7 +46,9 @@ describe("PWA install lifecycle", () => {
   it("notifies subscribers and clears a pending prompt when installed", async () => {
     const { pwaInstall } = await import("./pwa-install");
     const stop = pwaInstall.start();
-    browser.dispatchEvent(Object.assign(new Event("beforeinstallprompt"), { prompt: async () => {} }));
+    browser.dispatchEvent(
+      Object.assign(new Event("beforeinstallprompt"), { prompt: async () => {} }),
+    );
     const snapshots: unknown[] = [];
     const unsubscribe = pwaInstall.subscribe(() => snapshots.push(pwaInstall.getSnapshot()));
     browser.dispatchEvent(new Event("appinstalled"));
@@ -62,10 +68,14 @@ describe("PWA install lifecycle", () => {
   it("clears a rejected prompt without an unhandled error", async () => {
     const { pwaInstall } = await import("./pwa-install");
     const stop = pwaInstall.start();
-    browser.dispatchEvent(Object.assign(new Event("beforeinstallprompt"), {
-      prompt: async () => { throw new Error("Prompt unavailable"); },
-      userChoice: Promise.resolve({ outcome: "dismissed" }),
-    }));
+    browser.dispatchEvent(
+      Object.assign(new Event("beforeinstallprompt"), {
+        prompt: async () => {
+          throw new Error("Prompt unavailable");
+        },
+        userChoice: Promise.resolve({ outcome: "dismissed" }),
+      }),
+    );
     await expect(pwaInstall.install()).resolves.toBeUndefined();
     expect(pwaInstall.getSnapshot().prompt).toBeNull();
     stop();

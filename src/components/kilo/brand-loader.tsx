@@ -5,6 +5,14 @@ import { GrindMark } from "./grind-mark";
  * opening screen of the installed app. No text on purpose, like the icon the system shows just before it.
  * Motion stops for people who ask for less of it (prefers-reduced-motion); the mark then simply sits there.
  */
-export function BrandLoader({ size = 56, className, label = "Loading" }: { size?: number; className?: string; label?: string }) {
+export function BrandLoader({
+  size = 56,
+  className,
+  label = "Loading",
+}: {
+  size?: number;
+  className?: string;
+  label?: string;
+}) {
   return <GrindMark animated size={size} label={label || undefined} className={className} />;
 }

@@ -24,12 +24,17 @@ export function CheckRunsButton({ pending }: { pending: number }) {
             toast.error(body?.error ?? "Couldn't check your runs. Try again.");
             return;
           }
-          toast.success(body.recordsPending ? `Checked ${body.recordsChecked} runs. ${body.recordsPending} to go.` : "All your runs are checked.");
+          toast.success(
+            body.recordsPending
+              ? `Checked ${body.recordsChecked} runs. ${body.recordsPending} to go.`
+              : "All your runs are checked.",
+          );
           router.refresh();
         })
       }
     >
-      <RefreshCw className={busy ? "animate-spin" : undefined} /> {busy ? "Checking…" : `Check ${pending} older ${pending === 1 ? "run" : "runs"}`}
+      <RefreshCw className={busy ? "animate-spin" : undefined} />{" "}
+      {busy ? "Checking…" : `Check ${pending} older ${pending === 1 ? "run" : "runs"}`}
     </Button>
   );
 }

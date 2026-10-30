@@ -20,7 +20,10 @@ export function readUnsubscribeToken(token: string): { userId: string; kind: Wee
     const actual = Buffer.from(sig);
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return null;
     const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (typeof data.userId !== "string" || !["weekly-recap", "weekly-preview"].includes(data.kind)) return null;
+    if (typeof data.userId !== "string" || !["weekly-recap", "weekly-preview"].includes(data.kind))
+      return null;
     return data;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

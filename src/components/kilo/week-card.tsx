@@ -54,12 +54,20 @@ export function WeekCard({
             const done = statusOf(progress, w) === "completed";
             return (
               <li key={w.id}>
-                <Link href={`/workouts/${encodeURIComponent(w.id)}`} className="hover:bg-accent -mx-2 grid grid-cols-[14px_36px_1fr_auto] items-center gap-3 rounded-md px-2 py-1 text-sm">
+                <Link
+                  href={`/workouts/${encodeURIComponent(w.id)}`}
+                  className="hover:bg-accent -mx-2 grid grid-cols-[14px_36px_1fr_auto] items-center gap-3 rounded-md px-2 py-1 text-sm"
+                >
                   <TypeTag type={w.type} />
                   <span className="text-subtle text-[13px]">{weekdayShort(w.date)}</span>
                   <span className={cn(done && "text-muted-foreground line-through decoration-1")}>
                     {w.title}
-                    {w.kind === "strength" && <span className="text-muted-foreground"> · {w.durationMin.join("–")} min</span>}
+                    {w.kind === "strength" && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · {w.durationMin.join("–")} min
+                      </span>
+                    )}
                   </span>
                   {done ? <Check className="text-success size-4" aria-label="Done" /> : <span />}
                 </Link>

@@ -3,7 +3,18 @@ import { z } from "zod";
 import type { DB } from "../db/client";
 
 export type HistoryFilters = { type?: string; year?: number; month?: number; page?: number };
-export type HistoryEntry = { id: string; date: string; startLocal: string | null; type: string; kind: string; title: string; historyTitle: string | null; focus: string | null; distanceM: number | null; movingTimeSec: number | null };
+export type HistoryEntry = {
+  id: string;
+  date: string;
+  startLocal: string | null;
+  type: string;
+  kind: string;
+  title: string;
+  historyTitle: string | null;
+  focus: string | null;
+  distanceM: number | null;
+  movingTimeSec: number | null;
+};
 export type MonthTotals = { count: number; distanceM: number; movingTimeSec: number };
 const PAGE_SIZE = 50;
 
@@ -18,7 +29,9 @@ function historySource(userId: string, onlyAdditional = false) {
     LEFT JOIN workout_activity wa ON wa.user_id = a.user_id AND wa.activity_id = a.id
     LEFT JOIN historical_workout h ON h.id = wa.history_id AND h.user_id = a.user_id
     WHERE a.user_id = ${userId}
-    ${onlyAdditional ? sql`AND NOT EXISTS (
+    ${
+      onlyAdditional
+        ? sql`AND NOT EXISTS (
       SELECT 1 FROM planned_workout pw
       JOIN plan p ON p.id = pw.plan_id AND p.user_id = pw.user_id AND p.status = 'active'
       WHERE pw.user_id = a.user_id AND pw.date = a.date AND (
@@ -33,7 +46,9 @@ function historySource(userId: string, onlyAdditional = false) {
           )
         )
       )
-    )` : sql``}
+    )`
+        : sql``
+    }
     UNION ALL
     SELECT 'history:' || h.id::text, h.date, NULL::text, h.kind, h.kind, h.title, NULL::text, h.focus, NULL::real, NULL::integer
     FROM historical_workout h
@@ -46,7 +61,12 @@ function historySource(userId: string, onlyAdditional = false) {
  * Includes every activity type and manual history; archived/different-date links
  * must not hide an activity. Read-only: displaying an activity never completes a plan workout.
  */
-export async function listAdditionalTraining(db: DB, userId: string, from: string, to: string): Promise<HistoryEntry[]> {
+export async function listAdditionalTraining(
+  db: DB,
+  userId: string,
+  from: string,
+  to: string,
+): Promise<HistoryEntry[]> {
   z.iso.date().parse(from);
   z.iso.date().parse(to);
   if (from > to) throw new RangeError("Invalid date range.");
@@ -61,21 +81,41 @@ export async function listAdditionalTraining(db: DB, userId: string, from: strin
 
 /** Returns at most one page of the viewer's history, without loading activity payloads. */
 export async function listWorkoutHistory(db: DB, userId: string, filters: HistoryFilters) {
-  const page = Number.isFinite(filters.page) ? Math.min(10000, Math.max(1, Math.trunc(filters.page!))) : 1;
+  const page = Number.isFinite(filters.page)
+    ? Math.min(10000, Math.max(1, Math.trunc(filters.page!)))
+    : 1;
   const type = ["run", "strength", "other"].includes(filters.type || "") ? filters.type : undefined;
-  const year = filters.year && filters.year >= 1900 && filters.year <= 9999 ? Math.trunc(filters.year) : undefined;
-  const month = filters.month && filters.month >= 1 && filters.month <= 12 ? Math.trunc(filters.month) : undefined;
+  const year =
+    filters.year && filters.year >= 1900 && filters.year <= 9999
+      ? Math.trunc(filters.year)
+      : undefined;
+  const month =
+    filters.month && filters.month >= 1 && filters.month <= 12
+      ? Math.trunc(filters.month)
+      : undefined;
   const source = historySource(userId);
   const condition = sql`WHERE 1=1 ${type ? sql`AND kind = ${type}` : sql``} ${year ? sql`AND EXTRACT(YEAR FROM date) = ${year}` : sql``} ${month ? sql`AND EXTRACT(MONTH FROM date) = ${month}` : sql``}`;
   const [result, yearsResult, totalsResult] = await Promise.all([
-    db.execute(sql`SELECT id, to_char(date, 'YYYY-MM-DD') AS date, "startLocal", type, kind, title, "historyTitle", focus, "distanceM", "movingTimeSec" FROM (${source}) entries ${condition} ORDER BY date DESC, "startLocal" DESC NULLS LAST, id DESC LIMIT ${PAGE_SIZE + 1} OFFSET ${(page - 1) * PAGE_SIZE}`),
-    db.execute(sql`SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM (${source}) entries ORDER BY year DESC`),
+    db.execute(
+      sql`SELECT id, to_char(date, 'YYYY-MM-DD') AS date, "startLocal", type, kind, title, "historyTitle", focus, "distanceM", "movingTimeSec" FROM (${source}) entries ${condition} ORDER BY date DESC, "startLocal" DESC NULLS LAST, id DESC LIMIT ${PAGE_SIZE + 1} OFFSET ${(page - 1) * PAGE_SIZE}`,
+    ),
+    db.execute(
+      sql`SELECT DISTINCT EXTRACT(YEAR FROM date)::integer AS year FROM (${source}) entries ORDER BY year DESC`,
+    ),
     // Month totals cover every matching entry, not only the current page
-    db.execute(sql`SELECT to_char(date, 'YYYY-MM') AS month, COUNT(*)::integer AS count, COALESCE(SUM("distanceM"), 0)::float AS "distanceM", COALESCE(SUM("movingTimeSec"), 0)::float AS "movingTimeSec" FROM (${source}) entries ${condition} GROUP BY 1`),
+    db.execute(
+      sql`SELECT to_char(date, 'YYYY-MM') AS month, COUNT(*)::integer AS count, COALESCE(SUM("distanceM"), 0)::float AS "distanceM", COALESCE(SUM("movingTimeSec"), 0)::float AS "movingTimeSec" FROM (${source}) entries ${condition} GROUP BY 1`,
+    ),
   ]);
   const rows = (result as { rows: HistoryEntry[] }).rows;
   const totals: Record<string, MonthTotals> = {};
-  for (const r of (totalsResult as { rows: (MonthTotals & { month: string })[] }).rows) totals[r.month] = { count: r.count, distanceM: r.distanceM, movingTimeSec: r.movingTimeSec };
-  return { entries: rows.slice(0, PAGE_SIZE), hasNext: rows.length > PAGE_SIZE, page, years: (yearsResult as { rows: { year: number }[] }).rows.map((r) => r.year), totals };
+  for (const r of (totalsResult as { rows: (MonthTotals & { month: string })[] }).rows)
+    totals[r.month] = { count: r.count, distanceM: r.distanceM, movingTimeSec: r.movingTimeSec };
+  return {
+    entries: rows.slice(0, PAGE_SIZE),
+    hasNext: rows.length > PAGE_SIZE,
+    page,
+    years: (yearsResult as { rows: { year: number }[] }).rows.map((r) => r.year),
+    totals,
+  };
 }
-

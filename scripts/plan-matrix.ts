@@ -29,11 +29,18 @@ for (const goal of ["5k", "10k", "half", "marathon"] as const)
         });
         plans++;
         const r = validatePlan(plan);
-        for (const i of [...r.errors, ...r.warnings]) counts.set(`${i.severity} ${i.code}`, (counts.get(`${i.severity} ${i.code}`) ?? 0) + 1);
+        for (const i of [...r.errors, ...r.warnings])
+          counts.set(`${i.severity} ${i.code}`, (counts.get(`${i.severity} ${i.code}`) ?? 0) + 1);
         if (intensity === "balanced" && runDays.length === 4) {
           const km = Math.max(...plan.weeks.slice(0, -1).map((w) => w.targetKm));
-          const long = Math.max(...plan.weeks.flatMap((w) => w.workouts).map((w) => (w.kind === "run" && w.type === "long" ? w.distanceKm : 0)));
-          peaks.push(`${goal.padEnd(8)} ${experience.padEnd(12)} peak ${km} km/week · longest ${long} km`);
+          const long = Math.max(
+            ...plan.weeks
+              .flatMap((w) => w.workouts)
+              .map((w) => (w.kind === "run" && w.type === "long" ? w.distanceKm : 0)),
+          );
+          peaks.push(
+            `${goal.padEnd(8)} ${experience.padEnd(12)} peak ${km} km/week · longest ${long} km`,
+          );
         }
       }
 

@@ -16,7 +16,10 @@ export default defineConfig({
   },
   triggers: {
     "email-every-15-minutes": {
-      type: "schedule", function: "emailcron", functionPath: "/cron", cron: "*/15 * * * *",
+      type: "schedule",
+      function: "emailcron",
+      functionPath: "/cron",
+      cron: "*/15 * * * *",
       // Dev/preview and ordinary deploys stay disabled; enable only after a
       // production endpoint readiness check with matching CRON_SECRET.
       enabled: process.env.EMAIL_CRON_ENABLED === "true",
