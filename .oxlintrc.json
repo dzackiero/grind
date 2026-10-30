@@ -858,6 +858,10 @@
   },
   "overrides": [
     {
+      "files": ["src/lib/pwa-mark.tsx", "src/components/ui/chart.tsx"],
+      "rules": { "shadcn/no-inline-styles": "off" }
+    },
+    {
       "files": ["**/*.{ts,tsx,mts}"],
       "rules": {
         "constructor-super": "off",

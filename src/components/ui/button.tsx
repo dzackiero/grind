@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Slot } from "radix-ui";
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -16,6 +16,8 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-accent-ink underline-offset-4 hover:underline",
+        "ghost-destructive":
+          "text-destructive hover:bg-accent hover:text-destructive dark:hover:bg-accent/50",
       },
       size: {
         default: "h-11 px-5 py-2 has-[>svg]:px-4",
@@ -27,10 +29,21 @@ const buttonVariants = cva(
         "icon-sm": "size-8",
         "icon-lg": "size-10",
       },
+      justify: {
+        center: "justify-center",
+        between: "justify-between",
+      },
+      width: {
+        auto: "",
+        full: "w-full",
+        fill: "flex-1",
+      },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      justify: "center",
+      width: "auto",
     },
   },
 );
@@ -39,6 +52,8 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  justify = "center",
+  width = "auto",
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -52,7 +67,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, justify, width, className }))}
       {...props}
     />
   );

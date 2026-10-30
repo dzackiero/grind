@@ -22,11 +22,16 @@ function ToggleGroup({
   variant,
   size,
   spacing = 0,
+  width = "fit",
+  wrap = false,
   children,
   ...props
 }: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
   VariantProps<typeof toggleVariants> & {
     spacing?: number;
+    /** "full" stretches the group across its parent and shares the width between the items. */
+    width?: "fit" | "full";
+    wrap?: boolean;
   }) {
   return (
     <ToggleGroupPrimitive.Root
@@ -34,9 +39,12 @@ function ToggleGroup({
       data-variant={variant}
       data-size={size}
       data-spacing={spacing}
-      style={{ "--gap": spacing } as React.CSSProperties}
+      data-width={width}
+      style={{ "--gap": `calc(var(--spacing) * ${spacing})` } as React.CSSProperties}
       className={cn(
-        "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
+        "group/toggle-group flex items-center gap-(--gap) rounded-md data-[spacing=default]:data-[variant^=outline]:shadow-xs",
+        width === "full" ? "w-full" : "w-fit",
+        wrap && "flex-wrap",
         className,
       )}
       {...props}
@@ -68,8 +76,8 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
-        "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10",
-        "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
+        "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10 group-data-[width=full]/toggle-group:flex-1 group-data-[width=full]/toggle-group:px-0",
+        "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant^=outline]:border-l-0 data-[spacing=0]:data-[variant^=outline]:first:border-l",
         className,
       )}
       {...props}
