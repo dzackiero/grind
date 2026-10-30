@@ -850,11 +850,11 @@
     "typescript/prefer-namespace-keyword": "error",
     "typescript/triple-slash-reference": "error",
     "nextjs/no-html-link-for-pages": "off",
-    "shadcn/no-restyle": "warn",
-    "shadcn/no-raw-colors": "warn",
-    "shadcn/no-arbitrary-values": "warn",
-    "shadcn/no-inline-styles": "warn",
-    "shadcn/no-unknown-classes": "warn"
+    "shadcn/no-restyle": "error",
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-arbitrary-values": "error",
+    "shadcn/no-inline-styles": "error",
+    "shadcn/no-unknown-classes": "error"
   },
   "overrides": [
     {
