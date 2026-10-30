@@ -49,6 +49,11 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Require the production database secret
+        # Without it db-migrate.mts falls back to the embedded local database and "succeeds" without touching production
+        run: test -n "$DATABASE_URL_UNPOOLED" || { echo "::error::Secret DATABASE_URL_UNPOOLED is not set in the production environment"; exit 1; }
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
       - run: pnpm db:migrate
         env:
           # Direct (unpooled) Neon connection string; migrations need session state the pooler doesn't keep
