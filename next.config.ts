@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   // A stray pnpm-lock.yaml in the home folder makes Next guess the wrong root
@@ -14,6 +15,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      { source: "/:path*", headers: securityHeaders(process.env.NODE_ENV !== "production") },
       {
         // The service worker must never be served from a long-lived cache, or updates would not reach devices
         source: "/sw.js",
