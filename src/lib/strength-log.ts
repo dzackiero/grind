@@ -28,8 +28,14 @@ export type SetInput = z.infer<typeof SetInputSchema>;
 
 export const ExerciseSetsSchema = z.object({
   exerciseId: z.string().trim().min(1).max(60),
-  exerciseName: z.string().trim().min(1, "Give the exercise a name.").max(60, "Keep the name under 60 characters."),
-  sets: z.array(SetInputSchema).max(MAX_SETS_PER_EXERCISE, `Up to ${MAX_SETS_PER_EXERCISE} sets per exercise.`),
+  exerciseName: z
+    .string()
+    .trim()
+    .min(1, "Give the exercise a name.")
+    .max(60, "Keep the name under 60 characters."),
+  sets: z
+    .array(SetInputSchema)
+    .max(MAX_SETS_PER_EXERCISE, `Up to ${MAX_SETS_PER_EXERCISE} sets per exercise.`),
 });
 export type ExerciseSetsInput = z.infer<typeof ExerciseSetsSchema>;
 
@@ -84,11 +90,17 @@ export interface LastTime {
 export function startingRows(planned: PlannedAmount, last?: LastTime | null): SetRow[] {
   const timed = planned.durationSec !== undefined && planned.reps === undefined;
   const plannedAmount = timed ? planned.durationSec : planned.reps;
-  const lastWeights = (last?.sets ?? []).map((s) => s.weightKg).filter((w): w is number => w != null);
+  const lastWeights = (last?.sets ?? [])
+    .map((s) => s.weightKg)
+    .filter((w): w is number => w != null);
   const heaviest = lastWeights.length ? Math.max(...lastWeights) : null;
   return Array.from({ length: planned.sets }, (_, i) => {
     const weight = last?.sets[i]?.weightKg ?? heaviest;
-    return { weight: formatWeight(weight), amount: plannedAmount !== undefined ? String(plannedAmount) : "", done: false };
+    return {
+      weight: formatWeight(weight),
+      amount: plannedAmount !== undefined ? String(plannedAmount) : "",
+      done: false,
+    };
   });
 }
 
@@ -96,7 +108,11 @@ export function startingRows(planned: PlannedAmount, last?: LastTime | null): Se
 export function rowsFromLogged(sets: LoggedSet[], timed: boolean): SetRow[] {
   return [...sets]
     .sort((a, b) => a.position - b.position)
-    .map((s) => ({ weight: formatWeight(s.weightKg), amount: String(timed ? (s.seconds ?? "") : (s.reps ?? "")), done: s.done }));
+    .map((s) => ({
+      weight: formatWeight(s.weightKg),
+      amount: String(timed ? (s.seconds ?? "") : (s.reps ?? "")),
+      done: s.done,
+    }));
 }
 
 /** Rows ready to save. */
@@ -124,30 +140,40 @@ export interface ExerciseSummary {
   topSet: { weightKg: number; reps: number | null } | null;
 }
 
-export function summariseExercise(sets: { reps: number | null; weightKg: number | null; done: boolean }[]): ExerciseSummary {
+export function summariseExercise(
+  sets: { reps: number | null; weightKg: number | null; done: boolean }[],
+): ExerciseSummary {
   const done = sets.filter((s) => s.done);
   let top: ExerciseSummary["topSet"] = null;
   for (const s of done) {
     if (s.weightKg == null || s.weightKg <= 0) continue;
-    if (!top || s.weightKg > top.weightKg || (s.weightKg === top.weightKg && (s.reps ?? 0) > (top.reps ?? 0))) top = { weightKg: s.weightKg, reps: s.reps };
+    if (
+      !top ||
+      s.weightKg > top.weightKg ||
+      (s.weightKg === top.weightKg && (s.reps ?? 0) > (top.reps ?? 0))
+    )
+      top = { weightKg: s.weightKg, reps: s.reps };
   }
   return {
     setsDone: done.length,
     setsTotal: sets.length,
-    volumeKg: Math.round(done.reduce((sum, s) => sum + (s.weightKg ?? 0) * (s.reps ?? 0), 0) * 10) / 10,
+    volumeKg:
+      Math.round(done.reduce((sum, s) => sum + (s.weightKg ?? 0) * (s.reps ?? 0), 0) * 10) / 10,
     topSet: top,
   };
 }
 
 type LastSet = LastTime["sets"][number];
 
-const isTimed = (last: LastTime) => last.sets.every((s) => s.reps == null) && last.sets.some((s) => s.seconds != null);
+const isTimed = (last: LastTime) =>
+  last.sets.every((s) => s.reps == null) && last.sets.some((s) => s.seconds != null);
 
 /** One set from last time, short enough for a table cell: "32.5 × 8", "× 12" without a weight, "45 s" for a hold. */
 export function lastSetText(set: LastSet | undefined): string {
   if (!set) return "–";
   const weight = set.weightKg != null && set.weightKg > 0 ? formatWeight(set.weightKg) : null;
-  if (set.reps == null && set.seconds != null) return weight ? `${weight} × ${set.seconds} s` : `${set.seconds} s`;
+  if (set.reps == null && set.seconds != null)
+    return weight ? `${weight} × ${set.seconds} s` : `${set.seconds} s`;
   if (set.reps == null) return weight ?? "–";
   return weight ? `${weight} × ${set.reps}` : `× ${set.reps}`;
 }

@@ -23,7 +23,10 @@ export async function createDb(url: string | undefined): Promise<DB> {
   }
   // The embedded database is for local development and tests. On Vercel its disk is read-only, so a missing or
   // malformed DATABASE_URL (for example one wrapped in quotes) must be an error that says so.
-  if (process.env.VERCEL) throw new Error("DATABASE_URL is missing or isn't a postgres:// address. Check it in the Vercel project's environment variables.");
+  if (process.env.VERCEL)
+    throw new Error(
+      "DATABASE_URL is missing or isn't a postgres:// address. Check it in the Vercel project's environment variables.",
+    );
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const { migrate } = await import("drizzle-orm/pglite/migrator");

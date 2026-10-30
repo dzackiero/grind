@@ -13,7 +13,11 @@ export default async function OnboardingPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 py-6">
       <Logo />
-      <OnboardingForm firstName={user.name.split(" ")[0]} guestName={user.isAnonymous ? (user.name === "Guest" ? "" : user.name) : null} hasPlan={!!existing} />
+      <OnboardingForm
+        firstName={user.name.split(" ")[0]}
+        guestName={user.isAnonymous ? (user.name === "Guest" ? "" : user.name) : null}
+        hasPlan={!!existing}
+      />
     </main>
   );
 }

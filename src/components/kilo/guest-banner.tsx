@@ -15,13 +15,20 @@ function subscribe(callback: () => void) {
 
 /** Reminds guests that their account only lives in this browser. Dismissing hides it for a few days. */
 export function GuestBanner() {
-  const hiddenUntil = useSyncExternalStore(subscribe, () => localStorage.getItem(KEY), () => "pending");
+  const hiddenUntil = useSyncExternalStore(
+    subscribe,
+    () => localStorage.getItem(KEY),
+    () => "pending",
+  );
   if (hiddenUntil === "pending" || Number(hiddenUntil) > Date.now()) return null;
   return (
     <div className="bg-card flex items-start gap-3 rounded-xl border p-4">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-semibold">Save your progress</p>
-        <p className="text-muted-foreground text-sm">You&apos;re on a guest account that only lives in this browser. Add an email and password to keep your plan and log on any device.</p>
+        <p className="text-muted-foreground text-sm">
+          You&apos;re on a guest account that only lives in this browser. Add an email and password
+          to keep your plan and log on any device.
+        </p>
         <Link href="/settings#save-account" className="text-accent-ink text-sm font-semibold">
           Save my account
         </Link>

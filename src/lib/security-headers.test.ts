@@ -7,11 +7,22 @@ describe("security headers", () => {
     const rules = await nextConfig.headers!();
     const all = rules.find((rule) => rule.source === "/:path*")!;
     const keys = all.headers.map((header) => header.key);
-    for (const key of ["Content-Security-Policy", "X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy", "Permissions-Policy", "Strict-Transport-Security"]) {
+    for (const key of [
+      "Content-Security-Policy",
+      "X-Content-Type-Options",
+      "X-Frame-Options",
+      "Referrer-Policy",
+      "Permissions-Policy",
+      "Strict-Transport-Security",
+    ]) {
       expect(keys).toContain(key);
     }
     const sw = rules.find((rule) => rule.source === "/sw.js")!;
-    expect(sw.headers.map((header) => header.key)).toEqual(["Content-Type", "Cache-Control", "Service-Worker-Allowed"]);
+    expect(sw.headers.map((header) => header.key)).toEqual([
+      "Content-Type",
+      "Cache-Control",
+      "Service-Worker-Allowed",
+    ]);
   });
 
   it("forbids framing and plugins and keeps everything on our own origin", () => {

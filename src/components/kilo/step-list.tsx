@@ -14,7 +14,8 @@ const STEP_NAME: Record<SimpleStep["kind"], string> = {
 function stripClass(step: SimpleStep, type: RunWorkout["type"]) {
   if (step.kind === "recovery") return "bg-line-strong";
   const zone = step.target?.zone;
-  if (zone === "E" || step.kind === "warmup" || step.kind === "cooldown") return "bg-type-easy-mark";
+  if (zone === "E" || step.kind === "warmup" || step.kind === "cooldown")
+    return "bg-type-easy-mark";
   if (zone === "M") return "bg-type-long-mark";
   if (zone === "T") return "bg-type-tempo-mark";
   if (zone === "race") return "bg-type-race-mark";
@@ -23,17 +24,38 @@ function stripClass(step: SimpleStep, type: RunWorkout["type"]) {
 }
 
 function describe(step: SimpleStep) {
-  const amount = step.distanceM ? (step.distanceM >= 1000 ? `${+(step.distanceM / 1000).toFixed(2)} km` : `${step.distanceM} m`) : formatDurationShort(step.durationSec ?? 0);
-  const target = step.target?.pace ? `${formatPace(step.target.pace.minSecPerKm)}–${formatPace(step.target.pace.maxSecPerKm)}/km` : (step.target?.effort ?? step.note);
+  const amount = step.distanceM
+    ? step.distanceM >= 1000
+      ? `${+(step.distanceM / 1000).toFixed(2)} km`
+      : `${step.distanceM} m`
+    : formatDurationShort(step.durationSec ?? 0);
+  const target = step.target?.pace
+    ? `${formatPace(step.target.pace.minSecPerKm)}–${formatPace(step.target.pace.maxSecPerKm)}/km`
+    : (step.target?.effort ?? step.note);
   return target ? `${amount} · ${target}` : amount;
 }
 
-function StepRow({ step, type, nested }: { step: SimpleStep; type: RunWorkout["type"]; nested?: boolean }) {
+function StepRow({
+  step,
+  type,
+  nested,
+}: {
+  step: SimpleStep;
+  type: RunWorkout["type"];
+  nested?: boolean;
+}) {
   return (
-    <li className={cn("bg-secondary grid grid-cols-[4px_1fr_auto] items-center gap-3 overflow-hidden rounded-md py-2.5 pr-3", nested && "ml-4")}>
+    <li
+      className={cn(
+        "bg-secondary grid grid-cols-[4px_1fr_auto] items-center gap-3 overflow-hidden rounded-md py-2.5 pr-3",
+        nested && "ml-4",
+      )}
+    >
       <span className={cn("self-stretch -my-2.5", stripClass(step, type))} />
       <span className="font-semibold">{STEP_NAME[step.kind]}</span>
-      <span className="text-muted-foreground text-right font-mono text-[13px] tabular-nums">{describe(step)}</span>
+      <span className="text-muted-foreground text-right font-mono text-[13px] tabular-nums">
+        {describe(step)}
+      </span>
     </li>
   );
 }

@@ -4,7 +4,15 @@ import { describe, expect, it } from "vitest";
 
 const source = readFileSync("public/sw.js", "utf8");
 
-function worker(options: { keys?: string[]; offline?: Response; storageFails?: boolean; storageUnavailable?: boolean; networkFails?: boolean } = {}) {
+function worker(
+  options: {
+    keys?: string[];
+    offline?: Response;
+    storageFails?: boolean;
+    storageUnavailable?: boolean;
+    networkFails?: boolean;
+  } = {},
+) {
   const handlers: Record<string, (event: unknown) => void> = {};
   const deleted: string[] = [];
   const stored: string[] = [];
@@ -16,15 +24,20 @@ function worker(options: { keys?: string[]; offline?: Response; storageFails?: b
     },
   };
   runInNewContext(source, {
-    URL, Response,
+    URL,
+    Response,
     self: {
       location: { origin: "https://kilo.test" },
-      addEventListener: (name: string, handler: (event: unknown) => void) => { handlers[name] = handler; },
+      addEventListener: (name: string, handler: (event: unknown) => void) => {
+        handlers[name] = handler;
+      },
       clients: { claim: async () => {} },
     },
     caches: {
       keys: async () => options.keys ?? [],
-      delete: async (key: string) => { deleted.push(key); },
+      delete: async (key: string) => {
+        deleted.push(key);
+      },
       open: async () => {
         if (options.storageUnavailable) throw new Error("Storage unavailable");
         return cache;
@@ -41,9 +54,15 @@ function worker(options: { keys?: string[]; offline?: Response; storageFails?: b
 
 describe("service worker", () => {
   it("only deletes obsolete Grind caches, including the ones from when the app was called Kilo", async () => {
-    const w = worker({ keys: ["kilo-v2-static", "grind-v1-static", "grind-v2-static", "another-app-cache"] });
+    const w = worker({
+      keys: ["kilo-v2-static", "grind-v1-static", "grind-v2-static", "another-app-cache"],
+    });
     let work: Promise<unknown> = Promise.resolve();
-    w.handlers.activate({ waitUntil: (promise: Promise<unknown>) => { work = promise; } });
+    w.handlers.activate({
+      waitUntil: (promise: Promise<unknown>) => {
+        work = promise;
+      },
+    });
     await work;
     // The current cache (grind-v2-static) stays, and so does anything that isn't ours
     expect(w.deleted).toEqual(["kilo-v2-static", "grind-v1-static"]);
@@ -55,8 +74,12 @@ describe("service worker", () => {
     const work: Promise<unknown>[] = [];
     w.handlers.fetch({
       request: new Request("https://kilo.test/_next/static/chunk.js"),
-      respondWith: (promise: Promise<Response>) => { response = promise; },
-      waitUntil: (promise: Promise<unknown>) => { work.push(promise); },
+      respondWith: (promise: Promise<Response>) => {
+        response = promise;
+      },
+      waitUntil: (promise: Promise<unknown>) => {
+        work.push(promise);
+      },
     });
     expect(await (await response)!.text()).toBe("asset");
     await Promise.all(work);
@@ -67,7 +90,9 @@ describe("service worker", () => {
     let response: Promise<Response> | undefined;
     w.handlers.fetch({
       request: { method: "GET", url: "https://kilo.test/today", mode: "navigate" },
-      respondWith: (promise: Promise<Response>) => { response = promise; },
+      respondWith: (promise: Promise<Response>) => {
+        response = promise;
+      },
     });
     expect((await response)?.status).toBe(503);
   });
@@ -77,7 +102,9 @@ describe("service worker", () => {
     let response: Promise<Response> | undefined;
     w.handlers.fetch({
       request: { method: "GET", url: "https://kilo.test/today", mode: "navigate" },
-      respondWith: (promise: Promise<Response>) => { response = promise; },
+      respondWith: (promise: Promise<Response>) => {
+        response = promise;
+      },
     });
     expect(await (await response)!.text()).toBe("offline page");
   });
@@ -87,7 +114,9 @@ describe("service worker", () => {
     let response: Promise<Response> | undefined;
     w.handlers.fetch({
       request: new Request("https://kilo.test/_next/static/chunk.js"),
-      respondWith: (promise: Promise<Response>) => { response = promise; },
+      respondWith: (promise: Promise<Response>) => {
+        response = promise;
+      },
     });
     expect(await (await response)!.text()).toBe("asset");
   });
@@ -98,8 +127,12 @@ describe("service worker", () => {
     const work: Promise<unknown>[] = [];
     w.handlers.fetch({
       request: new Request("https://kilo.test/_next/static/chunk.js"),
-      respondWith: (promise: Promise<Response>) => { response = promise; },
-      waitUntil: (promise: Promise<unknown>) => { work.push(promise); },
+      respondWith: (promise: Promise<Response>) => {
+        response = promise;
+      },
+      waitUntil: (promise: Promise<unknown>) => {
+        work.push(promise);
+      },
     });
     await response;
     expect(work).toHaveLength(1);
@@ -107,13 +140,18 @@ describe("service worker", () => {
     expect(w.stored).toEqual(["https://kilo.test/_next/static/chunk.js"]);
   });
 
-  it.each(["/api/auth/session", "/today?_rsc=abc", "https://other.test/script.js"])("leaves private data and third-party requests alone: %s", (path) => {
-    const w = worker();
-    let intercepted = false;
-    w.handlers.fetch({
-      request: new Request(new URL(path, "https://kilo.test")),
-      respondWith: () => { intercepted = true; },
-    });
-    expect(intercepted).toBe(false);
-  });
+  it.each(["/api/auth/session", "/today?_rsc=abc", "https://other.test/script.js"])(
+    "leaves private data and third-party requests alone: %s",
+    (path) => {
+      const w = worker();
+      let intercepted = false;
+      w.handlers.fetch({
+        request: new Request(new URL(path, "https://kilo.test")),
+        respondWith: () => {
+          intercepted = true;
+        },
+      });
+      expect(intercepted).toBe(false);
+    },
+  );
 });

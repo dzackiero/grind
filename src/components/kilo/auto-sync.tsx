@@ -6,7 +6,13 @@ import { toast } from "sonner";
 import { createAutoSync } from "@/lib/auto-sync";
 
 /** Keeps intervals.icu data fresh while the app is visible and online. */
-export function AutoSync({ connected, lastSyncedAt }: { connected: boolean; lastSyncedAt: string | null }) {
+export function AutoSync({
+  connected,
+  lastSyncedAt,
+}: {
+  connected: boolean;
+  lastSyncedAt: string | null;
+}) {
   const router = useRouter();
   const controller = useRef<ReturnType<typeof createAutoSync> | null>(null);
   const latestSyncedAt = useRef(lastSyncedAt);
@@ -24,7 +30,10 @@ export function AutoSync({ connected, lastSyncedAt }: { connected: boolean; last
       isOnline: () => navigator.onLine,
       lastSyncedAt: latestSyncedAt.current,
       onSuccess: (body) => {
-        if (body.matched > 0) toast.success(`Synced from intervals.icu: ${body.matched} workout${body.matched === 1 ? "" : "s"} matched.`);
+        if (body.matched > 0)
+          toast.success(
+            `Synced from intervals.icu: ${body.matched} workout${body.matched === 1 ? "" : "s"} matched.`,
+          );
         router.refresh();
       },
     });

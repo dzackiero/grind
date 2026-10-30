@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const result = await upgradeGuest(await getAuth(), await getDb(), user.id, body);
     return Response.json(result);
   } catch (error) {
-    if (error instanceof AccountError) return Response.json({ error: error.message }, { status: error.status });
+    if (error instanceof AccountError)
+      return Response.json({ error: error.message }, { status: error.status });
     return errorResponse(error);
   }
 }

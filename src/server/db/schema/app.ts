@@ -1,5 +1,20 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, date, foreignKey, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  date,
+  foreignKey,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  real,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import type { PaceZones, Plan, PlanInput, Workout } from "@/lib/plan";
 import type { CoachingProfile } from "@/lib/coaching";
 import { user } from "./auth";
@@ -25,7 +40,10 @@ export const athleteProfile = pgTable("athlete_profile", {
   /** Last sync error, shown in Settings until the next successful sync */
   lastSyncError: text("last_sync_error"),
   timezone: text("timezone").notNull().default("UTC"),
-  coaching: jsonb("coaching").$type<CoachingProfile>().notNull().default({ preferences: {}, constraints: {} }),
+  coaching: jsonb("coaching")
+    .$type<CoachingProfile>()
+    .notNull()
+    .default({ preferences: {}, constraints: {} }),
   coachingRevision: integer("coaching_revision").notNull().default(0),
   ...timestamps,
 });
@@ -54,7 +72,10 @@ export const activity = pgTable(
     /** When best efforts were calculated from this run's stream; null until then */
     effortsAt: timestamp("efforts_at", { withTimezone: true }),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.id] }), index("activity_user_date").on(t.userId, t.date)],
+  (t) => [
+    primaryKey({ columns: [t.userId, t.id] }),
+    index("activity_user_date").on(t.userId, t.date),
+  ],
 );
 
 /** Fastest time over a standard distance inside one run (see lib/efforts.ts). Personal records are the best per key. */
@@ -69,7 +90,10 @@ export const activityEffort = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.userId, t.activityId, t.key] }),
-    foreignKey({ columns: [t.userId, t.activityId], foreignColumns: [activity.userId, activity.id] }).onDelete("cascade"),
+    foreignKey({
+      columns: [t.userId, t.activityId],
+      foreignColumns: [activity.userId, activity.id],
+    }).onDelete("cascade"),
     index("activity_effort_best").on(t.userId, t.key, t.seconds),
   ],
 );
@@ -101,7 +125,9 @@ export const plan = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userId(),
-    status: text("status", { enum: ["active", "archived"] }).notNull().default("active"),
+    status: text("status", { enum: ["active", "archived"] })
+      .notNull()
+      .default("active"),
     goal: text("goal", { enum: ["5k", "10k", "half", "marathon"] }).notNull(),
     title: text("title").notNull(),
     raceDate: date("race_date", { mode: "string" }).notNull(),
@@ -110,12 +136,18 @@ export const plan = pgTable(
     source: text("source", { enum: ["template", "coach"] }).notNull(),
     input: jsonb("input").$type<PlanInput>().notNull(),
     paces: jsonb("paces").$type<PaceZones>().notNull(),
-    estimatedRaceTimeSec: jsonb("estimated_race_time_sec").$type<Plan["estimatedRaceTimeSec"]>().notNull(),
+    estimatedRaceTimeSec: jsonb("estimated_race_time_sec")
+      .$type<Plan["estimatedRaceTimeSec"]>()
+      .notNull(),
     /** Bumped on every saved change, so concurrent edits (app vs Claude) can be detected */
     revision: integer("revision").notNull().default(1),
     ...timestamps,
   },
-  (t) => [uniqueIndex("plan_one_active_per_user").on(t.userId).where(sql`${t.status} = 'active'`)],
+  (t) => [
+    uniqueIndex("plan_one_active_per_user")
+      .on(t.userId)
+      .where(sql`${t.status} = 'active'`),
+  ],
 );
 
 export const planWeek = pgTable(
@@ -155,41 +187,65 @@ export const plannedWorkout = pgTable(
     title: text("title").notNull(),
     distanceKm: real("distance_km"),
     data: jsonb("data").$type<Workout>().notNull(),
-    status: text("status", { enum: ["planned", "completed", "skipped"] }).notNull().default("planned"),
+    status: text("status", { enum: ["planned", "completed", "skipped"] })
+      .notNull()
+      .default("planned"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     /** intervals.icu activity matched to this workout */
     activityId: text("activity_id"),
     ...timestamps,
   },
-  (t) => [uniqueIndex("planned_workout_plan_key").on(t.planId, t.workoutKey), index("planned_workout_user_date").on(t.userId, t.date)],
+  (t) => [
+    uniqueIndex("planned_workout_plan_key").on(t.planId, t.workoutKey),
+    index("planned_workout_user_date").on(t.userId, t.date),
+  ],
 );
 
 /** A session the athlete actually did, recorded independently of the training plan. */
-export const historicalWorkout = pgTable("historical_workout", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: userId(),
-  requestKey: text("request_key").notNull(),
-  date: date("date", { mode: "string" }).notNull(),
-  kind: text("kind", { enum: ["run", "strength", "other"] }).notNull(),
-  title: text("title").notNull(),
-  focus: text("focus"),
-  notes: text("notes"),
-  ...timestamps,
-}, (t) => [uniqueIndex("historical_workout_user_request").on(t.userId, t.requestKey), index("historical_workout_user_date").on(t.userId, t.date)]);
+export const historicalWorkout = pgTable(
+  "historical_workout",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userId(),
+    requestKey: text("request_key").notNull(),
+    date: date("date", { mode: "string" }).notNull(),
+    kind: text("kind", { enum: ["run", "strength", "other"] }).notNull(),
+    title: text("title").notNull(),
+    focus: text("focus"),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("historical_workout_user_request").on(t.userId, t.requestKey),
+    index("historical_workout_user_date").on(t.userId, t.date),
+  ],
+);
 
 /** One imported activity may belong to one planned workout or one historical session. */
-export const workoutActivity = pgTable("workout_activity", {
-  userId: userId(),
-  activityId: text("activity_id").notNull(),
-  plannedWorkoutId: uuid("planned_workout_id").references(() => plannedWorkout.id, { onDelete: "cascade" }),
-  historyId: uuid("history_id").references(() => historicalWorkout.id, { onDelete: "cascade" }),
-}, (t) => [
-  primaryKey({ columns: [t.userId, t.activityId] }),
-  foreignKey({ columns: [t.userId, t.activityId], foreignColumns: [activity.userId, activity.id] }).onDelete("cascade"),
-  check("workout_activity_one_target", sql`(${t.plannedWorkoutId} IS NOT NULL) <> (${t.historyId} IS NOT NULL)`),
-  index("workout_activity_planned").on(t.plannedWorkoutId),
-  index("workout_activity_history").on(t.historyId),
-]);
+export const workoutActivity = pgTable(
+  "workout_activity",
+  {
+    userId: userId(),
+    activityId: text("activity_id").notNull(),
+    plannedWorkoutId: uuid("planned_workout_id").references(() => plannedWorkout.id, {
+      onDelete: "cascade",
+    }),
+    historyId: uuid("history_id").references(() => historicalWorkout.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.activityId] }),
+    foreignKey({
+      columns: [t.userId, t.activityId],
+      foreignColumns: [activity.userId, activity.id],
+    }).onDelete("cascade"),
+    check(
+      "workout_activity_one_target",
+      sql`(${t.plannedWorkoutId} IS NOT NULL) <> (${t.historyId} IS NOT NULL)`,
+    ),
+    index("workout_activity_planned").on(t.plannedWorkoutId),
+    index("workout_activity_history").on(t.historyId),
+  ],
+);
 
 /** A small daily habit the athlete ticks off, scheduled on some weekdays. Archived habits keep their history. */
 export const habit = pgTable(
@@ -219,7 +275,10 @@ export const habitLog = pgTable(
     date: date("date", { mode: "string" }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.habitId, t.date] }), index("habit_log_user_date").on(t.userId, t.date)],
+  (t) => [
+    primaryKey({ columns: [t.habitId, t.date] }),
+    index("habit_log_user_date").on(t.userId, t.date),
+  ],
 );
 
 /**
@@ -266,11 +325,15 @@ export const planChange = pgTable(
     source: text("source", { enum: ["coach", "user"] }).notNull(),
     summary: text("summary").notNull(),
     /** Before/after for each touched workout */
-    changes: jsonb("changes").$type<{ workoutKey: string; before: Workout | null; after: Workout | null }[]>().notNull(),
+    changes: jsonb("changes")
+      .$type<{ workoutKey: string; before: Workout | null; after: Workout | null }[]>()
+      .notNull(),
     baseRevision: integer("base_revision"),
     coachingRevision: integer("coaching_revision").notNull().default(0),
     diff: jsonb("diff").$type<Record<string, unknown>>(),
-    status: text("status", { enum: ["proposed", "accepted", "rejected"] }).notNull().default("proposed"),
+    status: text("status", { enum: ["proposed", "accepted", "rejected"] })
+      .notNull()
+      .default("proposed"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   },

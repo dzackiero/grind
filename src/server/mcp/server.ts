@@ -55,7 +55,8 @@ How to work:
 - Completed workouts can't be changed. Race day can't be moved.
 - Speak plainly, like a coach at the track: short sentences, give the reason with the instruction.`;
 
-const paceRange = (p: { minSecPerKm: number; maxSecPerKm: number }) => `${formatPace(p.minSecPerKm)}-${formatPace(p.maxSecPerKm)} /km`;
+const paceRange = (p: { minSecPerKm: number; maxSecPerKm: number }) =>
+  `${formatPace(p.minSecPerKm)}-${formatPace(p.maxSecPerKm)} /km`;
 const round1 = (n: number | null | undefined) => (n == null ? null : Math.round(n * 10) / 10);
 
 export function buildMcpServer({ db, userId, scopes }: McpContext) {
@@ -79,12 +80,20 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       ? {
           km: a.distanceM ? round1(a.distanceM / 1000) : null,
           minutes: a.movingTimeSec ? Math.round(a.movingTimeSec / 60) : null,
-          paceMinPerKm: a.distanceM && a.movingTimeSec ? formatPace(a.movingTimeSec / (a.distanceM / 1000)) : null,
+          paceMinPerKm:
+            a.distanceM && a.movingTimeSec
+              ? formatPace(a.movingTimeSec / (a.distanceM / 1000))
+              : null,
           avgHr: a.avgHr ? Math.round(a.avgHr) : null,
         }
       : undefined;
 
-  const workoutRow = (plan: Plan, w: Plan["weeks"][number]["workouts"][number], progress: Progress, actuals: Awaited<ReturnType<typeof actualsFor>>) => ({
+  const workoutRow = (
+    plan: Plan,
+    w: Plan["weeks"][number]["workouts"][number],
+    progress: Progress,
+    actuals: Awaited<ReturnType<typeof actualsFor>>,
+  ) => ({
     id: w.id,
     date: w.date,
     day: dayLabel(w.date),
@@ -109,10 +118,29 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       async () =>
         guard(async () => {
           const { saved, today } = await load();
-          if (!saved) return fail("The athlete has no active plan yet. They need to build one in the Grind app first.");
+          if (!saved)
+            return fail(
+              "The athlete has no active plan yet. They need to build one in the Grind app first.",
+            );
           const { plan, progress } = saved;
           const actuals = await actualsFor();
-          const real = actualKm(Object.fromEntries(Object.entries(actuals).map(([k, a]) => [k, { activityId: a.id, name: a.name, distanceM: a.distanceM, movingTimeSec: a.movingTimeSec, avgHr: a.avgHr, maxHr: a.maxHr, trainingLoad: a.trainingLoad, elevationGainM: a.elevationGainM }])));
+          const real = actualKm(
+            Object.fromEntries(
+              Object.entries(actuals).map(([k, a]) => [
+                k,
+                {
+                  activityId: a.id,
+                  name: a.name,
+                  distanceM: a.distanceM,
+                  movingTimeSec: a.movingTimeSec,
+                  avgHr: a.avgHr,
+                  maxHr: a.maxHr,
+                  trainingLoad: a.trainingLoad,
+                  elevationGainM: a.elevationGainM,
+                },
+              ]),
+            ),
+          );
           const current = weekFor(plan, today);
           const pending = await listPendingChanges(db, userId);
           const intervals = await getIntervalsStatus(db, userId);
@@ -129,13 +157,28 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
             daysToRace: Math.round((Date.parse(plan.raceDate) - Date.parse(today)) / 86_400_000),
             estimatedFinish: `${formatDuration(plan.estimatedRaceTimeSec.low)} to ${formatDuration(plan.estimatedRaceTimeSec.high)}`,
             fitnessScore: plan.fitnessScore,
-            paces: Object.fromEntries(Object.entries(plan.paces).map(([zone, p]) => [zone, paceRange(p)])),
-            paceZones: "E easy, M marathon, T threshold, I interval, R repetition, race = goal race pace",
-            athleteSettings: { runDays: plan.input.runDays, longRunDay: plan.input.longRunDay, strengthSessionsPerWeek: plan.input.strength.sessionsPerWeek, intensity: plan.input.intensity },
+            paces: Object.fromEntries(
+              Object.entries(plan.paces).map(([zone, p]) => [zone, paceRange(p)]),
+            ),
+            paceZones:
+              "E easy, M marathon, T threshold, I interval, R repetition, race = goal race pace",
+            athleteSettings: {
+              runDays: plan.input.runDays,
+              longRunDay: plan.input.longRunDay,
+              strengthSessionsPerWeek: plan.input.strength.sessionsPerWeek,
+              intensity: plan.input.intensity,
+            },
             currentWeek: current.index,
             weeks: plan.weeks.map((w) => {
               const s = weekStats(w, progress, real);
-              return { week: w.index, starts: w.startDate, phase: w.phase, plannedKm: w.targetKm, doneKm: s.kmDone, workoutsDone: `${s.done}/${s.total}` };
+              return {
+                week: w.index,
+                starts: w.startDate,
+                phase: w.phase,
+                plannedKm: w.targetKm,
+                doneKm: s.kmDone,
+                workoutsDone: `${s.done}/${s.total}`,
+              };
             }),
             intervalsConnected: intervals.connected,
             pendingSuggestions: pending.map((c) => ({ changeId: c.id, summary: c.summary })),
@@ -147,8 +190,16 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       "get_week",
       {
         title: "Get a week of workouts",
-        description: "The workouts in one plan week, with their ids, dates, status and what the athlete actually did. Defaults to the current week. Use the ids in propose_plan_changes.",
-        inputSchema: z.object({ week: z.number().int().min(1).optional().describe("Plan week number; omit for the current week") }),
+        description:
+          "The workouts in one plan week, with their ids, dates, status and what the athlete actually did. Defaults to the current week. Use the ids in propose_plan_changes.",
+        inputSchema: z.object({
+          week: z
+            .number()
+            .int()
+            .min(1)
+            .optional()
+            .describe("Plan week number; omit for the current week"),
+        }),
         annotations: { readOnlyHint: true },
       },
       async ({ week }) =>
@@ -159,7 +210,16 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           const w = week ? plan.weeks[week - 1] : weekFor(plan, today);
           if (!w) return fail(`The plan has weeks 1 to ${plan.weeks.length}.`);
           const actuals = await actualsFor();
-          return text({ today, planRevision: saved.revision, week: w.index, starts: w.startDate, phase: w.phase, focus: w.focus, plannedKm: w.targetKm, workouts: w.workouts.map((x) => workoutRow(plan, x, progress, actuals)) });
+          return text({
+            today,
+            planRevision: saved.revision,
+            week: w.index,
+            starts: w.startDate,
+            phase: w.phase,
+            focus: w.focus,
+            plannedKm: w.targetKm,
+            workouts: w.workouts.map((x) => workoutRow(plan, x, progress, actuals)),
+          });
         }),
     );
 
@@ -167,7 +227,8 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       "get_workout",
       {
         title: "Get one workout in full",
-        description: "Everything about one workout: description, the steps of a run (with target paces) or the exercises of a strength session, its status and what the athlete actually did.",
+        description:
+          "Everything about one workout: description, the steps of a run (with target paces) or the exercises of a strength session, its status and what the athlete actually did.",
         inputSchema: z.object({ workoutId: z.string().describe("Workout id from get_week") }),
         annotations: { readOnlyHint: true },
       },
@@ -182,7 +243,13 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
             ...workoutRow(saved.plan, w, saved.progress, actuals),
             planRevision: saved.revision,
             workout: w,
-            units: { distanceKm: "km", stepDistance: "m", stepDuration: "seconds", pace: "seconds/km", rest: "seconds" },
+            units: {
+              distanceKm: "km",
+              stepDistance: "m",
+              stepDuration: "seconds",
+              pace: "seconds/km",
+              rest: "seconds",
+            },
             description: w.description,
             steps: w.kind === "run" ? describeRunSteps(w) : undefined,
             exercises: w.kind === "strength" ? describeExercises(w) : undefined,
@@ -194,18 +261,33 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       "get_recent_activities",
       {
         title: "Get recent activities",
-        description: "What the athlete actually did recently, from their watch via intervals.icu: runs, walks and gym sessions with distance, time, pace and heart rate.",
-        inputSchema: z.object({ days: z.number().int().min(1).max(60).default(14).describe("How many days back, up to 60") }),
+        description:
+          "What the athlete actually did recently, from their watch via intervals.icu: runs, walks and gym sessions with distance, time, pace and heart rate.",
+        inputSchema: z.object({
+          days: z
+            .number()
+            .int()
+            .min(1)
+            .max(60)
+            .default(14)
+            .describe("How many days back, up to 60"),
+        }),
         annotations: { readOnlyHint: true },
       },
       async ({ days }) =>
         guard(async () => {
           const { today } = await load();
-          const from = new Date(Date.parse(today) - (days - 1) * 86_400_000).toISOString().slice(0, 10);
+          const from = new Date(Date.parse(today) - (days - 1) * 86_400_000)
+            .toISOString()
+            .slice(0, 10);
           const rows = await listActivitiesBetween(db, userId, from, today);
           if (!rows.length) {
             const status = await getIntervalsStatus(db, userId);
-            return text(status.connected ? `No activities in the last ${days} days.` : "intervals.icu isn't connected, so there's no activity data. The athlete can connect it in Grind → Settings.");
+            return text(
+              status.connected
+                ? `No activities in the last ${days} days.`
+                : "intervals.icu isn't connected, so there's no activity data. The athlete can connect it in Grind → Settings.",
+            );
           }
           return text({
             from,
@@ -216,7 +298,10 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
               name: a.name,
               km: a.distanceM ? round1(a.distanceM / 1000) : null,
               minutes: a.movingTimeSec ? Math.round(a.movingTimeSec / 60) : null,
-              paceMinPerKm: a.distanceM && a.movingTimeSec ? formatPace(a.movingTimeSec / (a.distanceM / 1000)) : null,
+              paceMinPerKm:
+                a.distanceM && a.movingTimeSec
+                  ? formatPace(a.movingTimeSec / (a.distanceM / 1000))
+                  : null,
               avgHr: a.avgHr ? Math.round(a.avgHr) : null,
               maxHr: a.maxHr ? Math.round(a.maxHr) : null,
               climbMeters: a.elevationGainM ? Math.round(a.elevationGainM) : null,
@@ -231,27 +316,48 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
         title: "Get recovery data",
         description:
           "Daily recovery numbers from the athlete's watch via intervals.icu: resting heart rate, HRV and sleep when available, plus fitness (CTL), fatigue (ATL) and form (CTL minus ATL). Not every watch records every field; missing fields are left out.",
-        inputSchema: z.object({ days: z.number().int().min(1).max(60).default(14).describe("How many days back, up to 60") }),
+        inputSchema: z.object({
+          days: z
+            .number()
+            .int()
+            .min(1)
+            .max(60)
+            .default(14)
+            .describe("How many days back, up to 60"),
+        }),
         annotations: { readOnlyHint: true },
       },
       async ({ days }) =>
         guard(async () => {
           const { today } = await load();
-          const from = new Date(Date.parse(today) - (days - 1) * 86_400_000).toISOString().slice(0, 10);
+          const from = new Date(Date.parse(today) - (days - 1) * 86_400_000)
+            .toISOString()
+            .slice(0, 10);
           const rows = await listWellnessBetween(db, userId, from, today);
-          if (!rows.length) return text("No recovery data. intervals.icu may not be connected, or the watch hasn't sent any.");
+          if (!rows.length)
+            return text(
+              "No recovery data. intervals.icu may not be connected, or the watch hasn't sent any.",
+            );
           const loadLooksWrong = rows.some((r) => (r.ctl ?? 0) > 250);
           return text({
             from,
             to: today,
-            note: loadLooksWrong ? "Fitness, fatigue and form are not trustworthy: intervals.icu reports a fitness above 250, which usually means the threshold pace in the athlete's intervals.icu settings is wrong. Ignore those three numbers." : undefined,
+            note: loadLooksWrong
+              ? "Fitness, fatigue and form are not trustworthy: intervals.icu reports a fitness above 250, which usually means the threshold pace in the athlete's intervals.icu settings is wrong. Ignore those three numbers."
+              : undefined,
             days: rows.map((r) => ({
               date: r.date,
               restingHr: r.restingHr,
               hrv: r.hrv,
               sleepHours: r.sleepSecs ? round1(r.sleepSecs / 3600) : null,
               sleepScore: r.sleepScore,
-              ...(loadLooksWrong ? {} : { fitness: round1(r.ctl), fatigue: round1(r.atl), form: r.ctl != null && r.atl != null ? round1(r.ctl - r.atl) : null }),
+              ...(loadLooksWrong
+                ? {}
+                : {
+                    fitness: round1(r.ctl),
+                    fatigue: round1(r.atl),
+                    form: r.ctl != null && r.atl != null ? round1(r.ctl - r.atl) : null,
+                  }),
             })),
           });
         }),
@@ -267,7 +373,13 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
         description:
           "Suggest edits to the plan: move or swap workouts, remove one, turn a run into an easier or different run, or add a run or strength session. Grind builds the sessions at the athlete's own paces and checks the result against its safety rules; if a rule is broken you get the reason back so you can adjust. Nothing changes yet: the athlete accepts the suggestion in the Grind app, or you call apply_plan_changes after they agree in chat. A new suggestion replaces any older one still waiting.",
         inputSchema: z.object({
-          summary: z.string().min(5).max(280).describe("One or two plain sentences for the athlete: what changes and why. It is shown on their Today screen."),
+          summary: z
+            .string()
+            .min(5)
+            .max(280)
+            .describe(
+              "One or two plain sentences for the athlete: what changes and why. It is shown on their Today screen.",
+            ),
           changes: z.array(EditOpSchema).min(1).max(200),
           expectedRevision: z.number().int().min(1).optional(),
         }),
@@ -276,7 +388,15 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       async ({ summary, changes, expectedRevision }) =>
         guard(async () => {
           const { today } = await load();
-          const result = await proposeChanges(db, userId, changes, summary, today, "coach", expectedRevision);
+          const result = await proposeChanges(
+            db,
+            userId,
+            changes,
+            summary,
+            today,
+            "coach",
+            expectedRevision,
+          );
           return text({
             changeId: result.id,
             status: "proposed",
@@ -296,14 +416,21 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       "apply_plan_changes",
       {
         title: "Apply an accepted suggestion",
-        description: "Apply a suggestion made with propose_plan_changes. Only call this after the athlete clearly agreed in this conversation. The plan is checked again first; if it changed since the suggestion, you'll be told to make a new one.",
-        inputSchema: z.object({ changeId: z.string().describe("The changeId from propose_plan_changes") }),
+        description:
+          "Apply a suggestion made with propose_plan_changes. Only call this after the athlete clearly agreed in this conversation. The plan is checked again first; if it changed since the suggestion, you'll be told to make a new one.",
+        inputSchema: z.object({
+          changeId: z.string().describe("The changeId from propose_plan_changes"),
+        }),
         annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
       },
       async ({ changeId }) =>
         guard(async () => {
           const result = await resolveChange(db, userId, changeId, "accept");
-          return text({ ...result, warnings: result.warnings?.map((w) => w.message) ?? [], next: "The plan is updated. Tell the athlete it's done." });
+          return text({
+            ...result,
+            warnings: result.warnings?.map((w) => w.message) ?? [],
+            next: "The plan is updated. Tell the athlete it's done.",
+          });
         }),
     );
 
@@ -311,11 +438,15 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       "discard_plan_changes",
       {
         title: "Discard a suggestion",
-        description: "Withdraw a suggestion made with propose_plan_changes, for example when the athlete says no.",
-        inputSchema: z.object({ changeId: z.string().describe("The changeId from propose_plan_changes") }),
+        description:
+          "Withdraw a suggestion made with propose_plan_changes, for example when the athlete says no.",
+        inputSchema: z.object({
+          changeId: z.string().describe("The changeId from propose_plan_changes"),
+        }),
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
       },
-      async ({ changeId }) => guard(async () => text(await resolveChange(db, userId, changeId, "reject"))),
+      async ({ changeId }) =>
+        guard(async () => text(await resolveChange(db, userId, changeId, "reject"))),
     );
 
     server.registerTool(
@@ -326,7 +457,12 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
           "Add a short note to workouts, shown to the athlete on the workout page: why the session is in the plan, how to run it, what to watch for. Replaces the existing note. Notes change text only, so they apply immediately.",
         inputSchema: z.object({
           notes: z
-            .array(z.object({ workoutId: z.string().describe("Workout id from get_week"), note: z.string().min(3).max(600).describe("Two or three plain sentences") }))
+            .array(
+              z.object({
+                workoutId: z.string().describe("Workout id from get_week"),
+                note: z.string().min(3).max(600).describe("Two or three plain sentences"),
+              }),
+            )
             .min(1)
             .max(20),
         }),
@@ -342,7 +478,11 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
 
   server.registerPrompt(
     "weekly_check_in",
-    { title: "Weekly check-in", description: "Review the last week of training and the week ahead, then suggest any adjustments." },
+    {
+      title: "Weekly check-in",
+      description:
+        "Review the last week of training and the week ahead, then suggest any adjustments.",
+    },
     async () => ({
       messages: [
         {

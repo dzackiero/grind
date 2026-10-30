@@ -27,7 +27,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { authClient } from "@/lib/auth-client";
 import { GOAL_TEMPLATES, RACE_DISTANCE_M, type PlanInput } from "@/lib/plan";
@@ -113,19 +119,40 @@ function OptionCard({
         selected && "border-primary",
       )}
     >
-      <span className={cn("grid size-11 shrink-0 place-items-center rounded-md transition-transform", tone, selected && "scale-105")}>
+      <span
+        className={cn(
+          "grid size-11 shrink-0 place-items-center rounded-md transition-transform",
+          tone,
+          selected && "scale-105",
+        )}
+      >
         <Icon className="size-[22px]" strokeWidth={2} aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="font-display text-lg leading-6 font-extrabold">{title}</span>
-        {description && <span className="text-muted-foreground text-sm leading-5 font-normal">{description}</span>}
+        {description && (
+          <span className="text-muted-foreground text-sm leading-5 font-normal">{description}</span>
+        )}
       </span>
-      <RadioGroupItem id={`opt-${value}`} value={value} aria-label={title} className={cn(compact && "absolute opacity-0")} />
+      <RadioGroupItem
+        id={`opt-${value}`}
+        value={value}
+        aria-label={title}
+        className={cn(compact && "absolute opacity-0")}
+      />
     </Label>
   );
 }
 
-function DayPicker({ value, onChange, label }: { value: Weekday[]; onChange: (v: Weekday[]) => void; label: string }) {
+function DayPicker({
+  value,
+  onChange,
+  label,
+}: {
+  value: Weekday[];
+  onChange: (v: Weekday[]) => void;
+  label: string;
+}) {
   return (
     <ToggleGroup
       type="multiple"
@@ -136,7 +163,12 @@ function DayPicker({ value, onChange, label }: { value: Weekday[]; onChange: (v:
       className="w-full"
     >
       {DAYS.map((d) => (
-        <ToggleGroupItem key={d.value} value={d.value} aria-label={d.long} className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 flex-1 font-bold">
+        <ToggleGroupItem
+          key={d.value}
+          value={d.value}
+          aria-label={d.long}
+          className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 flex-1 font-bold"
+        >
           {d.short}
         </ToggleGroupItem>
       ))}
@@ -144,7 +176,17 @@ function DayPicker({ value, onChange, label }: { value: Weekday[]; onChange: (v:
   );
 }
 
-export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: string; /** Current name when this is a guest account (empty until they give one), otherwise null. */ guestName: string | null; hasPlan: boolean }) {
+export function OnboardingForm({
+  firstName,
+  guestName,
+  hasPlan,
+}: {
+  firstName: string;
+  /** Current name when this is a guest account (empty until they give one), otherwise null. */ guestName:
+    | string
+    | null;
+  hasPlan: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -164,7 +206,8 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
     equipment: "gym",
     intensity: "balanced",
   });
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setF((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setF((prev) => ({ ...prev, [key]: value }));
   const tpl = GOAL_TEMPLATES[f.goal];
   const greeting = guestName === null ? firstName : name.trim().split(" ")[0];
 
@@ -177,13 +220,16 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
         return null;
       case 2: {
         const kmValue = Number(f.weeklyKm);
-        if (!Number.isFinite(kmValue) || kmValue < 0 || kmValue > 250) return "Enter your weekly distance in km (0–250).";
-        if (f.raceDistance !== "none" && f.raceTimeSec !== null && f.raceTimeSec < 150) return "That finish time looks too short. Check the minutes.";
+        if (!Number.isFinite(kmValue) || kmValue < 0 || kmValue > 250)
+          return "Enter your weekly distance in km (0–250).";
+        if (f.raceDistance !== "none" && f.raceTimeSec !== null && f.raceTimeSec < 150)
+          return "That finish time looks too short. Check the minutes.";
         return null;
       }
       case 3:
         if (!f.runDays.length) return "Pick at least one run day.";
-        if (!f.longRunDay || !f.runDays.includes(f.longRunDay)) return "Pick which run day is your long run.";
+        if (!f.longRunDay || !f.runDays.includes(f.longRunDay))
+          return "Pick which run day is your long run.";
         return null;
       default:
         return null;
@@ -195,7 +241,8 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
     if (problem) return setError(problem);
     setError(null);
     // Guests can give a name here; it shows in greetings and carries over when they save the account
-    if (step === 0 && guestName !== null && name.trim() && name.trim() !== guestName) void authClient.updateUser({ name: name.trim() }).then(() => router.refresh());
+    if (step === 0 && guestName !== null && name.trim() && name.trim() !== guestName)
+      void authClient.updateUser({ name: name.trim() }).then(() => router.refresh());
     if (step < STEPS.length - 1) setStep(step + 1);
     else submit();
   }
@@ -209,7 +256,10 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
       startDate: localToday(),
       experience: f.experience,
       currentWeeklyKm: Number(f.weeklyKm),
-      recentRace: time && f.raceDistance !== "none" ? { distanceM: RACE_DISTANCE_M[f.raceDistance], timeSec: time } : undefined,
+      recentRace:
+        time && f.raceDistance !== "none"
+          ? { distanceM: RACE_DISTANCE_M[f.raceDistance], timeSec: time }
+          : undefined,
       runDays: f.runDays,
       longRunDay: f.longRunDay as Weekday,
       strength: { sessionsPerWeek: sessions, days: f.strengthDays, equipment: f.equipment },
@@ -221,10 +271,19 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
       });
-      const res = await fetch("/api/plans", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
+      const res = await fetch("/api/plans", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setError(body?.issues?.[0]?.message ?? body?.errors?.[0]?.message ?? body?.error ?? "Couldn't build the plan. Try again.");
+        setError(
+          body?.issues?.[0]?.message ??
+            body?.errors?.[0]?.message ??
+            body?.error ??
+            "Couldn't build the plan. Try again.",
+        );
         return;
       }
       router.push("/today");
@@ -245,21 +304,68 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
         {step === 0 && (
           <>
             <h1 className="font-display text-3xl font-extrabold">
-              {hasPlan ? "Start a new plan" : greeting ? `Hi ${greeting}, what are you training for?` : "What are you training for?"}
+              {hasPlan
+                ? "Start a new plan"
+                : greeting
+                  ? `Hi ${greeting}, what are you training for?`
+                  : "What are you training for?"}
             </h1>
-            {hasPlan && <p className="text-muted-foreground text-sm">Your current plan will be archived when the new one is ready.</p>}
+            {hasPlan && (
+              <p className="text-muted-foreground text-sm">
+                Your current plan will be archived when the new one is ready.
+              </p>
+            )}
             {guestName !== null && (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="guestName">What should we call you? (optional)</Label>
-                <Input id="guestName" autoComplete="given-name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="Your first name" />
+                <Input
+                  id="guestName"
+                  autoComplete="given-name"
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your first name"
+                />
               </div>
             )}
-            <RadioGroup value={f.goal} onValueChange={(v) => set("goal", v as FormState["goal"])} className="gap-3">
+            <RadioGroup
+              value={f.goal}
+              onValueChange={(v) => set("goal", v as FormState["goal"])}
+              className="gap-3"
+            >
               {/* Goal tiles use the PR plate colours: 5K green, 10K yellow, half blue, marathon red */}
-              <OptionCard value="5k" current={f.goal} icon={Zap} tone="bg-plate-green text-white" title="5K" description={`${GOAL_TEMPLATES["5k"].minWeeks}–${GOAL_TEMPLATES["5k"].maxWeeks} weeks. Get faster over a short distance.`} />
-              <OptionCard value="10k" current={f.goal} icon={Timer} tone="bg-plate-yellow text-on-type" title="10K" description={`${GOAL_TEMPLATES["10k"].minWeeks}–${GOAL_TEMPLATES["10k"].maxWeeks} weeks. Speed with more endurance.`} />
-              <OptionCard value="half" current={f.goal} icon={Medal} tone="bg-plate-blue text-white" title="Half marathon" description={`${GOAL_TEMPLATES.half.minWeeks}–${GOAL_TEMPLATES.half.maxWeeks} weeks. 21.1 km.`} />
-              <OptionCard value="marathon" current={f.goal} icon={Trophy} tone="bg-plate-red text-white" title="Marathon" description={`${GOAL_TEMPLATES.marathon.minWeeks}–${GOAL_TEMPLATES.marathon.maxWeeks} weeks. 42.2 km.`} />
+              <OptionCard
+                value="5k"
+                current={f.goal}
+                icon={Zap}
+                tone="bg-plate-green text-white"
+                title="5K"
+                description={`${GOAL_TEMPLATES["5k"].minWeeks}–${GOAL_TEMPLATES["5k"].maxWeeks} weeks. Get faster over a short distance.`}
+              />
+              <OptionCard
+                value="10k"
+                current={f.goal}
+                icon={Timer}
+                tone="bg-plate-yellow text-on-type"
+                title="10K"
+                description={`${GOAL_TEMPLATES["10k"].minWeeks}–${GOAL_TEMPLATES["10k"].maxWeeks} weeks. Speed with more endurance.`}
+              />
+              <OptionCard
+                value="half"
+                current={f.goal}
+                icon={Medal}
+                tone="bg-plate-blue text-white"
+                title="Half marathon"
+                description={`${GOAL_TEMPLATES.half.minWeeks}–${GOAL_TEMPLATES.half.maxWeeks} weeks. 21.1 km.`}
+              />
+              <OptionCard
+                value="marathon"
+                current={f.goal}
+                icon={Trophy}
+                tone="bg-plate-red text-white"
+                title="Marathon"
+                description={`${GOAL_TEMPLATES.marathon.minWeeks}–${GOAL_TEMPLATES.marathon.maxWeeks} weeks. 42.2 km.`}
+              />
             </RadioGroup>
           </>
         )}
@@ -269,7 +375,14 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
             <h1 className="font-display text-3xl font-extrabold">When is race day?</h1>
             <div className="flex flex-col gap-2">
               <Label htmlFor="raceDate">Race date</Label>
-              <Input id="raceDate" type="date" min={localToday()} value={f.raceDate} disabled={f.noRace} onChange={(e) => set("raceDate", e.target.value)} />
+              <Input
+                id="raceDate"
+                type="date"
+                min={localToday()}
+                value={f.raceDate}
+                disabled={f.noRace}
+                onChange={(e) => set("raceDate", e.target.value)}
+              />
               {f.raceDate && !f.noRace && (
                 <p className="text-muted-foreground text-sm">
                   {weeksUntil(f.raceDate)} weeks away.{" "}
@@ -282,7 +395,11 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
               )}
             </div>
             <Label htmlFor="noRace" className="flex items-center gap-3 font-normal">
-              <Checkbox id="noRace" checked={f.noRace} onCheckedChange={(v) => set("noRace", v === true)} />
+              <Checkbox
+                id="noRace"
+                checked={f.noRace}
+                onCheckedChange={(v) => set("noRace", v === true)}
+              />
               No race, just get fitter ({tpl.defaultWeeks}-week plan)
             </Label>
           </>
@@ -291,18 +408,54 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
         {step === 2 && (
           <>
             <h1 className="font-display text-3xl font-extrabold">Tell us about your running</h1>
-            <RadioGroup value={f.experience} onValueChange={(v) => set("experience", v as FormState["experience"])} className="gap-3">
-              <OptionCard value="beginner" current={f.experience} icon={Sprout} tone="bg-type-easy text-on-type" title="New to running" description="Running for less than a year, or coming back after a break." />
-              <OptionCard value="intermediate" current={f.experience} icon={Footprints} tone="bg-type-tempo text-on-type" title="Regular runner" description="Running most weeks and have done a few races." />
-              <OptionCard value="advanced" current={f.experience} icon={Flame} tone="bg-type-intervals text-on-type" title="Experienced" description="Years of consistent training and structured workouts." />
+            <RadioGroup
+              value={f.experience}
+              onValueChange={(v) => set("experience", v as FormState["experience"])}
+              className="gap-3"
+            >
+              <OptionCard
+                value="beginner"
+                current={f.experience}
+                icon={Sprout}
+                tone="bg-type-easy text-on-type"
+                title="New to running"
+                description="Running for less than a year, or coming back after a break."
+              />
+              <OptionCard
+                value="intermediate"
+                current={f.experience}
+                icon={Footprints}
+                tone="bg-type-tempo text-on-type"
+                title="Regular runner"
+                description="Running most weeks and have done a few races."
+              />
+              <OptionCard
+                value="advanced"
+                current={f.experience}
+                icon={Flame}
+                tone="bg-type-intervals text-on-type"
+                title="Experienced"
+                description="Years of consistent training and structured workouts."
+              />
             </RadioGroup>
             <div className="flex flex-col gap-2">
               <Label htmlFor="weeklyKm">Kilometers per week lately</Label>
-              <Input id="weeklyKm" type="number" inputMode="decimal" min={0} max={250} value={f.weeklyKm} onChange={(e) => set("weeklyKm", e.target.value)} />
+              <Input
+                id="weeklyKm"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={250}
+                value={f.weeklyKm}
+                onChange={(e) => set("weeklyKm", e.target.value)}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <Label>Recent race or time trial (for your paces)</Label>
-              <Select value={f.raceDistance} onValueChange={(v) => set("raceDistance", v as FormState["raceDistance"])}>
+              <Select
+                value={f.raceDistance}
+                onValueChange={(v) => set("raceDistance", v as FormState["raceDistance"])}
+              >
                 <SelectTrigger aria-label="Race distance" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -315,9 +468,16 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
                 </SelectContent>
               </Select>
               {f.raceDistance !== "none" && (
-                <DurationPicker value={f.raceTimeSec} onChange={(sec) => set("raceTimeSec", sec)} showHours={f.raceDistance !== "5k"} />
+                <DurationPicker
+                  value={f.raceTimeSec}
+                  onChange={(sec) => set("raceTimeSec", sec)}
+                  showHours={f.raceDistance !== "5k"}
+                />
               )}
-              <p className="text-muted-foreground text-xs">Skip it and we&apos;ll start with safe paces. Your intervals.icu data will refine them later.</p>
+              <p className="text-muted-foreground text-xs">
+                Skip it and we&apos;ll start with safe paces. Your intervals.icu data will refine
+                them later.
+              </p>
             </div>
           </>
         )}
@@ -351,7 +511,11 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
                 </SelectContent>
               </Select>
             </div>
-            {f.runDays.length === 7 && <p className="text-warning text-sm">Running every day leaves no rest day. That only suits experienced runners.</p>}
+            {f.runDays.length === 7 && (
+              <p className="text-warning text-sm">
+                Running every day leaves no rest day. That only suits experienced runners.
+              </p>
+            )}
             <p className="text-muted-foreground text-sm">
               {f.runDays.length === 1
                 ? "One run a week is your long run. Add more days whenever you can."
@@ -365,19 +529,48 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
             <h1 className="font-display text-3xl font-extrabold">Add strength training</h1>
             <div className="flex flex-col gap-2">
               <Label>Strength days (optional, up to {MAX_STRENGTH_DAYS})</Label>
-              <DayPicker label="Strength days" value={f.strengthDays} onChange={(v) => set("strengthDays", v.slice(-MAX_STRENGTH_DAYS))} />
+              <DayPicker
+                label="Strength days"
+                value={f.strengthDays}
+                onChange={(v) => set("strengthDays", v.slice(-MAX_STRENGTH_DAYS))}
+              />
               <p className="text-muted-foreground text-xs">
-                {f.strengthDays.length ? STRENGTH_SPLITS[f.strengthDays.length] : "No days picked: Grind plans running only. You can skip this step."}
+                {f.strengthDays.length
+                  ? STRENGTH_SPLITS[f.strengthDays.length]
+                  : "No days picked: Grind plans running only. You can skip this step."}
               </p>
             </div>
             {f.strengthDays.length > 0 && (
               <>
                 {new Set([...f.runDays, ...f.strengthDays]).size === 7 && (
-                  <p className="text-warning text-sm">No rest day left in your week. That works for experienced athletes; otherwise pair some strength days with run days.</p>
+                  <p className="text-warning text-sm">
+                    No rest day left in your week. That works for experienced athletes; otherwise
+                    pair some strength days with run days.
+                  </p>
                 )}
-                <RadioGroup value={f.equipment} onValueChange={(v) => set("equipment", v as FormState["equipment"])} className="grid grid-cols-2 gap-3">
-                  <OptionCard compact value="gym" current={f.equipment} icon={Dumbbell} tone="bg-type-strength text-on-type" title="Gym" description="Dumbbells, barbell" />
-                  <OptionCard compact value="bodyweight" current={f.equipment} icon={House} tone="bg-type-strength text-on-type" title="At home" description="Bodyweight only" />
+                <RadioGroup
+                  value={f.equipment}
+                  onValueChange={(v) => set("equipment", v as FormState["equipment"])}
+                  className="grid grid-cols-2 gap-3"
+                >
+                  <OptionCard
+                    compact
+                    value="gym"
+                    current={f.equipment}
+                    icon={Dumbbell}
+                    tone="bg-type-strength text-on-type"
+                    title="Gym"
+                    description="Dumbbells, barbell"
+                  />
+                  <OptionCard
+                    compact
+                    value="bodyweight"
+                    current={f.equipment}
+                    icon={House}
+                    tone="bg-type-strength text-on-type"
+                    title="At home"
+                    description="Bodyweight only"
+                  />
                 </RadioGroup>
               </>
             )}
@@ -387,10 +580,35 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
         {step === 5 && (
           <>
             <h1 className="font-display text-3xl font-extrabold">How hard should we push?</h1>
-            <RadioGroup value={f.intensity} onValueChange={(v) => set("intensity", v as FormState["intensity"])} className="gap-3">
-              <OptionCard value="steady" current={f.intensity} icon={Leaf} tone="bg-type-easy text-on-type" title="Steady" description="Gentle build. Good if you're busy or prone to niggles." />
-              <OptionCard value="balanced" current={f.intensity} icon={Gauge} tone="bg-type-tempo text-on-type" title="Balanced" description="A steady climb in distance with quality sessions most weeks." />
-              <OptionCard value="push" current={f.intensity} icon={Rocket} tone="bg-type-race text-on-type" title="Push me" description="Bigger weeks and more speed work. For when you have time to recover." />
+            <RadioGroup
+              value={f.intensity}
+              onValueChange={(v) => set("intensity", v as FormState["intensity"])}
+              className="gap-3"
+            >
+              <OptionCard
+                value="steady"
+                current={f.intensity}
+                icon={Leaf}
+                tone="bg-type-easy text-on-type"
+                title="Steady"
+                description="Gentle build. Good if you're busy or prone to niggles."
+              />
+              <OptionCard
+                value="balanced"
+                current={f.intensity}
+                icon={Gauge}
+                tone="bg-type-tempo text-on-type"
+                title="Balanced"
+                description="A steady climb in distance with quality sessions most weeks."
+              />
+              <OptionCard
+                value="push"
+                current={f.intensity}
+                icon={Rocket}
+                tone="bg-type-race text-on-type"
+                title="Push me"
+                description="Bigger weeks and more speed work. For when you have time to recover."
+              />
             </RadioGroup>
           </>
         )}
@@ -404,12 +622,22 @@ export function OnboardingForm({ firstName, guestName, hasPlan }: { firstName: s
 
       <div className="bg-background sticky bottom-0 flex gap-3 py-4">
         {step > 0 && (
-          <Button variant="outline" size="lg" onClick={() => (setError(null), setStep(step - 1))} disabled={pending} aria-label="Back">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => (setError(null), setStep(step - 1))}
+            disabled={pending}
+            aria-label="Back"
+          >
             <ArrowLeft />
           </Button>
         )}
         <Button size="lg" className="flex-1" onClick={next} disabled={pending}>
-          {pending ? "Building your plan…" : step === STEPS.length - 1 ? "Build my plan" : "Continue"}
+          {pending
+            ? "Building your plan…"
+            : step === STEPS.length - 1
+              ? "Build my plan"
+              : "Continue"}
         </Button>
       </div>
     </div>

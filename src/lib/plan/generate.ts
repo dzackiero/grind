@@ -1,5 +1,20 @@
-import { addDays, circularDayGap, dateForWeekday, daysBetween, mondayOf, WEEKDAYS, weekdayOf, type Weekday } from "./dates";
-import { expectedGain, paceZones, predictRaceTime, RACE_DISTANCE_M, startingFitness } from "./paces";
+import {
+  addDays,
+  circularDayGap,
+  dateForWeekday,
+  daysBetween,
+  mondayOf,
+  WEEKDAYS,
+  weekdayOf,
+  type Weekday,
+} from "./dates";
+import {
+  expectedGain,
+  paceZones,
+  predictRaceTime,
+  RACE_DISTANCE_M,
+  startingFitness,
+} from "./paces";
 import {
   easyRun,
   finishRun,
@@ -12,9 +27,25 @@ import {
   tempoRun,
   type LongVariant,
 } from "./run-sessions";
-import { PlanInputSchema, type PaceZones, type Plan, type PlanInput, type RunWorkout, type Week, type Workout } from "./schema";
+import {
+  PlanInputSchema,
+  type PaceZones,
+  type Plan,
+  type PlanInput,
+  type RunWorkout,
+  type Week,
+  type Workout,
+} from "./schema";
 import { buildStrength, weeklySplit } from "./strength-sessions";
-import { GOAL_TEMPLATES, INTENSITY, INTERVALS, LONG_STEP_KM, longRunShare, PHASE_FOCUS, PROGRESSION_CAP } from "./templates";
+import {
+  GOAL_TEMPLATES,
+  INTENSITY,
+  INTERVALS,
+  LONG_STEP_KM,
+  longRunShare,
+  PHASE_FOCUS,
+  PROGRESSION_CAP,
+} from "./templates";
 
 type Phase = Week["phase"];
 type Quality = "intervals" | "tempo" | "hills" | "sharpener";
@@ -67,14 +98,20 @@ function qualityCount(input: PlanInput, phase: Phase, runDays: number, raceWeek:
   return 2;
 }
 
-function qualityTypes(goal: PlanInput["goal"], phase: Phase, slots: number, weekIndex: number): Quality[] {
+function qualityTypes(
+  goal: PlanInput["goal"],
+  phase: Phase,
+  slots: number,
+  weekIndex: number,
+): Quality[] {
   if (slots === 0) return [];
   if (phase === "taper") return ["sharpener"];
   if (phase === "recovery") return ["tempo"];
   const speedFirst = goal === "5k" || goal === "10k";
   let pair: Quality[];
   if (phase === "base") pair = ["hills", "tempo"];
-  else if (phase === "build") pair = weekIndex % 2 === 0 ? ["intervals", "tempo"] : ["tempo", "intervals"];
+  else if (phase === "build")
+    pair = weekIndex % 2 === 0 ? ["intervals", "tempo"] : ["tempo", "intervals"];
   else pair = speedFirst ? ["intervals", "tempo"] : ["tempo", "intervals"];
   return pair.slice(0, slots);
 }
@@ -92,7 +129,11 @@ function longVariant(input: PlanInput, phase: Phase, weekIndex: number): LongVar
  * Pick days for hard sessions so no two hard days touch (long run counts as hard).
  * Days that can't keep a one-day gap are left as easy runs.
  */
-export function pickQualityDays(candidates: Weekday[], anchors: Weekday[], count: number): Weekday[] {
+export function pickQualityDays(
+  candidates: Weekday[],
+  anchors: Weekday[],
+  count: number,
+): Weekday[] {
   const chosen: Weekday[] = [];
   const pool = [...candidates];
   while (chosen.length < count && pool.length) {
@@ -117,7 +158,12 @@ export function pickQualityDays(candidates: Weekday[], anchors: Weekday[], count
 }
 
 /** Assign strength focuses to days so heavy leg work avoids the day before a hard run. */
-function assignStrength(focuses: ReturnType<typeof weeklySplit>, days: Weekday[], hardDays: Weekday[], longDay: Weekday | null) {
+function assignStrength(
+  focuses: ReturnType<typeof weeklySplit>,
+  days: Weekday[],
+  hardDays: Weekday[],
+  longDay: Weekday | null,
+) {
   const perms = permutations(days).map((p) => p.slice(0, focuses.length));
   let best = perms[0] ?? [];
   let bestScore = Infinity;
@@ -135,7 +181,8 @@ function assignStrength(focuses: ReturnType<typeof weeklySplit>, days: Weekday[]
     // With 4–5 sessions there are two leg days: keep them apart
     const legDays = p.filter((_, i) => focuses[i] !== "upper");
     for (let a = 0; a < legDays.length; a++)
-      for (let b = a + 1; b < legDays.length; b++) if (circularDayGap(legDays[a], legDays[b]) === 1) score += 2;
+      for (let b = a + 1; b < legDays.length; b++)
+        if (circularDayGap(legDays[a], legDays[b]) === 1) score += 2;
     if (score < bestScore) {
       bestScore = score;
       best = p;
@@ -146,7 +193,9 @@ function assignStrength(focuses: ReturnType<typeof weeklySplit>, days: Weekday[]
 
 function permutations<T>(items: T[]): T[][] {
   if (items.length <= 1) return [items];
-  return items.flatMap((x, i) => permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [x, ...rest]));
+  return items.flatMap((x, i) =>
+    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [x, ...rest]),
+  );
 }
 
 // ---------- Main ----------
@@ -196,7 +245,13 @@ export function generatePlan(rawInput: PlanInput): Plan {
   // Long runs follow their own progression toward the goal's longest run
   const share = longRunShare(runDays.length);
   const maxLong = tpl.maxLongKm[input.experience];
-  const longStep = Math.min(3, Math.max(0.5, (LONG_STEP_KM[input.experience] + INTENSITY[input.intensity].longStepKm) * tpl.longStepFactor));
+  const longStep = Math.min(
+    3,
+    Math.max(
+      0.5,
+      (LONG_STEP_KM[input.experience] + INTENSITY[input.intensity].longStepKm) * tpl.longStepFactor,
+    ),
+  );
   const taperStart = phases.indexOf("taper");
   let lastLong = round05(Math.min(maxLong, Math.max(tpl.minLongKm, volumes[0] * share)));
 
@@ -223,11 +278,14 @@ export function generatePlan(rawInput: PlanInput): Plan {
     let longDay: Weekday | null = null;
     let longKm = 0;
     if (raceWeek) {
-      workouts.push(finishRun(raceDay(tpl.label, goalDistance, paces), id(raceDate, "race"), raceDate, paces));
+      workouts.push(
+        finishRun(raceDay(tpl.label, goalDistance, paces), id(raceDate, "race"), raceDate, paces),
+      );
     } else if (available.includes(input.longRunDay)) {
       longDay = input.longRunDay;
       if (phase === "recovery") longKm = lastLong * 0.75;
-      else if (phase === "taper") longKm = lastLong * tpl.taperFactors.slice(-(phases.length - taperStart))[wi - taperStart];
+      else if (phase === "taper")
+        longKm = lastLong * tpl.taperFactors.slice(-(phases.length - taperStart))[wi - taperStart];
       else {
         if (wi > 0) lastLong = Math.min(maxLong, lastLong + longStep);
         longKm = lastLong;
@@ -242,8 +300,16 @@ export function generatePlan(rawInput: PlanInput): Plan {
     const raceDay_ = raceWeek ? weekdayOf(raceDate) : null;
     const anchors = [longDay, raceDay_].filter((d): d is Weekday => d !== null);
     let candidates = available.filter((d) => d !== longDay);
-    if (raceWeek) candidates = candidates.filter((d) => daysBetween(dateForWeekday(weekStart, d), raceDate) >= 3);
-    const wanted = qualityTypes(input.goal, phase, qualityCount(input, phase, runDays.length, raceWeek), weekIndex);
+    if (raceWeek)
+      candidates = candidates.filter(
+        (d) => daysBetween(dateForWeekday(weekStart, d), raceDate) >= 3,
+      );
+    const wanted = qualityTypes(
+      input.goal,
+      phase,
+      qualityCount(input, phase, runDays.length, raceWeek),
+      weekIndex,
+    );
     const qDays = pickQualityDays(candidates, anchors, wanted.length);
 
     let qualityKm = 0;
@@ -258,7 +324,11 @@ export function generatePlan(rawInput: PlanInput): Plan {
       let draft;
       if (q === "intervals") {
         const list = INTERVALS[input.goal];
-        draft = intervalRun(list[Math.min(pick("intervals"), list.length - 1)], input.experience, paces);
+        draft = intervalRun(
+          list[Math.min(pick("intervals"), list.length - 1)],
+          input.experience,
+          paces,
+        );
       } else if (q === "tempo") draft = tempoRun(pick("tempo"), input.experience, paces);
       else if (q === "hills") draft = hillRun(pick("hills"), input.experience, paces);
       else draft = sharpener(input.goal, raceWeek, input.experience, paces);
@@ -300,8 +370,12 @@ export function generatePlan(rawInput: PlanInput): Plan {
       }
     }
 
-    workouts.sort((a, b) => (a.date === b.date ? (a.kind === "run" ? -1 : 1) : a.date < b.date ? -1 : 1));
-    const targetKm = round05(workouts.reduce((s, w) => s + (w.kind === "run" ? w.distanceKm : 0), 0));
+    workouts.sort((a, b) =>
+      a.date === b.date ? (a.kind === "run" ? -1 : 1) : a.date < b.date ? -1 : 1,
+    );
+    const targetKm = round05(
+      workouts.reduce((s, w) => s + (w.kind === "run" ? w.distanceKm : 0), 0),
+    );
 
     return {
       index: weekIndex,

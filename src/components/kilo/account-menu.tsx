@@ -41,7 +41,9 @@ export function AccountMenu({ name, email }: { name: string; email: string | nul
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuLabel className="flex flex-col">
           <span>{name}</span>
-          <span className="text-muted-foreground text-xs font-normal">{email ?? "Guest account"}</span>
+          <span className="text-muted-foreground text-xs font-normal">
+            {email ?? "Guest account"}
+          </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -72,7 +74,13 @@ export function AccountMenu({ name, email }: { name: string; email: string | nul
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={async () => {
-            if (email === null && !window.confirm("You're on a guest account. Signing out deletes it and your plan for good. Sign out anyway?")) return;
+            if (
+              email === null &&
+              !window.confirm(
+                "You're on a guest account. Signing out deletes it and your plan for good. Sign out anyway?",
+              )
+            )
+              return;
             await authClient.signOut();
             router.push("/sign-in");
             router.refresh();

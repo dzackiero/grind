@@ -4,7 +4,12 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import type { WeekTotals } from "@/server/progress/service";
 import { addDaysIso, shortDate } from "./format";
 import { Stat } from "./stat";
@@ -23,12 +28,23 @@ export function WeeklyVolume({ weeks }: { weeks: WeekTotals[] }) {
   const [selected, setSelected] = useState(weeks.length - 1);
   const week = weeks[selected];
   const time = duration(week.minutes);
-  const label = selected === weeks.length - 1 ? "This week" : selected === weeks.length - 2 ? "Last week" : `Week of ${shortDate(week.start)}`;
+  const label =
+    selected === weeks.length - 1
+      ? "This week"
+      : selected === weeks.length - 2
+        ? "Last week"
+        : `Week of ${shortDate(week.start)}`;
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" aria-label="Previous week" disabled={selected === 0} onClick={() => setSelected(selected - 1)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Previous week"
+          disabled={selected === 0}
+          onClick={() => setSelected(selected - 1)}
+        >
           <ChevronLeft />
         </Button>
         <div className="text-center" aria-live="polite">
@@ -37,7 +53,13 @@ export function WeeklyVolume({ weeks }: { weeks: WeekTotals[] }) {
             {shortDate(week.start)} – {shortDate(addDaysIso(week.start, 6))}
           </div>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Next week" disabled={selected === weeks.length - 1} onClick={() => setSelected(selected + 1)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Next week"
+          disabled={selected === weeks.length - 1}
+          onClick={() => setSelected(selected + 1)}
+        >
           <ChevronRight />
         </Button>
       </div>
@@ -52,10 +74,38 @@ export function WeeklyVolume({ weeks }: { weeks: WeekTotals[] }) {
       <ChartContainer config={config} className="aspect-auto h-40 w-full">
         <BarChart data={weeks} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="start" tickLine={false} axisLine={false} tickMargin={6} interval={1} fontSize={10} tickFormatter={(s: string) => shortDate(s)} />
-          <YAxis tickLine={false} axisLine={false} width={28} fontSize={11} tickCount={3} allowDecimals={false} />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent labelFormatter={(s) => `Week of ${shortDate(String(s))}`} formatter={(v) => [`${v} km`, " Run"]} />} />
-          <Bar dataKey="km" radius={4} className="cursor-pointer" onClick={(_, index) => setSelected(index)}>
+          <XAxis
+            dataKey="start"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={6}
+            interval={1}
+            fontSize={10}
+            tickFormatter={(s: string) => shortDate(s)}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            width={28}
+            fontSize={11}
+            tickCount={3}
+            allowDecimals={false}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(s) => `Week of ${shortDate(String(s))}`}
+                formatter={(v) => [`${v} km`, " Run"]}
+              />
+            }
+          />
+          <Bar
+            dataKey="km"
+            radius={4}
+            className="cursor-pointer"
+            onClick={(_, index) => setSelected(index)}
+          >
             {weeks.map((w, i) => (
               <Cell key={w.start} fill={i === selected ? "var(--primary)" : "var(--line-strong)"} />
             ))}

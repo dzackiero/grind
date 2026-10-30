@@ -1,12 +1,22 @@
 "use client";
 
 import { Area, AreaChart, CartesianGrid, Line, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import type { PacePoint } from "@/lib/activity-detail";
 import { formatPace } from "@/lib/plan";
 
-const paceConfig = { pace: { label: "Pace", color: "var(--primary)" }, gap: { label: "Grade-adjusted", color: "var(--muted-foreground)" } } satisfies ChartConfig;
-const elevationConfig = { m: { label: "Elevation", color: "var(--accent-ink)" } } satisfies ChartConfig;
+const paceConfig = {
+  pace: { label: "Pace", color: "var(--primary)" },
+  gap: { label: "Grade-adjusted", color: "var(--muted-foreground)" },
+} satisfies ChartConfig;
+const elevationConfig = {
+  m: { label: "Elevation", color: "var(--accent-ink)" },
+} satisfies ChartConfig;
 
 /** The value below which `share` of the values fall; used so a single GPS spike doesn't flatten the chart. */
 function percentile(values: number[], share: number) {
@@ -46,11 +56,62 @@ export function PaceChart({ series, showGap }: { series: PacePoint[]; showGap: b
     <ChartContainer config={paceConfig} className="aspect-auto h-56 w-full">
       <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <CartesianGrid vertical />
-        <XAxis dataKey="km" type="number" domain={[0, "dataMax"]} ticks={distanceTicks(totalKm)} tickLine={false} axisLine={false} tickMargin={6} fontSize={11} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} unit=" km" />
-        <YAxis reversed domain={[low, high]} allowDataOverflow ticks={roundTicks(low, high, high - low > 150 ? 60 : step)} tickLine={false} axisLine={false} width={44} fontSize={11} tickFormatter={(v: number) => formatPace(v)} />
-        <ChartTooltip content={<ChartTooltipContent labelFormatter={kmLabel} formatter={(v, name) => [`${formatPace(Number(v))}/km`, ` ${name === "gap" ? "Grade-adjusted" : "Pace"}`]} />} />
-        <Area dataKey="pace" type="monotone" baseValue={high} stroke="var(--color-pace)" fill="var(--color-pace)" fillOpacity={0.15} strokeWidth={2} dot={false} isAnimationActive={false} />
-        {showGap && <Line dataKey="gap" type="monotone" stroke="var(--color-gap)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} isAnimationActive={false} />}
+        <XAxis
+          dataKey="km"
+          type="number"
+          domain={[0, "dataMax"]}
+          ticks={distanceTicks(totalKm)}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
+          fontSize={11}
+          tickFormatter={(v: number) => String(Math.round(v * 10) / 10)}
+          unit=" km"
+        />
+        <YAxis
+          reversed
+          domain={[low, high]}
+          allowDataOverflow
+          ticks={roundTicks(low, high, high - low > 150 ? 60 : step)}
+          tickLine={false}
+          axisLine={false}
+          width={44}
+          fontSize={11}
+          tickFormatter={(v: number) => formatPace(v)}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={kmLabel}
+              formatter={(v, name) => [
+                `${formatPace(Number(v))}/km`,
+                ` ${name === "gap" ? "Grade-adjusted" : "Pace"}`,
+              ]}
+            />
+          }
+        />
+        <Area
+          dataKey="pace"
+          type="monotone"
+          baseValue={high}
+          stroke="var(--color-pace)"
+          fill="var(--color-pace)"
+          fillOpacity={0.15}
+          strokeWidth={2}
+          dot={false}
+          isAnimationActive={false}
+        />
+        {showGap && (
+          <Line
+            dataKey="gap"
+            type="monotone"
+            stroke="var(--color-gap)"
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            dot={false}
+            isAnimationActive={false}
+          />
+        )}
       </AreaChart>
     </ChartContainer>
   );
@@ -65,10 +126,46 @@ export function ElevationChart({ series }: { series: { km: number; m: number }[]
     <ChartContainer config={elevationConfig} className="aspect-auto h-48 w-full">
       <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
         <CartesianGrid vertical />
-        <XAxis dataKey="km" type="number" domain={[0, "dataMax"]} ticks={distanceTicks(totalKm)} tickLine={false} axisLine={false} tickMargin={6} fontSize={11} tickFormatter={(v: number) => String(Math.round(v * 10) / 10)} unit=" km" />
-        <YAxis domain={[low, high]} tickLine={false} axisLine={false} width={36} fontSize={11} tickCount={5} allowDecimals={false} unit=" m" />
-        <ChartTooltip content={<ChartTooltipContent labelFormatter={kmLabel} formatter={(v) => [`${Number(v)} m`, " Elevation"]} />} />
-        <Area dataKey="m" type="monotone" stroke="var(--color-m)" fill="var(--color-m)" fillOpacity={0.2} strokeWidth={2} dot={false} isAnimationActive={false} />
+        <XAxis
+          dataKey="km"
+          type="number"
+          domain={[0, "dataMax"]}
+          ticks={distanceTicks(totalKm)}
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
+          fontSize={11}
+          tickFormatter={(v: number) => String(Math.round(v * 10) / 10)}
+          unit=" km"
+        />
+        <YAxis
+          domain={[low, high]}
+          tickLine={false}
+          axisLine={false}
+          width={36}
+          fontSize={11}
+          tickCount={5}
+          allowDecimals={false}
+          unit=" m"
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={kmLabel}
+              formatter={(v) => [`${Number(v)} m`, " Elevation"]}
+            />
+          }
+        />
+        <Area
+          dataKey="m"
+          type="monotone"
+          stroke="var(--color-m)"
+          fill="var(--color-m)"
+          fillOpacity={0.2}
+          strokeWidth={2}
+          dot={false}
+          isAnimationActive={false}
+        />
       </AreaChart>
     </ChartContainer>
   );

@@ -5,7 +5,14 @@ import { createDb, type DB } from "../db/client";
 import { activity, activityEffort, athleteProfile, user } from "../db/schema";
 import { createPlanFromInput, getActivePlan } from "../plans/service";
 import { IntervalsError, type IntervalsApi } from "./client";
-import { computeEfforts, connectIntervals, disconnectIntervals, getIntervalsStatus, getWellnessSummary, syncIntervals } from "./sync";
+import {
+  computeEfforts,
+  connectIntervals,
+  disconnectIntervals,
+  getIntervalsStatus,
+  getWellnessSummary,
+  syncIntervals,
+} from "./sync";
 import { recordHistoricalWorkout } from "../history/service";
 
 process.env.ENCRYPTION_KEY = Buffer.alloc(32, 7).toString("base64");
@@ -29,15 +36,45 @@ const fakeApi = (key: string): IntervalsApi => ({
     return { time, distance: time.map((s) => (s * 1000) / 405) };
   },
   async getAthlete() {
-    if (key !== "good-key-123456") throw new IntervalsError("intervals.icu rejected the API key.", 401);
+    if (key !== "good-key-123456")
+      throw new IntervalsError("intervals.icu rejected the API key.", 401);
     return { id: "i664964", name: "Test Athlete" };
   },
   async listActivities() {
     return [
-      { id: "a-run", start_date_local: "2026-10-30T07:00:00", type: "Run", name: "Morning Run", distance: 3100, moving_time: 1260, average_heartrate: 148, icu_training_load: 30 },
-      { id: "a-indoor", start_date_local: "2026-10-30T19:00:00", type: "VirtualRun", name: "Treadmill", distance: 2000, moving_time: 1160 },
-      { id: "a-walk", start_date_local: "2026-10-29T12:00:00", type: "Walk", distance: 2500, moving_time: 1800 },
-      { id: "a-gym", start_date_local: "2026-10-29T18:00:00", type: "Workout", name: "Strength", moving_time: 2700, average_heartrate: 110 },
+      {
+        id: "a-run",
+        start_date_local: "2026-10-30T07:00:00",
+        type: "Run",
+        name: "Morning Run",
+        distance: 3100,
+        moving_time: 1260,
+        average_heartrate: 148,
+        icu_training_load: 30,
+      },
+      {
+        id: "a-indoor",
+        start_date_local: "2026-10-30T19:00:00",
+        type: "VirtualRun",
+        name: "Treadmill",
+        distance: 2000,
+        moving_time: 1160,
+      },
+      {
+        id: "a-walk",
+        start_date_local: "2026-10-29T12:00:00",
+        type: "Walk",
+        distance: 2500,
+        moving_time: 1800,
+      },
+      {
+        id: "a-gym",
+        start_date_local: "2026-10-29T18:00:00",
+        type: "Workout",
+        name: "Strength",
+        moving_time: 2700,
+        average_heartrate: 110,
+      },
     ];
   },
   async listWellness() {
@@ -76,7 +113,9 @@ describe("crypto", () => {
 
 describe("intervals.icu sync", () => {
   it("rejects a bad key and stores nothing", async () => {
-    await expect(connectIntervals(db, USER, "wrong-key-000000", "", fakeApi)).rejects.toBeInstanceOf(IntervalsError);
+    await expect(
+      connectIntervals(db, USER, "wrong-key-000000", "", fakeApi),
+    ).rejects.toBeInstanceOf(IntervalsError);
     expect((await getIntervalsStatus(db, USER)).connected).toBe(false);
   });
 
@@ -97,7 +136,10 @@ describe("intervals.icu sync", () => {
     const friRun = all.find((w) => w.date === "2026-10-30" && w.kind === "run")!;
     const thuStrength = all.find((w) => w.date === "2026-10-29" && w.kind === "strength")!;
     expect(saved!.progress[friRun.id]).toMatchObject({ status: "completed", activityId: "a-run" });
-    expect(saved!.progress[thuStrength.id]).toMatchObject({ status: "completed", activityId: "a-gym" });
+    expect(saved!.progress[thuStrength.id]).toMatchObject({
+      status: "completed",
+      activityId: "a-gym",
+    });
     expect(result.matched).toBe(2);
 
     // Syncing again is idempotent
@@ -107,7 +149,13 @@ describe("intervals.icu sync", () => {
 
   it("summarises wellness against the previous days", async () => {
     const w = await getWellnessSummary(db, USER, "2026-10-30");
-    expect(w).toMatchObject({ date: "2026-10-30", restingHr: 50, restingHrBaseline: 53, ctl: 21, atl: 24 });
+    expect(w).toMatchObject({
+      date: "2026-10-30",
+      restingHr: 50,
+      restingHrBaseline: 53,
+      ctl: 21,
+      atl: 24,
+    });
   });
 
   it("works out best efforts for outdoor runs only, from the run's stream", async () => {
@@ -127,34 +175,82 @@ describe("intervals.icu sync", () => {
   });
 
   it("stops and tries again later when intervals.icu is busy, but doesn't retry a run it can't read", async () => {
-    const row = { userId: USER, date: "2026-10-01", startLocal: "2026-10-01T07:00:00", type: "Run", distanceM: 5000, raw: {} };
+    const row = {
+      userId: USER,
+      date: "2026-10-01",
+      startLocal: "2026-10-01T07:00:00",
+      type: "Run",
+      distanceM: 5000,
+      raw: {},
+    };
     await db.insert(activity).values([{ ...row, id: "x-busy" }]);
-    const busy = { ...fakeApi("good-key-123456"), getActivityStreams: async () => Promise.reject(new IntervalsError("busy", 429)) };
+    const busy = {
+      ...fakeApi("good-key-123456"),
+      getActivityStreams: async () => Promise.reject(new IntervalsError("busy", 429)),
+    };
     expect(await computeEfforts(db, USER, busy)).toEqual({ processed: 0, pending: 1 });
 
-    const broken = { ...fakeApi("good-key-123456"), getActivityStreams: async () => Promise.reject(new IntervalsError("not found", 404)) };
+    const broken = {
+      ...fakeApi("good-key-123456"),
+      getActivityStreams: async () => Promise.reject(new IntervalsError("not found", 404)),
+    };
     expect(await computeEfforts(db, USER, broken)).toEqual({ processed: 0, pending: 0 });
     await db.delete(activity).where(eq(activity.id, "x-busy"));
   });
 
   it("does not auto-match an activity already assigned to a historical session", async () => {
-    await db.insert(activity).values({ userId: USER, id: "historic-run", date: "2026-10-28", startLocal: "2026-10-28T07:00:00", type: "Run", distanceM: 5000, raw: {} });
-    await recordHistoricalWorkout(db, USER, { requestKey: "history-28", date: "2026-10-28", kind: "run", title: "Extra run", activityIds: ["historic-run"] }, "2026-10-30");
-    const api = { ...fakeApi("good-key-123456"), getActivityStreams: async () => null,
-      listActivities: async () => [{ id: "historic-run", start_date_local: "2026-10-28T07:00:00", type: "Run", distance: 5000 }] };
+    await db.insert(activity).values({
+      userId: USER,
+      id: "historic-run",
+      date: "2026-10-28",
+      startLocal: "2026-10-28T07:00:00",
+      type: "Run",
+      distanceM: 5000,
+      raw: {},
+    });
+    await recordHistoricalWorkout(
+      db,
+      USER,
+      {
+        requestKey: "history-28",
+        date: "2026-10-28",
+        kind: "run",
+        title: "Extra run",
+        activityIds: ["historic-run"],
+      },
+      "2026-10-30",
+    );
+    const api = {
+      ...fakeApi("good-key-123456"),
+      getActivityStreams: async () => null,
+      listActivities: async () => [
+        {
+          id: "historic-run",
+          start_date_local: "2026-10-28T07:00:00",
+          type: "Run",
+          distance: 5000,
+        },
+      ],
+    };
     await syncIntervals(db, USER, "2026-10-30", () => api);
     const saved = await getActivePlan(db, USER);
-    const wed = saved!.plan.weeks.flatMap((w) => w.workouts).find((w) => w.date === "2026-10-28" && w.kind === "run")!;
+    const wed = saved!.plan.weeks
+      .flatMap((w) => w.workouts)
+      .find((w) => w.date === "2026-10-28" && w.kind === "run")!;
     expect(saved!.progress[wed.id]).toMatchObject({ status: "planned", activityId: null });
   });
 
   it("disconnects, deletes synced data and keeps workouts done", async () => {
     await disconnectIntervals(db, USER);
-    expect(await db.select().from(activityEffort).where(eq(activityEffort.userId, USER))).toEqual([]);
+    expect(await db.select().from(activityEffort).where(eq(activityEffort.userId, USER))).toEqual(
+      [],
+    );
     expect((await getIntervalsStatus(db, USER)).connected).toBe(false);
     expect(await getWellnessSummary(db, USER, "2026-10-30")).toBeNull();
     const saved = await getActivePlan(db, USER);
-    const friRun = saved!.plan.weeks.flatMap((w) => w.workouts).find((w) => w.date === "2026-10-30" && w.kind === "run")!;
+    const friRun = saved!.plan.weeks
+      .flatMap((w) => w.workouts)
+      .find((w) => w.date === "2026-10-30" && w.kind === "run")!;
     expect(saved!.progress[friRun.id]).toMatchObject({ status: "completed", activityId: null });
   });
 });

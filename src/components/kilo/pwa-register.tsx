@@ -11,9 +11,11 @@ export function PwaRegister() {
   useEffect(() => {
     const stop = pwaInstall.start();
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => {
-        // Not fatal: the app works the same without it
-      });
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .catch(() => {
+          // Not fatal: the app works the same without it
+        });
     }
     return stop;
   }, []);

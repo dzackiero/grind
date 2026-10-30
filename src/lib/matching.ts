@@ -6,7 +6,12 @@
  */
 
 export const RUN_ACTIVITY_TYPES = new Set(["Run", "TrailRun", "VirtualRun", "Treadmill"]);
-export const STRENGTH_ACTIVITY_TYPES = new Set(["WeightTraining", "Workout", "Crossfit", "HighIntensityIntervalTraining"]);
+export const STRENGTH_ACTIVITY_TYPES = new Set([
+  "WeightTraining",
+  "Workout",
+  "Crossfit",
+  "HighIntensityIntervalTraining",
+]);
 
 export interface PlannedForMatch {
   key: string;
@@ -39,9 +44,14 @@ function cost(p: PlannedForMatch, a: ActivityForMatch) {
  * A run workout takes every other run recorded the same day too (a watch that split warm-up and main set,
  * or a pause that started a second recording), so they count as one session. Strength takes the best one.
  */
-export function matchActivityGroups(planned: PlannedForMatch[], activities: ActivityForMatch[]): Map<string, string[]> {
+export function matchActivityGroups(
+  planned: PlannedForMatch[],
+  activities: ActivityForMatch[],
+): Map<string, string[]> {
   const claimed = new Set(planned.map((p) => p.activityId).filter((id): id is string => !!id));
-  const open = planned.filter((p) => !p.activityId && p.status !== "skipped").sort((a, b) => a.date.localeCompare(b.date));
+  const open = planned
+    .filter((p) => !p.activityId && p.status !== "skipped")
+    .sort((a, b) => a.date.localeCompare(b.date));
   const links = new Map<string, string[]>();
 
   for (const p of open) {
@@ -50,7 +60,10 @@ export function matchActivityGroups(planned: PlannedForMatch[], activities: Acti
       .sort((a, b) => cost(p, a) - cost(p, b));
     if (!candidates.length) continue;
     const picked = p.kind === "run" ? candidates : candidates.slice(0, 1);
-    links.set(p.key, picked.map((a) => a.id));
+    links.set(
+      p.key,
+      picked.map((a) => a.id),
+    );
     for (const a of picked) claimed.add(a.id);
   }
   return links;
@@ -60,12 +73,19 @@ export function matchActivityGroups(planned: PlannedForMatch[], activities: Acti
  * Runs recorded after a run workout was already matched: same day, not linked to anything yet.
  * `activities` must only hold activities that no workout or historical session has claimed.
  */
-export function extraRunsForLinked(planned: PlannedForMatch[], activities: ActivityForMatch[]): Map<string, string[]> {
+export function extraRunsForLinked(
+  planned: PlannedForMatch[],
+  activities: ActivityForMatch[],
+): Map<string, string[]> {
   const extras = new Map<string, string[]>();
   const used = new Set<string>();
   for (const p of planned) {
     if (p.kind !== "run" || !p.activityId || p.status === "skipped") continue;
-    const ids = activities.filter((a) => !used.has(a.id) && a.id !== p.activityId && compatible(p, a) && a.date === p.date).map((a) => a.id);
+    const ids = activities
+      .filter(
+        (a) => !used.has(a.id) && a.id !== p.activityId && compatible(p, a) && a.date === p.date,
+      )
+      .map((a) => a.id);
     if (!ids.length) continue;
     extras.set(p.key, ids);
     for (const id of ids) used.add(id);
@@ -74,6 +94,9 @@ export function extraRunsForLinked(planned: PlannedForMatch[], activities: Activ
 }
 
 /** Returns new links: workout key → the closest activity id. */
-export function matchActivities(planned: PlannedForMatch[], activities: ActivityForMatch[]): Map<string, string> {
+export function matchActivities(
+  planned: PlannedForMatch[],
+  activities: ActivityForMatch[],
+): Map<string, string> {
   return new Map([...matchActivityGroups(planned, activities)].map(([key, ids]) => [key, ids[0]]));
 }

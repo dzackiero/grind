@@ -15,7 +15,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     const { key } = await params;
     const { status } = Body.parse(await request.json());
     const found = await setWorkoutStatus(await getDb(), user.id, key, status);
-    if (!found) return Response.json({ error: "Workout not found in your active plan." }, { status: 404 });
+    if (!found)
+      return Response.json({ error: "Workout not found in your active plan." }, { status: 404 });
     return Response.json({ key, status });
   } catch (error) {
     return errorResponse(error);

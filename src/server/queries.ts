@@ -105,7 +105,10 @@ export const getViewerProgress = cache(async () => {
 export const getViewerHabits = cache(async () => {
   const user = await requireViewer();
   const today = await getViewerToday();
-  return listHabits(await getDb(), user.id, { from: addDays(today, -STREAK_LOOKBACK_DAYS), to: today });
+  return listHabits(await getDb(), user.id, {
+    from: addDays(today, -STREAK_LOOKBACK_DAYS),
+    to: today,
+  });
 });
 
 export const getViewerIntervals = cache(async () => {

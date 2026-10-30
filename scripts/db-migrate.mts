@@ -15,7 +15,9 @@ if (url?.startsWith("postgres")) {
   await client.connect();
   await migrate(drizzle(client), { migrationsFolder: MIGRATIONS_DIR });
   await client.end();
-  console.log(`Migrations applied to Neon branch "${process.env.NEON_BRANCH ?? "unknown"}" (direct connection).`);
+  console.log(
+    `Migrations applied to Neon branch "${process.env.NEON_BRANCH ?? "unknown"}" (direct connection).`,
+  );
 } else {
   await createDb(undefined);
   console.log("Migrations applied to the local embedded database (.data/pglite).");

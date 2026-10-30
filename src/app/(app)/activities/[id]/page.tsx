@@ -9,7 +9,14 @@ import { Stat } from "@/components/kilo/stat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { activityTitle, analyseElevation, analysePace, buildRoute, computeSplits, stepsPerMinute } from "@/lib/activity-detail";
+import {
+  activityTitle,
+  analyseElevation,
+  analysePace,
+  buildRoute,
+  computeSplits,
+  stepsPerMinute,
+} from "@/lib/activity-detail";
 import { EFFORT_DISTANCES, formatEffort } from "@/lib/efforts";
 import { formatPace } from "@/lib/plan";
 import { getDb } from "@/server/db";
@@ -22,7 +29,12 @@ export const metadata = { title: "Activity · Grind" };
 function startLabel(startLocal: string) {
   const match = startLocal.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
   if (!match) return startLocal;
-  const date = new Date(`${match[1]}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  const date = new Date(`${match[1]}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const hour = Number(match[2]);
   return `${date} at ${hour % 12 || 12}:${match[3]} ${hour < 12 ? "AM" : "PM"}`;
 }
@@ -60,7 +72,11 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
     const found = efforts.find((e) => e.key === d.key);
     return found ? [{ ...d, seconds: found.seconds }] : [];
   });
-  const showGap = !!pace?.hasGrade && pace.avgGapSec != null && pace.avgPaceSec != null && Math.abs(pace.avgGapSec - pace.avgPaceSec) >= 1;
+  const showGap =
+    !!pace?.hasGrade &&
+    pace.avgGapSec != null &&
+    pace.avgPaceSec != null &&
+    Math.abs(pace.avgGapSec - pace.avgPaceSec) >= 1;
 
   return (
     <div className="flex flex-col gap-5">
@@ -73,13 +89,23 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
       {route && <ActivityRoute route={route} />}
 
       <div className="flex flex-col gap-2">
-        <h1 className="font-display text-3xl leading-9 font-extrabold">{activityTitle(a.type, a.name)}</h1>
+        <h1 className="font-display text-3xl leading-9 font-extrabold">
+          {activityTitle(a.type, a.name)}
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{a.type === "VirtualRun" || a.type === "Treadmill" ? "Indoor" : a.type}</Badge>
-          {distanceKm != null && <span className="text-muted-foreground text-sm">{distanceKm.toFixed(2)} km</span>}
+          <Badge variant="secondary">
+            {a.type === "VirtualRun" || a.type === "Treadmill" ? "Indoor" : a.type}
+          </Badge>
+          {distanceKm != null && (
+            <span className="text-muted-foreground text-sm">{distanceKm.toFixed(2)} km</span>
+          )}
         </div>
         <p className="text-muted-foreground text-sm">{startLabel(a.startLocal)}</p>
-        {source && <p className="text-muted-foreground text-sm">Source: {source.charAt(0) + source.slice(1).toLowerCase()} via intervals.icu</p>}
+        {source && (
+          <p className="text-muted-foreground text-sm">
+            Source: {source.charAt(0) + source.slice(1).toLowerCase()} via intervals.icu
+          </p>
+        )}
       </div>
 
       <Card>
@@ -87,7 +113,9 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
           {distanceKm != null && <Stat label="Distance" value={distanceKm.toFixed(2)} unit="km" />}
           {a.movingTimeSec != null && <Stat label="Time" value={formatEffort(a.movingTimeSec)} />}
           {isRun && avgPace && <Stat label="Avg pace" value={formatPace(avgPace)} unit="/km" />}
-          {a.elevationGainM != null && a.elevationGainM > 0 && <Stat label="Elevation gain" value={Math.round(a.elevationGainM)} unit="m" />}
+          {a.elevationGainM != null && a.elevationGainM > 0 && (
+            <Stat label="Elevation gain" value={Math.round(a.elevationGainM)} unit="m" />
+          )}
           {a.avgHr != null && <Stat label="Avg HR" value={Math.round(a.avgHr)} unit="bpm" />}
           {cadence != null && <Stat label="Cadence" value={cadence} unit="spm" />}
           {calories != null && <Stat label="Calories" value={Math.round(calories)} />}
@@ -104,11 +132,22 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Best efforts</CardTitle>
-            <CardDescription>The fastest stretch of each distance inside this run. They use total time, so pauses count.</CardDescription>
+            <CardDescription>
+              The fastest stretch of each distance inside this run. They use total time, so pauses
+              count.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-6">
             {effortRows.map((e) => (
-              <PlateBadge key={e.key} label={e.label} name={e.label} plate={e.plate} value={formatEffort(e.seconds)} caption={`${formatPace(e.seconds / (e.meters / 1000))}/km`} tag="" />
+              <PlateBadge
+                key={e.key}
+                label={e.label}
+                name={e.label}
+                plate={e.plate}
+                value={formatEffort(e.seconds)}
+                caption={`${formatPace(e.seconds / (e.meters / 1000))}/km`}
+                tag=""
+              />
             ))}
           </CardContent>
         </Card>
@@ -129,14 +168,25 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Pace</CardTitle>
-            {showGap && <CardDescription>The dashed line is pace adjusted for hills: what the same effort would be on flat ground.</CardDescription>}
+            {showGap && (
+              <CardDescription>
+                The dashed line is pace adjusted for hills: what the same effort would be on flat
+                ground.
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <PaceChart series={pace.series} showGap={showGap} />
             <dl>
-              {pace.avgPaceSec != null && <Row label="Avg. pace" value={`${formatPace(pace.avgPaceSec)}/km`} />}
-              {showGap && <Row label="Avg. grade-adjusted pace" value={`${formatPace(pace.avgGapSec!)}/km`} />}
-              {pace.maxPaceSec != null && <Row label="Max. pace" value={`${formatPace(pace.maxPaceSec)}/km`} />}
+              {pace.avgPaceSec != null && (
+                <Row label="Avg. pace" value={`${formatPace(pace.avgPaceSec)}/km`} />
+              )}
+              {showGap && (
+                <Row label="Avg. grade-adjusted pace" value={`${formatPace(pace.avgGapSec!)}/km`} />
+              )}
+              {pace.maxPaceSec != null && (
+                <Row label="Max. pace" value={`${formatPace(pace.maxPaceSec)}/km`} />
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -150,8 +200,12 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
           <CardContent className="flex flex-col gap-4">
             <ElevationChart series={elevation.series} />
             <dl>
-              {a.elevationGainM != null && <Row label="Elevation gain" value={`${Math.round(a.elevationGainM)} m`} />}
-              {elevation.maxM != null && <Row label="Max elevation" value={`${Math.round(elevation.maxM)} m`} />}
+              {a.elevationGainM != null && (
+                <Row label="Elevation gain" value={`${Math.round(a.elevationGainM)} m`} />
+              )}
+              {elevation.maxM != null && (
+                <Row label="Max elevation" value={`${Math.round(elevation.maxM)} m`} />
+              )}
             </dl>
           </CardContent>
         </Card>

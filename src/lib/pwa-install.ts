@@ -19,10 +19,13 @@ export const pwaInstall = {
   getServerSnapshot: () => initialState,
   subscribe(listener: () => void) {
     listeners.add(listener);
-    return () => { listeners.delete(listener); };
+    return () => {
+      listeners.delete(listener);
+    };
   },
   start() {
-    const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true;
     update({ prompt: standalone ? null : state.prompt, installed: standalone || state.installed });
     const onPrompt = (event: Event) => {

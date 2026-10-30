@@ -1,6 +1,12 @@
 import { and, asc, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { addDays } from "@/lib/plan/dates";
-import { HabitInputSchema, HabitPatchSchema, isIsoDate, MAX_BACKFILL_DAYS, MAX_HABITS } from "@/lib/habits";
+import {
+  HabitInputSchema,
+  HabitPatchSchema,
+  isIsoDate,
+  MAX_BACKFILL_DAYS,
+  MAX_HABITS,
+} from "@/lib/habits";
 import type { Weekday } from "@/lib/plan/dates";
 import type { DB } from "../db/client";
 import { habit, habitLog } from "../db/schema";
@@ -34,8 +40,12 @@ export async function createHabit(db: DB, userId: string, rawInput: unknown) {
     .select({ n: sql<number>`count(*)::int` })
     .from(habit)
     .where(and(eq(habit.userId, userId), isNull(habit.archivedAt)));
-  if (n >= MAX_HABITS) throw new HabitError(`You can track up to ${MAX_HABITS} habits. Archive one to add another.`);
-  const [row] = await db.insert(habit).values({ userId, name: input.name, icon: input.icon, days: input.days }).returning();
+  if (n >= MAX_HABITS)
+    throw new HabitError(`You can track up to ${MAX_HABITS} habits. Archive one to add another.`);
+  const [row] = await db
+    .insert(habit)
+    .values({ userId, name: input.name, icon: input.icon, days: input.days })
+    .returning();
   return { id: row.id, name: row.name, icon: row.icon, days: toWeekdays(row.days) };
 }
 
@@ -63,18 +73,37 @@ export async function archiveHabit(db: DB, userId: string, id: string) {
 }
 
 /** Tick or untick a habit for a day: today or up to 60 days back, never the future. */
-export async function setHabitDone(db: DB, userId: string, id: string, date: string, done: boolean, today: string) {
+export async function setHabitDone(
+  db: DB,
+  userId: string,
+  id: string,
+  date: string,
+  done: boolean,
+  today: string,
+) {
   if (!isIsoDate(date)) throw new HabitError("The date must look like 2026-10-28.");
-  if (date > today) throw new HabitError("You can't tick a habit for a day that hasn't happened yet.");
-  if (date < addDays(today, -MAX_BACKFILL_DAYS)) throw new HabitError(`You can only change the last ${MAX_BACKFILL_DAYS} days.`);
-  const [found] = await db.select({ id: habit.id }).from(habit).where(and(eq(habit.id, id), eq(habit.userId, userId), isNull(habit.archivedAt)));
+  if (date > today)
+    throw new HabitError("You can't tick a habit for a day that hasn't happened yet.");
+  if (date < addDays(today, -MAX_BACKFILL_DAYS))
+    throw new HabitError(`You can only change the last ${MAX_BACKFILL_DAYS} days.`);
+  const [found] = await db
+    .select({ id: habit.id })
+    .from(habit)
+    .where(and(eq(habit.id, id), eq(habit.userId, userId), isNull(habit.archivedAt)));
   if (!found) throw new HabitError("That habit doesn't exist.", 404);
   if (done) await db.insert(habitLog).values({ habitId: id, userId, date }).onConflictDoNothing();
-  else await db.delete(habitLog).where(and(eq(habitLog.habitId, id), eq(habitLog.userId, userId), eq(habitLog.date, date)));
+  else
+    await db
+      .delete(habitLog)
+      .where(and(eq(habitLog.habitId, id), eq(habitLog.userId, userId), eq(habitLog.date, date)));
 }
 
 /** The athlete's active habits, oldest first, each with the days ticked between `from` and `to`. */
-export async function listHabits(db: DB, userId: string, range: { from: string; to: string }): Promise<HabitWithLogs[]> {
+export async function listHabits(
+  db: DB,
+  userId: string,
+  range: { from: string; to: string },
+): Promise<HabitWithLogs[]> {
   const habits = await db
     .select()
     .from(habit)
@@ -84,7 +113,17 @@ export async function listHabits(db: DB, userId: string, range: { from: string; 
   const logs = await db
     .select({ habitId: habitLog.habitId, date: habitLog.date })
     .from(habitLog)
-    .where(and(eq(habitLog.userId, userId), inArray(habitLog.habitId, habits.map((h) => h.id)), gte(habitLog.date, range.from), lte(habitLog.date, range.to)));
+    .where(
+      and(
+        eq(habitLog.userId, userId),
+        inArray(
+          habitLog.habitId,
+          habits.map((h) => h.id),
+        ),
+        gte(habitLog.date, range.from),
+        lte(habitLog.date, range.to),
+      ),
+    );
   const byHabit = new Map<string, string[]>();
   for (const l of logs) byHabit.set(l.habitId, [...(byHabit.get(l.habitId) ?? []), l.date]);
   return habits.map((h) => ({

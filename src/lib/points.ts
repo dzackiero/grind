@@ -17,7 +17,15 @@ export const TIERS = [
 ] as const;
 export type TierKey = (typeof TIERS)[number]["key"];
 
-const BASE_POINTS: Record<string, number> = { easy: 100, hills: 180, tempo: 200, intervals: 220, long: 260, race: 500, strength: 150 };
+const BASE_POINTS: Record<string, number> = {
+  easy: 100,
+  hills: 180,
+  tempo: 200,
+  intervals: 220,
+  long: 260,
+  race: 500,
+  strength: 150,
+};
 const POINTS_PER_KM = 12;
 export const WEEK_BONUS = 200;
 /** Share of a week's planned workouts that must be done for the bonus and the streak */
@@ -47,8 +55,15 @@ export interface PointsSummary {
   streak: number;
 }
 
-export function pointsSummary(rows: readonly PointRow[], activePlanId: string | null, today: string): PointsSummary {
-  const weeks = new Map<string, { planId: string; weekStart: string; total: number; done: number }>();
+export function pointsSummary(
+  rows: readonly PointRow[],
+  activePlanId: string | null,
+  today: string,
+): PointsSummary {
+  const weeks = new Map<
+    string,
+    { planId: string; weekStart: string; total: number; done: number }
+  >();
   let earned = 0;
   let completed = 0;
   for (const r of rows) {
@@ -63,7 +78,8 @@ export function pointsSummary(rows: readonly PointRow[], activePlanId: string | 
     weeks.set(key, w);
   }
 
-  const hit = (w: { total: number; done: number }) => w.total > 0 && w.done / w.total >= WEEK_TARGET;
+  const hit = (w: { total: number; done: number }) =>
+    w.total > 0 && w.done / w.total >= WEEK_TARGET;
   const hitWeeks = [...weeks.values()].filter(hit);
 
   // Streak: finished weeks of the active plan, newest first, until one falls short
@@ -77,7 +93,14 @@ export function pointsSummary(rows: readonly PointRow[], activePlanId: string | 
   }
 
   const bonus = hitWeeks.length * WEEK_BONUS;
-  return { points: earned + bonus, workoutPoints: earned, bonusPoints: bonus, completedWorkouts: completed, weeksHit: hitWeeks.length, streak };
+  return {
+    points: earned + bonus,
+    workoutPoints: earned,
+    bonusPoints: bonus,
+    completedWorkouts: completed,
+    weeksHit: hitWeeks.length,
+    streak,
+  };
 }
 
 export interface TierStatus {

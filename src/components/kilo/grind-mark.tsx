@@ -9,9 +9,27 @@ const c = MARK.size / 2;
  * time, for loading; the CSS is in globals.css and stops for prefers-reduced-motion, which leaves the finished mark.
  * Colours come from the theme (primary and primary-foreground), which are the same lime and ink in both themes.
  */
-export function GrindMark({ className, animated = false, label, size }: { className?: string; animated?: boolean; label?: string; size?: number }) {
+export function GrindMark({
+  className,
+  animated = false,
+  label,
+  size,
+}: {
+  className?: string;
+  animated?: boolean;
+  label?: string;
+  size?: number;
+}) {
   return (
-    <svg viewBox={`0 0 ${MARK.size} ${MARK.size}`} width={size} height={size} className={cn(animated && "brand-loader", className)} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+    <svg
+      viewBox={`0 0 ${MARK.size} ${MARK.size}`}
+      width={size}
+      height={size}
+      className={cn(animated && "brand-loader", className)}
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    >
       <circle cx={c} cy={c} r={MARK.discRadius} className="fill-primary" />
       <g transform={`rotate(${MARK.teethOffsetAngle} ${c} ${c})`}>
         <circle
@@ -33,7 +51,12 @@ export function GrindMark({ className, animated = false, label, size }: { classN
         pathLength={100}
         className={cn("stroke-primary-foreground/25", animated && "brand-loader-ring")}
       />
-      <circle cx={c} cy={c} r={MARK.hubRadius} className={cn("fill-primary-foreground", animated && "brand-loader-hub")} />
+      <circle
+        cx={c}
+        cy={c}
+        r={MARK.hubRadius}
+        className={cn("fill-primary-foreground", animated && "brand-loader-hub")}
+      />
     </svg>
   );
 }

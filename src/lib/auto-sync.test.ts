@@ -26,10 +26,20 @@ describe("automatic intervals sync", () => {
     page.visibilityState = visible ? "visible" : "hidden";
     const events = new EventTarget();
     const network = { online };
-    const request = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ activities: 1, wellnessDays: 1, matched: 1 }));
+    const request = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () =>
+        Response.json({ activities: 1, wellnessDays: 1, matched: 1 }),
+      );
     vi.stubGlobal("fetch", request);
     const onSuccess = vi.fn();
-    const controller = createAutoSync({ document: page, window: events, isOnline: () => network.online, lastSyncedAt, onSuccess });
+    const controller = createAutoSync({
+      document: page,
+      window: events,
+      isOnline: () => network.online,
+      lastSyncedAt,
+      onSuccess,
+    });
     cleanups.push(controller.stop);
     return { page, events, network, request, onSuccess, controller };
   }
@@ -37,7 +47,10 @@ describe("automatic intervals sync", () => {
   it("syncs on open and repeats after five minutes of freshness", async () => {
     const s = setup();
     await vi.advanceTimersByTimeAsync(0);
-    expect(s.request).toHaveBeenCalledWith("/api/intervals/sync", expect.objectContaining({ method: "POST", signal: expect.any(AbortSignal) }));
+    expect(s.request).toHaveBeenCalledWith(
+      "/api/intervals/sync",
+      expect.objectContaining({ method: "POST", signal: expect.any(AbortSignal) }),
+    );
     expect(s.onSuccess).toHaveBeenCalledWith({ activities: 1, wellnessDays: 1, matched: 1 });
     s.events.dispatchEvent(new Event("focus"));
     await vi.advanceTimersByTimeAsync(299_999);
@@ -73,25 +86,34 @@ describe("automatic intervals sync", () => {
     expect(s.request).toHaveBeenCalledTimes(3);
   });
 
-  it.each(["http", "network"])("retries %s failures after a minute without success callbacks", async (failure) => {
-    const s = setup(new Date().toISOString());
-    if (failure === "http") s.request.mockResolvedValueOnce(Response.json({ error: "Try later" }, { status: 503 }));
-    else s.request.mockRejectedValueOnce(new Error("Connection lost"));
-    await vi.advanceTimersByTimeAsync(300_000);
-    expect(s.onSuccess).not.toHaveBeenCalled();
-    s.events.dispatchEvent(new Event("focus"));
-    s.events.dispatchEvent(new Event("online"));
-    await vi.advanceTimersByTimeAsync(59_999);
-    expect(s.request).toHaveBeenCalledTimes(1);
-    await vi.advanceTimersByTimeAsync(1);
-    expect(s.request).toHaveBeenCalledTimes(2);
-    expect(s.onSuccess).toHaveBeenCalledTimes(1);
-  });
+  it.each(["http", "network"])(
+    "retries %s failures after a minute without success callbacks",
+    async (failure) => {
+      const s = setup(new Date().toISOString());
+      if (failure === "http")
+        s.request.mockResolvedValueOnce(Response.json({ error: "Try later" }, { status: 503 }));
+      else s.request.mockRejectedValueOnce(new Error("Connection lost"));
+      await vi.advanceTimersByTimeAsync(300_000);
+      expect(s.onSuccess).not.toHaveBeenCalled();
+      s.events.dispatchEvent(new Event("focus"));
+      s.events.dispatchEvent(new Event("online"));
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(s.request).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(s.request).toHaveBeenCalledTimes(2);
+      expect(s.onSuccess).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("does not overlap requests when events or timers fire", async () => {
     const s = setup(new Date().toISOString());
     let finish!: (response: Response) => void;
-    s.request.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    s.request.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
     await vi.advanceTimersByTimeAsync(300_000);
     s.events.dispatchEvent(new Event("focus"));
     s.events.dispatchEvent(new Event("online"));
@@ -120,7 +142,12 @@ describe("automatic intervals sync", () => {
   it("aborts pending work and removes listeners and timers when stopped", async () => {
     const s = setup(new Date().toISOString());
     let finish!: (response: Response) => void;
-    s.request.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    s.request.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
     await vi.advanceTimersByTimeAsync(300_000);
     expect(s.request).toHaveBeenCalledTimes(1);
     const signal = s.request.mock.calls[0][1]!.signal!;

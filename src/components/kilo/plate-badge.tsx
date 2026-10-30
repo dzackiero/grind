@@ -41,17 +41,45 @@ export function PlateBadge({
   const colors = PLATE[plate];
   const top = tag ?? (locked ? "" : "PR");
   return (
-    <figure className={cn("flex flex-col items-center gap-1.5 text-center", className)} aria-label={locked ? `${name}: ${caption}` : `${name} personal record ${value}, ${caption}`}>
+    <figure
+      className={cn("flex flex-col items-center gap-1.5 text-center", className)}
+      aria-label={locked ? `${name}: ${caption}` : `${name} personal record ${value}, ${caption}`}
+    >
       <svg viewBox="0 0 76 76" className="size-[76px]" aria-hidden>
         <circle cx="38" cy="38" r="38" className="fill-plate-rim" />
         <circle cx="38" cy="38" r="34" className={locked ? "fill-secondary" : colors.face} />
-        <circle cx="38" cy="38" r="25" fill="none" strokeWidth="1.5" className="stroke-plate-rim/30" />
+        <circle
+          cx="38"
+          cy="38"
+          r="25"
+          fill="none"
+          strokeWidth="1.5"
+          className="stroke-plate-rim/30"
+        />
         {top && (
-          <text x="38" y="27" textAnchor="middle" className={cn("font-sans text-[7px] font-bold tracking-[0.1em]", locked ? "fill-subtle" : colors.text)} opacity={0.75}>
+          <text
+            x="38"
+            y="27"
+            textAnchor="middle"
+            className={cn(
+              "font-sans text-[7px] font-bold tracking-[0.1em]",
+              locked ? "fill-subtle" : colors.text,
+            )}
+            opacity={0.75}
+          >
             {top}
           </text>
         )}
-        <text x="38" y="46" textAnchor="middle" className={cn("font-display text-[15px] font-extrabold", locked ? "fill-subtle" : colors.text)} style={{ fontStretch: "112%" }}>
+        <text
+          x="38"
+          y="46"
+          textAnchor="middle"
+          className={cn(
+            "font-display text-[15px] font-extrabold",
+            locked ? "fill-subtle" : colors.text,
+          )}
+          style={{ fontStretch: "112%" }}
+        >
           {label}
         </text>
       </svg>

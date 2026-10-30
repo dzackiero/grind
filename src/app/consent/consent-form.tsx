@@ -8,16 +8,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { authClient } from "@/lib/auth-client";
 
 /** Approve or deny an app's access. The signed OAuth query in the page URL is attached to the request for us. */
-export function ConsentForm({ clientName, redirectHost, userName, items }: { clientName: string; redirectHost: string | null; userName: string; items: { title: string; detail: string }[] }) {
+export function ConsentForm({
+  clientName,
+  redirectHost,
+  userName,
+  items,
+}: {
+  clientName: string;
+  redirectHost: string | null;
+  userName: string;
+  items: { title: string; detail: string }[];
+}) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const decide = (accept: boolean) =>
     startTransition(async () => {
       setError(null);
-      const { data, error } = await authClient.$fetch<{ redirect?: boolean; url?: string }>("/oauth2/consent", { method: "POST", body: { accept } });
+      const { data, error } = await authClient.$fetch<{ redirect?: boolean; url?: string }>(
+        "/oauth2/consent",
+        { method: "POST", body: { accept } },
+      );
       if (error || !data?.url) {
-        setError(error?.message ?? "Couldn't save your choice. Go back to Claude and try connecting again.");
+        setError(
+          error?.message ??
+            "Couldn't save your choice. Go back to Claude and try connecting again.",
+        );
         return;
       }
       window.location.href = data.url;
@@ -26,9 +42,18 @@ export function ConsentForm({ clientName, redirectHost, userName, items }: { cli
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-display text-2xl font-extrabold">Connect {clientName} to Grind?</CardTitle>
+        <CardTitle className="font-display text-2xl font-extrabold">
+          Connect {clientName} to Grind?
+        </CardTitle>
         <CardDescription>
-          Signed in as {userName}.{redirectHost ? <> After you choose, you&apos;ll return to <b className="text-foreground">{redirectHost}</b>.</> : null}
+          Signed in as {userName}.
+          {redirectHost ? (
+            <>
+              {" "}
+              After you choose, you&apos;ll return to{" "}
+              <b className="text-foreground">{redirectHost}</b>.
+            </>
+          ) : null}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
@@ -58,7 +83,9 @@ export function ConsentForm({ clientName, redirectHost, userName, items }: { cli
             Don&apos;t allow
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">You can disconnect {clientName} any time in Grind → Settings.</p>
+        <p className="text-muted-foreground text-xs">
+          You can disconnect {clientName} any time in Grind → Settings.
+        </p>
       </CardContent>
     </Card>
   );

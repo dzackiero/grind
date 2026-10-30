@@ -13,7 +13,8 @@ async function saveStatus(key: string, status: WorkoutStatus) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? "Couldn't save. Try again.");
+  if (!res.ok)
+    throw new Error((await res.json().catch(() => null))?.error ?? "Couldn't save. Try again.");
 }
 
 function useDoneState(workoutKey: string, status: WorkoutStatus) {
@@ -39,16 +40,38 @@ function useDoneState(workoutKey: string, status: WorkoutStatus) {
 }
 
 /** Square checkbox on workout cards. */
-export function DoneCheckbox({ workoutKey, status, label }: { workoutKey: string; status: WorkoutStatus; label: string }) {
+export function DoneCheckbox({
+  workoutKey,
+  status,
+  label,
+}: {
+  workoutKey: string;
+  status: WorkoutStatus;
+  label: string;
+}) {
   const { done, pending, toggle } = useDoneState(workoutKey, status);
-  return <Checkbox checked={done} disabled={pending} onCheckedChange={toggle} aria-label={done ? `Mark ${label} not done` : `Mark ${label} done`} className="size-7 rounded-[9px]" />;
+  return (
+    <Checkbox
+      checked={done}
+      disabled={pending}
+      onCheckedChange={toggle}
+      aria-label={done ? `Mark ${label} not done` : `Mark ${label} done`}
+      className="size-7 rounded-[9px]"
+    />
+  );
 }
 
 /** Full-width button on the workout page. */
 export function DoneButton({ workoutKey, status }: { workoutKey: string; status: WorkoutStatus }) {
   const { done, pending, toggle } = useDoneState(workoutKey, status);
   return (
-    <Button size="lg" variant={done ? "outline" : "default"} className="w-full" disabled={pending} onClick={toggle}>
+    <Button
+      size="lg"
+      variant={done ? "outline" : "default"}
+      className="w-full"
+      disabled={pending}
+      onClick={toggle}
+    >
       {done ? "Mark as not done" : "Mark as done"}
     </Button>
   );

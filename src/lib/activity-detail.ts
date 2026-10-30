@@ -98,7 +98,12 @@ export function computeSplits(streams: Pick<DetailStreams, "time" | "distance">)
     const distanceKm = (endM - startM) / 1000;
     const paceSec = (endT - startT) / distanceKm;
     const previous = out.at(-1);
-    out.push({ km: out.length + 1, distanceKm, paceSec, gainSec: previous ? previous.paceSec - paceSec : null });
+    out.push({
+      km: out.length + 1,
+      distanceKm,
+      paceSec,
+      gainSec: previous ? previous.paceSec - paceSec : null,
+    });
     startM = endM;
     startT = endT;
   }
@@ -145,16 +150,22 @@ const SLOWEST = 20 * 60;
 const FASTEST = 2 * 60;
 
 /** Pace along the run in 25 m steps, lightly smoothed, with the grade-adjusted pace for the same steps. */
-export function analysePace(streams: Pick<DetailStreams, "time" | "distance" | "altitude" | "grade">): PaceAnalysis {
+export function analysePace(
+  streams: Pick<DetailStreams, "time" | "distance" | "altitude" | "grade">,
+): PaceAnalysis {
   const samples = clean(streams.time, streams.distance);
-  if (samples.length < 2) return { series: [], avgPaceSec: null, avgGapSec: null, maxPaceSec: null, hasGrade: false };
+  if (samples.length < 2)
+    return { series: [], avgPaceSec: null, avgGapSec: null, maxPaceSec: null, hasGrade: false };
   const total = samples[samples.length - 1].d;
   const hasGrade = !!streams.grade || !!streams.altitude;
 
   // Slope for each 25 m step: the stream's own value when it has one, else from the altitude change
   const gradeAt = (fromM: number, toM: number) => {
     if (streams.grade) {
-      const inside = samples.filter((s) => s.d >= fromM && s.d <= toM).map((s) => streams.grade![s.i]).filter((v): v is number => v != null);
+      const inside = samples
+        .filter((s) => s.d >= fromM && s.d <= toM)
+        .map((s) => streams.grade![s.i])
+        .filter((v): v is number => v != null);
       if (inside.length) return inside.reduce((a, b) => a + b, 0) / inside.length;
     }
     if (streams.altitude) {
@@ -177,7 +188,12 @@ export function analysePace(streams: Pick<DetailStreams, "time" | "distance" | "
     const meters = to - from;
     if (meters < 5) continue;
     const seconds = timeAt(samples, to) - timeAt(samples, from);
-    raw.push({ km: (from + meters / 2) / 1000, seconds, meters, flatMeters: meters * gradeFactor(gradeAt(from, to)) });
+    raw.push({
+      km: (from + meters / 2) / 1000,
+      seconds,
+      meters,
+      flatMeters: meters * gradeFactor(gradeAt(from, to)),
+    });
   }
 
   const clamp = (v: number) => Math.min(SLOWEST, Math.max(FASTEST, v));
@@ -186,7 +202,11 @@ export function analysePace(streams: Pick<DetailStreams, "time" | "distance" | "
     const seconds = window.reduce((a, b) => a + b.seconds, 0);
     const meters = window.reduce((a, b) => a + b.meters, 0);
     const flat = window.reduce((a, b) => a + b.flatMeters, 0);
-    return { km: Math.round(raw[i].km * 1000) / 1000, pace: clamp((seconds / meters) * 1000), gap: clamp((seconds / flat) * 1000) };
+    return {
+      km: Math.round(raw[i].km * 1000) / 1000,
+      pace: clamp((seconds / meters) * 1000),
+      gap: clamp((seconds / flat) * 1000),
+    };
   });
 
   const duration = samples[samples.length - 1].t - samples[0].t;
@@ -206,7 +226,9 @@ export interface ElevationAnalysis {
 }
 
 /** Altitude along the run, about one point per 25 m. */
-export function analyseElevation(streams: Pick<DetailStreams, "time" | "distance" | "altitude">): ElevationAnalysis {
+export function analyseElevation(
+  streams: Pick<DetailStreams, "time" | "distance" | "altitude">,
+): ElevationAnalysis {
   if (!streams.altitude) return { series: [], maxM: null };
   const samples = clean(streams.time, streams.distance);
   const series: { km: number; m: number }[] = [];
@@ -231,7 +253,10 @@ export interface Route {
 
 /** The route drawn flat: longitude is scaled by the cosine of the latitude so it keeps its shape. */
 export function buildRoute(latlng: DetailStreams["latlng"], maxPoints = 400): Route | null {
-  const points = (latlng ?? []).filter((p): p is readonly [number, number] => !!p && Number.isFinite(p[0]) && Number.isFinite(p[1]) && !(p[0] === 0 && p[1] === 0));
+  const points = (latlng ?? []).filter(
+    (p): p is readonly [number, number] =>
+      !!p && Number.isFinite(p[0]) && Number.isFinite(p[1]) && !(p[0] === 0 && p[1] === 0),
+  );
   if (points.length < 2) return null;
   const step = Math.max(1, Math.ceil(points.length / maxPoints));
   const kept = points.filter((_, i) => i % step === 0 || i === points.length - 1);
@@ -243,7 +268,10 @@ export function buildRoute(latlng: DetailStreams["latlng"], maxPoints = 400): Ro
   const minY = Math.min(...xy.map((p) => p.y));
   const maxY = Math.max(...xy.map((p) => p.y));
   const size = Math.max(maxX - minX, maxY - minY) || 1e-9;
-  const norm = xy.map((p) => ({ x: Math.round(((p.x - minX) / size) * 1000) / 10, y: Math.round(((p.y - minY) / size) * 1000) / 10 }));
+  const norm = xy.map((p) => ({
+    x: Math.round(((p.x - minX) / size) * 1000) / 10,
+    y: Math.round(((p.y - minY) / size) * 1000) / 10,
+  }));
   const width = ((maxX - minX) / size) * 100;
   const height = ((maxY - minY) / size) * 100;
   return {
@@ -254,7 +282,12 @@ export function buildRoute(latlng: DetailStreams["latlng"], maxPoints = 400): Ro
   };
 }
 
-const GENERIC_TITLES: Record<string, string> = { Run: "Outdoor run", TrailRun: "Trail run", VirtualRun: "Indoor run", Treadmill: "Indoor run" };
+const GENERIC_TITLES: Record<string, string> = {
+  Run: "Outdoor run",
+  TrailRun: "Trail run",
+  VirtualRun: "Indoor run",
+  Treadmill: "Indoor run",
+};
 
 /** An unnamed watch recording reads "Outdoor run" / "Indoor run" instead of the raw activity type. */
 export function activityTitle(type: string, name: string | null | undefined): string {

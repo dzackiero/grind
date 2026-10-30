@@ -5,7 +5,12 @@ import { oauthAccessToken, oauthClient, oauthConsent, oauthRefreshToken } from "
 /** Apps (like Claude) the athlete has approved, with when they last connected. */
 export async function listConnectedApps(db: DB, userId: string) {
   const rows = await db
-    .select({ clientId: oauthConsent.clientId, name: oauthClient.name, scopes: oauthConsent.scopes, since: oauthConsent.createdAt })
+    .select({
+      clientId: oauthConsent.clientId,
+      name: oauthClient.name,
+      scopes: oauthConsent.scopes,
+      since: oauthConsent.createdAt,
+    })
     .from(oauthConsent)
     .leftJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
     .where(eq(oauthConsent.userId, userId));
@@ -43,8 +48,14 @@ export async function isGrantActive(db: DB, userId: string, clientId: string, is
 export async function revokeApp(db: DB, userId: string, clientId: string) {
   await db.transaction(async (tx) => {
     // Access tokens point at refresh tokens, so they go first
-    await tx.delete(oauthAccessToken).where(and(eq(oauthAccessToken.userId, userId), eq(oauthAccessToken.clientId, clientId)));
-    await tx.delete(oauthRefreshToken).where(and(eq(oauthRefreshToken.userId, userId), eq(oauthRefreshToken.clientId, clientId)));
-    await tx.delete(oauthConsent).where(and(eq(oauthConsent.userId, userId), eq(oauthConsent.clientId, clientId)));
+    await tx
+      .delete(oauthAccessToken)
+      .where(and(eq(oauthAccessToken.userId, userId), eq(oauthAccessToken.clientId, clientId)));
+    await tx
+      .delete(oauthRefreshToken)
+      .where(and(eq(oauthRefreshToken.userId, userId), eq(oauthRefreshToken.clientId, clientId)));
+    await tx
+      .delete(oauthConsent)
+      .where(and(eq(oauthConsent.userId, userId), eq(oauthConsent.clientId, clientId)));
   });
 }

@@ -3,7 +3,15 @@ import { bestEfforts, RECORD_ACTIVITY_TYPES } from "@/lib/efforts";
 import { extraRunsForLinked, matchActivityGroups } from "@/lib/matching";
 import { decryptSecret, encryptSecret } from "../crypto";
 import type { DB } from "../db/client";
-import { activity, activityEffort, athleteProfile, plan as planTable, plannedWorkout, wellness, workoutActivity } from "../db/schema";
+import {
+  activity,
+  activityEffort,
+  athleteProfile,
+  plan as planTable,
+  plannedWorkout,
+  wellness,
+  workoutActivity,
+} from "../db/schema";
 import { createIntervalsClient, IntervalsError, type IntervalsApi } from "./client";
 
 /*
@@ -41,7 +49,13 @@ export async function getIntervalsStatus(db: DB, userId: string): Promise<Interv
 }
 
 /** Check the key against intervals.icu, then store it encrypted. */
-export async function connectIntervals(db: DB, userId: string, apiKey: string, athleteId = "", factory = defaultFactory) {
+export async function connectIntervals(
+  db: DB,
+  userId: string,
+  apiKey: string,
+  athleteId = "",
+  factory = defaultFactory,
+) {
   const key = apiKey.trim();
   const id = athleteId.trim() || "0";
   const athlete = await factory(key, id).getAthlete();
@@ -64,9 +78,19 @@ export async function disconnectIntervals(db: DB, userId: string) {
   await db.transaction(async (tx) => {
     await tx
       .update(athleteProfile)
-      .set({ intervalsApiKeyEnc: null, intervalsAthleteId: null, intervalsAthleteName: null, lastSyncedAt: null, lastSyncError: null, updatedAt: new Date() })
+      .set({
+        intervalsApiKeyEnc: null,
+        intervalsAthleteId: null,
+        intervalsAthleteName: null,
+        lastSyncedAt: null,
+        lastSyncError: null,
+        updatedAt: new Date(),
+      })
       .where(eq(athleteProfile.userId, userId));
-    await tx.update(plannedWorkout).set({ activityId: null }).where(eq(plannedWorkout.userId, userId));
+    await tx
+      .update(plannedWorkout)
+      .set({ activityId: null })
+      .where(eq(plannedWorkout.userId, userId));
     await tx.delete(activity).where(eq(activity.userId, userId));
     await tx.delete(wellness).where(eq(wellness.userId, userId));
   });
@@ -89,18 +113,30 @@ function shiftDate(iso: string, days: number) {
 }
 
 /** Pull the last SYNC_DAYS of activities and wellness, then match runs to planned workouts. */
-export async function syncIntervals(db: DB, userId: string, today: string, factory = defaultFactory): Promise<SyncResult> {
+export async function syncIntervals(
+  db: DB,
+  userId: string,
+  today: string,
+  factory = defaultFactory,
+): Promise<SyncResult> {
   const [profile] = await db.select().from(athleteProfile).where(eq(athleteProfile.userId, userId));
-  if (!profile?.intervalsApiKeyEnc) throw new IntervalsError("Connect intervals.icu in Settings first.", 400);
+  if (!profile?.intervalsApiKeyEnc)
+    throw new IntervalsError("Connect intervals.icu in Settings first.", 400);
 
-  const client = factory(decryptSecret(profile.intervalsApiKeyEnc), profile.intervalsAthleteId ?? "0");
+  const client = factory(
+    decryptSecret(profile.intervalsApiKeyEnc),
+    profile.intervalsAthleteId ?? "0",
+  );
   const oldest = shiftDate(today, -SYNC_DAYS);
   const activityOldest = shiftDate(today, -ACTIVITY_DAYS);
   // Include tomorrow: intervals.icu dates are the athlete's local dates, which can be ahead of ours
   const newest = shiftDate(today, 1);
 
   try {
-    const [acts, well] = await Promise.all([client.listActivities(activityOldest, newest), client.listWellness(oldest, newest)]);
+    const [acts, well] = await Promise.all([
+      client.listActivities(activityOldest, newest),
+      client.listWellness(oldest, newest),
+    ]);
 
     await db.transaction(async (tx) => {
       for (const a of acts) {
@@ -121,7 +157,10 @@ export async function syncIntervals(db: DB, userId: string, today: string, facto
           raw: a as Record<string, unknown>,
           syncedAt: new Date(),
         };
-        await tx.insert(activity).values(row).onConflictDoUpdate({ target: [activity.userId, activity.id], set: row });
+        await tx
+          .insert(activity)
+          .values(row)
+          .onConflictDoUpdate({ target: [activity.userId, activity.id], set: row });
       }
       for (const w of well) {
         const row = {
@@ -138,18 +177,39 @@ export async function syncIntervals(db: DB, userId: string, today: string, facto
           raw: w as Record<string, unknown>,
           syncedAt: new Date(),
         };
-        await tx.insert(wellness).values(row).onConflictDoUpdate({ target: [wellness.userId, wellness.date], set: row });
+        await tx
+          .insert(wellness)
+          .values(row)
+          .onConflictDoUpdate({ target: [wellness.userId, wellness.date], set: row });
       }
     });
 
     const matched = await matchActivePlan(db, userId, oldest, newest);
-    await db.update(athleteProfile).set({ lastSyncedAt: new Date(), lastSyncError: null }).where(eq(athleteProfile.userId, userId));
+    await db
+      .update(athleteProfile)
+      .set({ lastSyncedAt: new Date(), lastSyncError: null })
+      .where(eq(athleteProfile.userId, userId));
     // Records come from run streams; a failure there must not fail the sync that already saved everything else
-    const efforts = await computeEfforts(db, userId, client).catch(() => ({ processed: 0, pending: 0 }));
-    return { activities: acts.length, wellnessDays: well.length, matched, oldest, newest, recordsChecked: efforts.processed, recordsPending: efforts.pending };
+    const efforts = await computeEfforts(db, userId, client).catch(() => ({
+      processed: 0,
+      pending: 0,
+    }));
+    return {
+      activities: acts.length,
+      wellnessDays: well.length,
+      matched,
+      oldest,
+      newest,
+      recordsChecked: efforts.processed,
+      recordsPending: efforts.pending,
+    };
   } catch (error) {
-    const message = error instanceof IntervalsError ? error.message : "Sync failed. Try again in a moment.";
-    await db.update(athleteProfile).set({ lastSyncError: message }).where(eq(athleteProfile.userId, userId));
+    const message =
+      error instanceof IntervalsError ? error.message : "Sync failed. Try again in a moment.";
+    await db
+      .update(athleteProfile)
+      .set({ lastSyncError: message })
+      .where(eq(athleteProfile.userId, userId));
     throw error;
   }
 }
@@ -159,9 +219,24 @@ export async function syncIntervals(db: DB, userId: string, today: string, facto
  * Short runs and treadmill runs are skipped. If intervals.icu is busy (rate limit, outage) it stops and tries
  * again next sync; a run with no usable stream is marked done so it isn't fetched forever.
  */
-export async function computeEfforts(db: DB, userId: string, client: IntervalsApi, limit = EFFORT_BATCH) {
-  const eligible = and(eq(activity.userId, userId), isNull(activity.effortsAt), inArray(activity.type, [...RECORD_ACTIVITY_TYPES]), gte(activity.distanceM, 1000));
-  const batch = await db.select({ id: activity.id }).from(activity).where(eligible).orderBy(desc(activity.startLocal)).limit(limit);
+export async function computeEfforts(
+  db: DB,
+  userId: string,
+  client: IntervalsApi,
+  limit = EFFORT_BATCH,
+) {
+  const eligible = and(
+    eq(activity.userId, userId),
+    isNull(activity.effortsAt),
+    inArray(activity.type, [...RECORD_ACTIVITY_TYPES]),
+    gte(activity.distanceM, 1000),
+  );
+  const batch = await db
+    .select({ id: activity.id })
+    .from(activity)
+    .where(eligible)
+    .orderBy(desc(activity.startLocal))
+    .limit(limit);
 
   let processed = 0;
   for (const { id } of batch) {
@@ -169,25 +244,48 @@ export async function computeEfforts(db: DB, userId: string, client: IntervalsAp
       const streams = await client.getActivityStreams(id);
       const efforts = streams ? bestEfforts(streams.time, streams.distance) : {};
       await db.transaction(async (tx) => {
-        await tx.delete(activityEffort).where(and(eq(activityEffort.userId, userId), eq(activityEffort.activityId, id)));
-        const rows = Object.entries(efforts).map(([key, seconds]) => ({ userId, activityId: id, key, seconds }));
+        await tx
+          .delete(activityEffort)
+          .where(and(eq(activityEffort.userId, userId), eq(activityEffort.activityId, id)));
+        const rows = Object.entries(efforts).map(([key, seconds]) => ({
+          userId,
+          activityId: id,
+          key,
+          seconds,
+        }));
         if (rows.length) await tx.insert(activityEffort).values(rows);
-        await tx.update(activity).set({ effortsAt: new Date() }).where(and(eq(activity.userId, userId), eq(activity.id, id)));
+        await tx
+          .update(activity)
+          .set({ effortsAt: new Date() })
+          .where(and(eq(activity.userId, userId), eq(activity.id, id)));
       });
       processed++;
     } catch (error) {
-      const temporary = error instanceof IntervalsError && (error.status === 0 || error.status === 429 || error.status >= 500);
+      const temporary =
+        error instanceof IntervalsError &&
+        (error.status === 0 || error.status === 429 || error.status >= 500);
       if (temporary) break;
-      await db.update(activity).set({ effortsAt: new Date() }).where(and(eq(activity.userId, userId), eq(activity.id, id)));
+      await db
+        .update(activity)
+        .set({ effortsAt: new Date() })
+        .where(and(eq(activity.userId, userId), eq(activity.id, id)));
     }
   }
 
-  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(activity).where(eligible);
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(activity)
+    .where(eligible);
   return { processed, pending: n };
 }
 
 /** Link activities to the active plan's workouts and mark them done. Returns how many new links were made. */
-export async function matchActivePlan(db: DB, userId: string, oldest: string, newest: string): Promise<number> {
+export async function matchActivePlan(
+  db: DB,
+  userId: string,
+  oldest: string,
+  newest: string,
+): Promise<number> {
   const [active] = await db
     .select({ id: planTable.id })
     .from(planTable)
@@ -204,28 +302,63 @@ export async function matchActivePlan(db: DB, userId: string, oldest: string, ne
       activityId: plannedWorkout.activityId,
     })
     .from(plannedWorkout)
-    .where(and(eq(plannedWorkout.planId, active.id), gte(plannedWorkout.date, oldest), lte(plannedWorkout.date, newest)));
+    .where(
+      and(
+        eq(plannedWorkout.planId, active.id),
+        gte(plannedWorkout.date, oldest),
+        lte(plannedWorkout.date, newest),
+      ),
+    );
   const inRange = await db
-    .select({ id: activity.id, date: activity.date, type: activity.type, distanceM: activity.distanceM, startLocal: activity.startLocal })
+    .select({
+      id: activity.id,
+      date: activity.date,
+      type: activity.type,
+      distanceM: activity.distanceM,
+      startLocal: activity.startLocal,
+    })
     .from(activity)
-    .where(and(eq(activity.userId, userId), gte(activity.date, shiftDate(oldest, -1)), lte(activity.date, shiftDate(newest, 1))));
+    .where(
+      and(
+        eq(activity.userId, userId),
+        gte(activity.date, shiftDate(oldest, -1)),
+        lte(activity.date, shiftDate(newest, 1)),
+      ),
+    );
   // Activities already assigned to a workout or a historical session are not available for matching
   const claimed = inRange.length
     ? await db
         .select({ id: workoutActivity.activityId })
         .from(workoutActivity)
-        .where(and(eq(workoutActivity.userId, userId), inArray(workoutActivity.activityId, inRange.map((a) => a.id))))
+        .where(
+          and(
+            eq(workoutActivity.userId, userId),
+            inArray(
+              workoutActivity.activityId,
+              inRange.map((a) => a.id),
+            ),
+          ),
+        )
     : [];
   const taken = new Set(claimed.map((c) => c.id));
   for (const p of planned) if (p.activityId) taken.add(p.activityId);
   const acts = inRange.filter((a) => !taken.has(a.id));
 
   const targets = new Map(
-    (await db.select({ id: plannedWorkout.id, key: plannedWorkout.workoutKey }).from(plannedWorkout).where(eq(plannedWorkout.planId, active.id))).map((r) => [r.key, r.id]),
+    (
+      await db
+        .select({ id: plannedWorkout.id, key: plannedWorkout.workoutKey })
+        .from(plannedWorkout)
+        .where(eq(plannedWorkout.planId, active.id))
+    ).map((r) => [r.key, r.id]),
   );
   const link = async (key: string, ids: string[]) => {
     const target = targets.get(key);
-    if (target) await db.insert(workoutActivity).values(ids.map((activityId) => ({ userId, activityId, plannedWorkoutId: target }))).onConflictDoNothing();
+    if (target)
+      await db
+        .insert(workoutActivity)
+        .values(ids.map((activityId) => ({ userId, activityId, plannedWorkoutId: target })))
+        .onConflictDoNothing();
   };
 
   const groups = matchActivityGroups(planned, acts);
@@ -238,14 +371,26 @@ export async function matchActivePlan(db: DB, userId: string, oldest: string, ne
       .set({
         activityId: ids[0],
         // A manual "done" keeps its time; otherwise the earliest activity's start is when it was done
-        ...(p.status === "planned" ? { status: "completed" as const, completedAt: new Date(ids.map((id) => acts.find((x) => x.id === id)!.startLocal).sort()[0] ?? first.startLocal) } : {}),
+        ...(p.status === "planned"
+          ? {
+              status: "completed" as const,
+              completedAt: new Date(
+                ids.map((id) => acts.find((x) => x.id === id)!.startLocal).sort()[0] ??
+                  first.startLocal,
+              ),
+            }
+          : {}),
         updatedAt: new Date(),
       })
       .where(and(eq(plannedWorkout.planId, active.id), eq(plannedWorkout.workoutKey, key)));
   }
   // A second run recorded after the first one was matched joins the same workout
   const grouped = new Set([...groups.values()].flat());
-  for (const [key, ids] of extraRunsForLinked(planned, acts.filter((a) => !grouped.has(a.id)))) await link(key, ids);
+  for (const [key, ids] of extraRunsForLinked(
+    planned,
+    acts.filter((a) => !grouped.has(a.id)),
+  ))
+    await link(key, ids);
   return groups.size;
 }
 
@@ -289,9 +434,16 @@ export async function getWellnessSummary(db: DB, userId: string, today: string) 
   const rows = await db
     .select()
     .from(wellness)
-    .where(and(eq(wellness.userId, userId), lte(wellness.date, today), gte(wellness.date, shiftDate(today, -8))))
+    .where(
+      and(
+        eq(wellness.userId, userId),
+        lte(wellness.date, today),
+        gte(wellness.date, shiftDate(today, -8)),
+      ),
+    )
     .orderBy(desc(wellness.date));
-  const latest = rows.find((r) => r.hrv != null || r.restingHr != null || r.sleepSecs != null) ?? null;
+  const latest =
+    rows.find((r) => r.hrv != null || r.restingHr != null || r.sleepSecs != null) ?? null;
   if (!latest) return null;
   const prior = rows.filter((r) => r.date < latest.date);
   const avg = (vals: (number | null)[]) => {
@@ -313,8 +465,14 @@ export async function getWellnessSummary(db: DB, userId: string, today: string) 
 
 /** Distinct activity ids already linked, for counting in Settings. */
 export async function countSynced(db: DB, userId: string) {
-  const [a] = await db.select({ n: sql<number>`count(*)::int` }).from(activity).where(eq(activity.userId, userId));
-  const [w] = await db.select({ n: sql<number>`count(*)::int` }).from(wellness).where(eq(wellness.userId, userId));
+  const [a] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(activity)
+    .where(eq(activity.userId, userId));
+  const [w] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(wellness)
+    .where(eq(wellness.userId, userId));
   const [m] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(plannedWorkout)

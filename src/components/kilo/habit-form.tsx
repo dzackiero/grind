@@ -6,11 +6,25 @@ import { ChevronDown, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { HABIT_ICONS, HABIT_SUGGESTIONS, scheduleLabel, WEEKDAY_LABELS, type HabitIcon } from "@/lib/habits";
+import {
+  HABIT_ICONS,
+  HABIT_SUGGESTIONS,
+  scheduleLabel,
+  WEEKDAY_LABELS,
+  type HabitIcon,
+} from "@/lib/habits";
 import { WEEKDAYS, type Weekday } from "@/lib/plan/dates";
 import { HabitIconView, habitIconLabel } from "./habit-icon";
 
@@ -21,7 +35,15 @@ export interface HabitDraft {
   days: Weekday[];
 }
 
-const FULL_DAY: Record<Weekday, string> = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" };
+const FULL_DAY: Record<Weekday, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
 
 /** Add a habit, or edit one when `habit` has an id. Opens from `trigger`. */
 export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: ReactNode }) {
@@ -50,7 +72,9 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.issues?.[0]?.message ?? body?.error ?? "Couldn't save the habit. Try again.");
+        toast.error(
+          body?.issues?.[0]?.message ?? body?.error ?? "Couldn't save the habit. Try again.",
+        );
         return;
       }
       toast.success(editing ? "Habit updated." : "Habit added.");
@@ -71,7 +95,9 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? "Edit habit" : "New habit"}</DialogTitle>
-          <DialogDescription>Pick the days you plan to do it. You tick it off on those days.</DialogDescription>
+          <DialogDescription>
+            Pick the days you plan to do it. You tick it off on those days.
+          </DialogDescription>
         </DialogHeader>
 
         {!editing && (
@@ -108,14 +134,34 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="habit-name">Name</Label>
-          <Input id="habit-name" value={name} maxLength={40} placeholder="Stretch for 10 minutes" onChange={(e) => setName(e.target.value)} className="h-11" />
+          <Input
+            id="habit-name"
+            value={name}
+            maxLength={40}
+            placeholder="Stretch for 10 minutes"
+            onChange={(e) => setName(e.target.value)}
+            className="h-11"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
           <span className="kilo-label">Icon</span>
-          <ToggleGroup type="single" value={icon} onValueChange={(v) => v && setIcon(v)} variant="outline" spacing={2} className="flex-wrap" aria-label="Icon">
+          <ToggleGroup
+            type="single"
+            value={icon}
+            onValueChange={(v) => v && setIcon(v)}
+            variant="outline"
+            spacing={2}
+            className="flex-wrap"
+            aria-label="Icon"
+          >
             {HABIT_ICONS.map((key: HabitIcon) => (
-              <ToggleGroupItem key={key} value={key} aria-label={habitIconLabel(key)} className="size-11">
+              <ToggleGroupItem
+                key={key}
+                value={key}
+                aria-label={habitIconLabel(key)}
+                className="size-11"
+              >
                 <HabitIconView icon={key} className="size-5" />
               </ToggleGroupItem>
             ))}
@@ -129,9 +175,22 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
               {days.length ? `${scheduleLabel(days)} · ${days.length} a week` : "Pick at least one"}
             </span>
           </div>
-          <ToggleGroup type="multiple" value={days} onValueChange={(v) => setDays(v as Weekday[])} variant="outline" spacing={1} className="w-full" aria-label="Days">
+          <ToggleGroup
+            type="multiple"
+            value={days}
+            onValueChange={(v) => setDays(v as Weekday[])}
+            variant="outline"
+            spacing={1}
+            className="w-full"
+            aria-label="Days"
+          >
             {WEEKDAYS.map((d) => (
-              <ToggleGroupItem key={d} value={d} aria-label={FULL_DAY[d]} className="h-11 flex-1 px-0 text-xs">
+              <ToggleGroupItem
+                key={d}
+                value={d}
+                aria-label={FULL_DAY[d]}
+                className="h-11 flex-1 px-0 text-xs"
+              >
                 {WEEKDAY_LABELS[d]}
               </ToggleGroupItem>
             ))}
@@ -139,7 +198,12 @@ export function HabitForm({ habit, trigger }: { habit?: HabitDraft; trigger: Rea
         </div>
 
         <DialogFooter>
-          <Button type="button" className="h-11" disabled={saving || !name.trim() || !days.length} onClick={save}>
+          <Button
+            type="button"
+            className="h-11"
+            disabled={saving || !name.trim() || !days.length}
+            onClick={save}
+          >
             {saving ? "Saving…" : editing ? "Save changes" : "Add habit"}
           </Button>
         </DialogFooter>

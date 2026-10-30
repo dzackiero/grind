@@ -6,7 +6,10 @@ import { revokeApp } from "@/server/mcp/connections";
 export const runtime = "nodejs";
 
 /** Disconnect an app: it loses access straight away. */
-export async function DELETE(_request: Request, { params }: { params: Promise<{ clientId: string }> }) {
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ clientId: string }> },
+) {
   try {
     const user = await requireUser();
     const { clientId } = await params;

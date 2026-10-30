@@ -9,7 +9,12 @@ function utc(iso: string) {
 
 /** "Wednesday, Nov 4" */
 export function longDate(iso: string) {
-  return utc(iso).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
+  return utc(iso).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /** "Nov 4" */
@@ -40,7 +45,9 @@ export function km(n: number) {
 
 /** One-line summary under a workout title */
 export function workoutSummary(w: Workout) {
-  return w.kind === "run" ? `${km(w.distanceKm)} · about ${w.estDurationMin} min` : `${w.durationMin[0]}–${w.durationMin[1]} min · ${w.exercises.length} exercises`;
+  return w.kind === "run"
+    ? `${km(w.distanceKm)} · about ${w.estDurationMin} min`
+    : `${w.durationMin[0]}–${w.durationMin[1]} min · ${w.exercises.length} exercises`;
 }
 
 /** Main target pace of a run (its first work step), e.g. "4:10/km" */
@@ -49,7 +56,8 @@ export function mainPace(w: Workout): string | null {
   for (const s of w.steps) {
     const steps = s.kind === "repeat" ? s.steps : [s];
     for (const x of steps) {
-      if ((x.kind === "work" || x.kind === "steady") && x.target?.pace) return `${formatPace(x.target.pace.minSecPerKm)}`;
+      if ((x.kind === "work" || x.kind === "steady") && x.target?.pace)
+        return `${formatPace(x.target.pace.minSecPerKm)}`;
     }
   }
   return null;
