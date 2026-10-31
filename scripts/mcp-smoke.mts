@@ -316,6 +316,7 @@ const expected = [
   "set_coaching_preferences",
   "get_training_summary",
   "get_workout_compliance",
+  "get_weekly_review",
   "get_habits",
   "get_strength_log",
 ];
@@ -580,6 +581,24 @@ check(
   "Compliance returns planned-vs-actual rows",
   Array.isArray((await tool(access, "get_workout_compliance", {})).json?.workouts),
 );
+const planRevisionBeforeReview = (await tool(access, "get_plan")).json?.planRevision;
+const weeklyReview = await tool(access, "get_weekly_review", {});
+check(
+  "Weekly review returns structured facts and rule-derived suggestions",
+  weeklyReview.structured?.success === true &&
+    weeklyReview.json?.completion?.planned >= 0 &&
+    Array.isArray(weeklyReview.json?.suggestedAdjustments) &&
+    weeklyReview.json?.coaching !== undefined,
+  weeklyReview.text.slice(0, 200),
+);
+check(
+  "Weekly review changes nothing in the plan",
+  (await tool(access, "get_plan")).json?.planRevision === planRevisionBeforeReview,
+);
+check(
+  "Weekly review rejects a week that has not started",
+  (await tool(access, "get_weekly_review", { week: "2999-01-01" })).isError,
+);
 
 // ---- refresh ----
 const refresh = await fetch(`${base}/api/auth/oauth2/token`, {
@@ -611,6 +630,7 @@ check(
   "A read-only token sees read tools and no write tools",
   rTools.includes("get_athlete_context") &&
     rTools.includes("validate_plan") &&
+    rTools.includes("get_weekly_review") &&
     ![
       "propose_plan_changes",
       "write_coach_notes",

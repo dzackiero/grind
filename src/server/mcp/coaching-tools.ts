@@ -15,6 +15,7 @@ import { getActivePlan } from "../plans/service";
 import { proposeChanges } from "../plans/changes";
 import { getPlanDiff, previewPlanChanges } from "../plans/preview";
 import { getTrainingSummary, getWorkoutCompliance } from "../progress/coaching-summary";
+import { getWeeklyReview, WeeklyReviewError } from "../progress/weekly-review";
 import { mcpFail as fail, mcpGuard as guard, mcpText as text } from "./result";
 import type { McpContext } from "./server";
 
@@ -128,6 +129,29 @@ export function registerCoachingTools(server: McpServer, { db, userId, scopes }:
           if (daysBetween(start, end) < 0 || daysBetween(start, end) > 364)
             return fail("Use a date range of 1 to 365 days, with from before to.");
           return text(await getWorkoutCompliance(db, userId, start, end));
+        }),
+    );
+
+    server.registerTool(
+      "get_weekly_review",
+      {
+        description:
+          "Deterministic review of one Monday-to-Sunday week, computed by fixed rules (no AI): completion (planned vs completed/matched/missed), missed key sessions (long run, quality), run-km change vs the previous week, consecutive hard days and hard weeks, recovery trend (null when the watch sent nothing), unmatched extra activities, the athlete's coaching preferences and constraints, and suggestedAdjustments. Defaults to last week when it had planned workouts, otherwise the current week. Call it when the athlete asks how their week went. Suggestions are rule-based starting points, not decisions, and change nothing. Explain them in plain words; only if the athlete wants one, pass a 'ready' suggestion's `changes` to propose_plan_changes with the planRevision from this result. Never propose 'blocked' ones (they break a constraint). Mention any warnings (preferences).",
+        inputSchema: z.object({
+          week: WorkoutDateSchema.optional().describe(
+            "Any date (YYYY-MM-DD) inside the week to review; omit for the default",
+          ),
+        }),
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
+      },
+      async ({ week }) =>
+        guard(async () => {
+          try {
+            return text(await getWeeklyReview(db, userId, await today(), week));
+          } catch (error) {
+            if (error instanceof WeeklyReviewError) return fail(error.message);
+            throw error;
+          }
         }),
     );
   }
