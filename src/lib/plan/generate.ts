@@ -18,6 +18,7 @@ import {
 import {
   easyRun,
   finishRun,
+  flatPowerRun,
   hillRun,
   intervalRun,
   longRun,
@@ -200,7 +201,12 @@ function permutations<T>(items: T[]): T[][] {
 
 // ---------- Main ----------
 
-export function generatePlan(rawInput: PlanInput): Plan {
+export interface GenerateOptions {
+  /** When false, hill sessions are replaced by flat hard efforts at the same progression. */
+  allowHills?: boolean;
+}
+
+export function generatePlan(rawInput: PlanInput, options: GenerateOptions = {}): Plan {
   const input = PlanInputSchema.parse(rawInput);
   const tpl = GOAL_TEMPLATES[input.goal];
   const goalDistance = RACE_DISTANCE_M[input.goal];
@@ -330,7 +336,11 @@ export function generatePlan(rawInput: PlanInput): Plan {
           paces,
         );
       } else if (q === "tempo") draft = tempoRun(pick("tempo"), input.experience, paces);
-      else if (q === "hills") draft = hillRun(pick("hills"), input.experience, paces);
+      else if (q === "hills")
+        draft =
+          options.allowHills === false
+            ? flatPowerRun(pick("hills"), input.experience, paces)
+            : hillRun(pick("hills"), input.experience, paces);
       else draft = sharpener(input.goal, raceWeek, input.experience, paces);
       addRun(draft, day, q);
       qualityKm += (workouts[workouts.length - 1] as RunWorkout).distanceKm;

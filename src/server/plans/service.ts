@@ -54,7 +54,13 @@ export async function createPlanFromInput(
 ): Promise<SavedPlan> {
   const input = PlanInputSchema.parse(rawInput);
   const coaching = await getCoachingProfile(db, userId);
-  return savePlan(db, userId, personalizeGeneratedPlan(generatePlan(input), coaching.profile));
+  const { preferences, constraints } = coaching.profile;
+  const allowHills = constraints.allowHills ?? preferences.allowHills;
+  return savePlan(
+    db,
+    userId,
+    personalizeGeneratedPlan(generatePlan(input, { allowHills }), coaching.profile),
+  );
 }
 
 /** Validate and save a plan as the user's active plan. The previous active plan is archived. */

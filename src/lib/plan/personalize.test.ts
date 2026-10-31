@@ -105,3 +105,26 @@ describe("personalizeGeneratedPlan", () => {
     );
   });
 });
+
+describe("generatePlan without hills", () => {
+  const withHills = generatePlan(input);
+  const noHills = generatePlan(input, { allowHills: false });
+  const runs = (p: typeof plan) =>
+    p.weeks.flatMap((w) => w.workouts).filter((w) => w.kind === "run");
+
+  it("keeps every hill slot as a flat quality session at the same progression", () => {
+    const hillRuns = runs(withHills).filter((w) => w.type === "hills");
+    expect(hillRuns.length).toBeGreaterThan(0);
+    expect(runs(noHills).some((w) => w.type === "hills")).toBe(false);
+    for (const hill of hillRuns) {
+      const flatRun = runs(noHills).find((w) => w.id === hill.id);
+      expect(flatRun?.type).toBe("intervals");
+      expect(flatRun?.title).toMatch(/Hard Efforts$/);
+      expect(flatRun?.title.split(" Hard")[0]).toBe(hill.title.split(" Hills")[0]);
+    }
+  });
+
+  it("matches default generation when hills are allowed or unspecified", () => {
+    expect(generatePlan(input, { allowHills: true })).toEqual(withHills);
+  });
+});
