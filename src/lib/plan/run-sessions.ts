@@ -192,6 +192,38 @@ export function hillRun(index: number, level: PlanInput["experience"], p: PaceZo
   };
 }
 
+/** Hill-session stand-in for athletes without hills: the same short hard reps on flat ground. */
+export function flatPowerRun(
+  index: number,
+  level: PlanInput["experience"],
+  p: PaceZones,
+): RunDraft {
+  const s = HILLS[Math.min(index, HILLS.length - 1)];
+  const { warmup, cooldown } = warmCool(level, p);
+  return {
+    kind: "run",
+    type: "intervals",
+    title: `${s.reps} × ${s.seconds}s Hard Efforts`,
+    description: `Find a flat stretch of road or path. Run hard for ${s.seconds} seconds with tall posture and quick arms, as if running uphill, then jog easily to recover.`,
+    steps: [
+      warmup,
+      {
+        kind: "repeat",
+        times: s.reps,
+        steps: [
+          {
+            kind: "work",
+            durationSec: s.seconds,
+            target: { zone: "I", effort: "Hard, like uphill" },
+          },
+          { kind: "recovery", durationSec: Math.round(s.seconds * 1.5), note: "Easy jog" },
+        ],
+      },
+      cooldown,
+    ],
+  };
+}
+
 /** Short session at race pace for taper weeks. */
 export function sharpener(
   goal: PlanInput["goal"],

@@ -210,3 +210,23 @@ describe("coaching change controls", () => {
     expect((await getActivePlan(db, uid))!.revision).toBe(2);
   });
 });
+
+describe("new plans without hills", () => {
+  it("keeps the base-phase quality session as flat hard efforts instead of an easy run", async () => {
+    await setCoachingProfile(db, uid, { preferences: { allowHills: false }, constraints: {} }, 0);
+    const saved = await createPlanFromInput(db, uid, {
+      goal: "half",
+      raceDate: "2027-03-14",
+      startDate: TODAY,
+      experience: "intermediate",
+      currentWeeklyKm: 25,
+      runDays: ["tue", "thu", "sat", "sun"],
+      longRunDay: "sun",
+      strength: { sessionsPerWeek: 0, days: [], equipment: "gym" },
+      intensity: "balanced",
+    });
+    const runs = saved.plan.weeks.flatMap((w) => w.workouts).filter((w) => w.kind === "run");
+    expect(runs.some((w) => w.type === "hills")).toBe(false);
+    expect(runs.some((w) => w.title.endsWith("Hard Efforts"))).toBe(true);
+  });
+});
