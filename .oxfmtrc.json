@@ -5,7 +5,6 @@
     ".data/**",
     "drizzle/**",
     "public/**",
-    "grind-ds/**",
     "promo/**",
     "pnpm-lock.yaml",
     "docs/**"

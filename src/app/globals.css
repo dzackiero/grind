@@ -7,7 +7,7 @@
 /*
  * Grind design system → shadcn theme.
  * shadcn's semantic variables carry the Grind palette; Grind-only tokens (workout types, plates, tiers)
- * are added beside them. Source of truth: grind-ds/project/tokens.json.
+ * are added beside them. Documented in DESIGN.md; change both together (`pnpm design:check` compares them).
  */
 
 @theme inline {

@@ -50,8 +50,8 @@ Everything below falls under one of these.
 Keep it short (under about 150 lines). Agents load it into every session, so each line costs tokens. Contents:
 
 - **Commands:** `pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test -- path/to/file`, `pnpm db:generate`, `pnpm db:migrate`.
-- **Definition of done:** "`pnpm lint && pnpm typecheck && pnpm test` passes; schema changes include a generated migration in `drizzle/`; UI changes use shadcn components and `grind-ds` tokens."
-- **Architecture map:** `src/app` (routes), `src/server` (server-only logic, DB access), `src/lib` (pure logic plus colocated `*.test.ts`), `src/functions` (Neon functions), `drizzle/` (migrations, never hand-edit `meta/`), `grind-ds/` (design system).
+- **Definition of done:** "`pnpm lint && pnpm typecheck && pnpm test` passes; schema changes include a generated migration in `drizzle/`; UI changes follow `DESIGN.md`."
+- **Architecture map:** `src/app` (routes), `src/server` (server-only logic, DB access), `src/lib` (pure logic plus colocated `*.test.ts`), `src/functions` (Neon functions), `drizzle/` (migrations, never hand-edit `meta/`), `DESIGN.md` (design system).
 - **Rules that bite:** never edit an applied migration, generate a new one; never prefix secrets with `NEXT_PUBLIC_`; MCP tool changes must keep the validator; the plan generator is rule-based, so changes need `pnpm plan:matrix`.
 - **Workflow:** trunk-based, branch + PR to `main`, never push to `main`.
 
@@ -77,7 +77,7 @@ Commit to the repo so every session and every teammate gets it:
 - **Skills** (`.claude/skills/<name>/SKILL.md`): repeatable procedures loaded only when relevant. Good candidates here:
   - `add-migration`: edit schema → `db:generate` → review SQL → run tests.
   - `add-mcp-tool`: schema, validator, OAuth scope, `mcp:smoke`.
-  - `ui-component`: shadcn add + `grind-ds` tokens + preview.
+  - `ui-component`: shadcn add + `DESIGN.md` tokens + preview.
 - **Subagents** (`.claude/agents/*.md`): a read-only `reviewer` and a `test-writer` with narrow tool access.
 - **`.mcp.json`:** project MCP servers everyone needs: Neon (DB branches, schema diff), Linear (issues), Playwright or a browser MCP (verify UI), Vercel (deploy logs). Use OAuth, never commit tokens.
 - **`.gitignore`:** keep `.claude/settings.local.json` and `CLAUDE.local.md` personal.
