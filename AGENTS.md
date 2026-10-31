@@ -24,8 +24,9 @@ The principle behind most design decisions: **the athlete stays in control.** Cl
 
 ```bash
 pnpm dev                    # http://localhost:3000; no env needed (embedded PGlite in .data/)
-pnpm check                  # lint + format:check + typecheck
+pnpm check                  # lint + format:check + typecheck + design:check
 pnpm format                 # oxfmt, fixes formatting
+pnpm design:lint            # DESIGN.md against the spec (needs network)
 pnpm test --maxWorkers=2    # vitest; DB tests use in-memory PGlite with every migration
 pnpm vitest run <path>      # one file or directory while iterating
 pnpm build                  # CI runs this too; needs no secrets
@@ -43,12 +44,13 @@ pnpm smoke / mcp:smoke      # end-to-end, against a running app
 - `src/lib`: pure logic shared by client and server. `src/lib/plan` is the plan engine (generate, validate, edit, personalize).
 - `src/components/ui`: shadcn components. `src/components/kilo`: app components.
 - `src/functions`: Neon functions (the email cron trigger).
-- `drizzle/`: generated SQL migrations. `grind-ds/`: design system reference.
+- `drizzle/`: generated SQL migrations. `DESIGN.md`: the design system (tokens and rules).
 - `docs/`: runbooks and architecture. `docs/superpowers/plans/`: implementation plans.
 
 ## Conventions
 
 - Tests live next to source as `*.test.ts`.
+- UI work: read `DESIGN.md` first. Use its semantic tokens, never raw colours, and change `DESIGN.md` and `globals.css` together.
 - UI uses shadcn components and their variants (`@shadcn/lint` rules are errors). Add a variant rather than restyling at the call site.
 - Every query on user data is scoped by `userId`. MCP tools get `userId` and `scopes` from the token; never accept a user id from tool input.
 - Server code that touches the DB or secrets imports `"server-only"`.
