@@ -51,6 +51,7 @@ pnpm smoke / mcp:smoke      # end-to-end, against a running app
 
 - Tests live next to source as `*.test.ts`.
 - UI work: read `DESIGN.md` first. Use its semantic tokens, never raw colours, and change `DESIGN.md` and `globals.css` together.
+- Design mockups: use the pen.dev MCP on `design/grind.pen`. It is encrypted, so never read it with Read or Grep. Reuse its components and variables, and propose a new token (in `DESIGN.md` and `globals.css`) before adding one. `DESIGN.md` wins if they disagree.
 - UI uses shadcn components and their variants (`@shadcn/lint` rules are errors). Add a variant rather than restyling at the call site.
 - Every query on user data is scoped by `userId`. MCP tools get `userId` and `scopes` from the token; never accept a user id from tool input.
 - Server code that touches the DB or secrets imports `"server-only"`.

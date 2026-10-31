@@ -274,6 +274,12 @@ Build from `src/components/ui` (shadcn) and `src/components/kilo` (app component
 - Don't add shadows to cards, and don't add colours, radii or type sizes that aren't listed here. Propose the token first, then add it to `globals.css` and this file together.
 - Don't put emoji in the UI.
 
+## Design in pen.dev
+
+`design/grind.pen` is the same system for designers and agents working in [pen.dev](https://www.pen.dev). It has a `mode` theme (Dark is the default, Light overrides) and variables named after the tokens above: colours (including the `type-*-mark`, `plate-*` and `tier-*` ones), `radius-*`, `spacing-*` and the type scale. Components (Button, Card, Badge, TypeTag, TypeDot, Stat, TabBar) bind every fill, text colour and radius to those variables. The Documentation frames show both themes.
+
+`.pen` files are encrypted, so open and edit them only through pen.dev or its MCP server. When the file and this one disagree, this file wins; fix the `.pen` file to match. `pnpm design:check` does not compare the two.
+
 ## Changing the system
 
 1. Edit `src/app/globals.css` (both `:root` and `.dark`) and this file in the same change.
