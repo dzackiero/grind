@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm check)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm format*)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm vitest run*)",
+      "Bash(pnpm build)",
+      "Bash(pnpm plan:sample*)",
+      "Bash(pnpm plan:matrix)",
+      "Bash(pnpm db:generate)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.vercel)",
+      "Read(./.env.neon-email)",
+      "Read(./.env.production-check)",
+      "Edit(./drizzle/meta/**)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(npx neon deploy*)"
+    ]
+  }
+}

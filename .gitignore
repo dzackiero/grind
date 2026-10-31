@@ -48,3 +48,7 @@ next-env.d.ts
 
 # rendered promo video, sound and test frames (made by promo/render-story.mjs and promo/make-sfx.mjs)
 promo/out/
+
+# personal agent config
+.claude/settings.local.json
+CLAUDE.local.md

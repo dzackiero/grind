@@ -30,14 +30,14 @@ Everything below falls under one of these.
 | Dependency updates                                             | ✅     | Dependabot, weekly, grouped                                |
 | Smoke scripts                                                  | ✅     | `smoke`, `mcp:smoke`, `intervals:check`                    |
 | Plans and specs in repo                                        | ✅     | `docs/superpowers/plans/`                                  |
-| **Agent instruction file** (`AGENTS.md` / `CLAUDE.md`)         | ❌     | Highest-value gap                                          |
-| Shared agent settings (`.claude/settings.json`, hooks, skills) | ⚠️     | Only `launch.json`                                         |
+| Agent instruction file (`AGENTS.md` / `CLAUDE.md`)             | ✅     | Root plus nested in `src/server/mcp` and `src/server/email` |
+| Shared agent settings (`.claude/settings.json`, hooks, skills) | ⚠️     | Allowlist and deny rules; no hooks or skills yet           |
 | Per-PR preview environment with its own DB                     | ⚠️     | Vercel previews exist, no Neon branch per PR               |
 | End-to-end / browser tests                                     | ❌     | No Playwright                                              |
 | AI review and `@claude` on issues/PRs                          | ❌     |                                                            |
 | PR / issue templates, CODEOWNERS                               | ❌     |                                                            |
 | Supply-chain hardening (pinned actions, secret scanning)       | ⚠️     | Actions pinned to tags, not SHAs                           |
-| Formatter                                                      | ❌     | No Prettier/Biome. Agents produce noisy diffs without one  |
+| Formatter                                                      | ✅     | Oxfmt, checked in CI                                       |
 
 ---
 
