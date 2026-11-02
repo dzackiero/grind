@@ -1,6 +1,7 @@
 import { addDays, daysBetween, weekdayIndex } from "./dates";
 import { stepsDistanceKm } from "./run-sessions";
 import { PlanSchema, type Plan, type RunWorkout, type Step } from "./schema";
+import { goalLabel } from "./goal";
 import { GOAL_TEMPLATES } from "./templates";
 import { strengthUsesLegs } from "./strength-focus";
 
@@ -71,7 +72,7 @@ export function validatePlan(candidate: unknown): ValidationResult {
     add({
       severity: "warning",
       code: "PLAN_TOO_SHORT",
-      message: `${plan.weeks.length} weeks is short for a ${tpl.label}; ${tpl.minWeeks}+ is recommended. Keep volume conservative.`,
+      message: `${plan.weeks.length} weeks is short for a ${goalLabel(plan.input)}; ${tpl.minWeeks}+ is recommended. Keep volume conservative.`,
     });
   }
 
@@ -79,7 +80,7 @@ export function validatePlan(candidate: unknown): ValidationResult {
     add({
       severity: "warning",
       code: "LOW_BASE",
-      message: `Starting from ${plan.input.currentWeeklyKm} km/week is low for a ${tpl.label} (${tpl.floorKm}+ recommended). The plan starts at ${tpl.floorKm} km; build up first if that feels like a lot.`,
+      message: `Starting from ${plan.input.currentWeeklyKm} km/week is low for a ${goalLabel(plan.input)} (${tpl.floorKm}+ recommended). The plan starts at ${tpl.floorKm} km; build up first if that feels like a lot.`,
     });
   }
 

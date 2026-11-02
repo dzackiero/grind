@@ -1,10 +1,13 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import {
   generatePlan,
+  goalForDistanceKm,
+  PlanEditError,
   PlanInputSchema,
   PlanSchema,
   validatePlan,
   type Plan,
+  type PlanInput,
   type PlanIssue,
   type ValidationResult,
 } from "@/lib/plan";
@@ -61,6 +64,57 @@ export async function createPlanFromInput(
     userId,
     personalizeGeneratedPlan(generatePlan(input, { allowHills }), coaching.profile),
   );
+}
+
+export interface PlanRebuildChanges {
+  /** Custom goal distance in km. Picks the closest standard template. */
+  goalDistanceKm?: number;
+  /** A standard race. Clears any custom distance. Ignored when goalDistanceKm is set. */
+  goal?: PlanInput["goal"];
+  raceDate?: string;
+  /** A recent race or time trial; the plan's fitness score and paces come from it. */
+  recentRace?: PlanInput["recentRace"];
+}
+
+/**
+ * Rebuild the active plan with a new goal distance, race date or reference race, keeping the
+ * athlete's other settings. With `apply: false` nothing is saved and the candidate plan is returned
+ * for review. With `apply: true` it replaces the active plan, which is archived. `expectedRevision`
+ * makes a plan that changed in the meantime a conflict.
+ */
+export async function rebuildPlan(
+  db: DB,
+  userId: string,
+  changes: PlanRebuildChanges,
+  opts: { apply: boolean; today: string; expectedRevision?: number },
+): Promise<{ saved: SavedPlan | null; plan: Plan; warnings: PlanIssue[] }> {
+  const current = await getActivePlan(db, userId);
+  if (!current) throw new PlanEditError("The athlete has no active plan to rebuild.");
+  if (opts.expectedRevision !== undefined && opts.expectedRevision !== current.revision)
+    throw new PlanEditError(
+      `The plan changed (now revision ${current.revision}). Read it again before rebuilding.`,
+    );
+
+  const { goalDistanceKm: previousKm, ...previous } = current.plan.input;
+  const customKm = changes.goalDistanceKm ?? (changes.goal ? undefined : previousKm);
+  const input = PlanInputSchema.parse({
+    ...previous,
+    goal: customKm !== undefined ? goalForDistanceKm(customKm) : (changes.goal ?? previous.goal),
+    goalDistanceKm: customKm,
+    raceDate: changes.raceDate ?? previous.raceDate,
+    recentRace: changes.recentRace ?? previous.recentRace,
+    startDate: opts.today,
+  });
+
+  const coaching = await getCoachingProfile(db, userId);
+  const { preferences, constraints } = coaching.profile;
+  const allowHills = constraints.allowHills ?? preferences.allowHills;
+  const plan = personalizeGeneratedPlan(generatePlan(input, { allowHills }), coaching.profile);
+  const result = validatePlan(plan);
+  if (!result.ok) throw new PlanValidationError(result);
+  if (!opts.apply) return { saved: null, plan, warnings: result.warnings };
+  const saved = await savePlan(db, userId, plan);
+  return { saved, plan: saved.plan, warnings: saved.warnings };
 }
 
 /** Validate and save a plan as the user's active plan. The previous active plan is archived. */

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PlanEditError, validatePlan, type PlanInput } from "@/lib/plan";
 import { createDb, type DB } from "../db/client";
 import { user } from "../db/schema";
@@ -27,7 +27,9 @@ let db: DB;
 let hillsId: string;
 let easyId: string;
 
+// resolveChange reads the real clock; pin it to the fixture date so workouts are not "in the past"
 beforeAll(async () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-28T12:00:00Z") });
   db = await createDb("memory://");
   await db.insert(user).values([
     { id: "u1", name: "One", email: "one@example.com" },
@@ -198,4 +200,8 @@ describe("plan changes", () => {
       /No workout/,
     );
   });
+});
+
+afterAll(() => {
+  vi.useRealTimers();
 });

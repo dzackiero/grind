@@ -6,9 +6,12 @@ import {
   describeChanges,
   describeExercises,
   describeRunSteps,
+  CUSTOM_GOAL_MAX_KM,
+  CUSTOM_GOAL_MIN_KM,
   EditOpSchema,
   formatDuration,
   formatPace,
+  GoalSchema,
   workoutOneLine,
   type Plan,
 } from "@/lib/plan";
@@ -17,7 +20,7 @@ import type { DB } from "../db/client";
 import { getIntervalsStatus, listActivitiesBetween, listWellnessBetween } from "../intervals/sync";
 import { getWorkoutActuals } from "../intervals/workout-activities";
 import { listPendingChanges, proposeChanges, resolveChange, setCoachNotes } from "../plans/changes";
-import { getActivePlan } from "../plans/service";
+import { getActivePlan, rebuildPlan } from "../plans/service";
 import { getTimezone, todayIn } from "../profile/service";
 import { getCoachingProfile } from "../profile/coaching";
 import { STRENGTH_FOCUS_LABELS } from "@/lib/plan/strength-focus";
@@ -53,7 +56,7 @@ How to work:
 - A suggestion changes nothing by itself. Tell the athlete what you suggested and why. They accept it in the Grind app, or if they agree in this chat, call apply_plan_changes.
 - Never call apply_plan_changes unless the athlete has clearly said yes in this conversation.
 - Use write_coach_notes to explain why a session is in the plan or how to run it. Keep notes to a few sentences.
-- Completed workouts can't be changed. Race day can't be moved.
+- Completed workouts can't be changed. Race day can't be moved or edited with propose_plan_changes. To change the goal distance, the race date or the race result the paces come from, use rebuild_plan: call it with apply false first, show the athlete the new goal, paces and estimated finish, and call it with apply true only after they clearly agree. It replaces the plan with a freshly generated one; the old plan is archived.
 - Speak plainly, like a coach at the track: short sentences, give the reason with the instruction.`;
 
 const paceRange = (p: { minSecPerKm: number; maxSecPerKm: number }) =>
@@ -154,6 +157,8 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
             supportedStrengthFocuses: STRENGTH_FOCUS_LABELS,
             title: plan.title,
             goal: plan.goal,
+            goalDistanceKm: plan.input.goalDistanceKm ?? null,
+            recentRace: plan.input.recentRace ?? null,
             raceDate: plan.raceDate,
             daysToRace: Math.round((Date.parse(plan.raceDate) - Date.parse(today)) / 86_400_000),
             estimatedFinish: `${formatDuration(plan.estimatedRaceTimeSec.low)} to ${formatDuration(plan.estimatedRaceTimeSec.high)}`,
@@ -448,6 +453,71 @@ export function buildMcpServer({ db, userId, scopes }: McpContext) {
       },
       async ({ changeId }) =>
         guard(async () => text(await resolveChange(db, userId, changeId, "reject"))),
+    );
+
+    server.registerTool(
+      "rebuild_plan",
+      {
+        title: "Rebuild the plan for a new goal",
+        description:
+          "Change the goal distance (for example a 24 km race), the race date, or the recent race result the training paces come from, by generating a fresh plan that keeps the athlete's other settings. Use this when the goal itself is wrong; race day and pace zones can't be edited with propose_plan_changes. Call it first with apply false: nothing is saved and you get the new goal, paces, estimated finish and warnings to show the athlete. Call it again with apply true only after the athlete clearly agreed in this conversation. Applying replaces the active plan with a new template plan starting today and archives the old one, so tell the athlete that coach edits to the old plan are not carried over.",
+        inputSchema: z.object({
+          goalDistanceKm: z
+            .number()
+            .min(CUSTOM_GOAL_MIN_KM)
+            .max(CUSTOM_GOAL_MAX_KM)
+            .optional()
+            .describe("Custom goal distance in km, such as 24. Grind uses the closest template."),
+          goal: GoalSchema.optional().describe(
+            "A standard race instead of a custom distance: 5k, 10k, half or marathon.",
+          ),
+          raceDate: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional()
+            .describe("New race day, YYYY-MM-DD"),
+          recentRace: z
+            .object({
+              distanceM: z.number().min(1000).max(42195),
+              timeSec: z
+                .number()
+                .min(150)
+                .max(8 * 3600),
+            })
+            .optional()
+            .describe("A recent race or time trial the athlete ran. It sets the paces."),
+          apply: z
+            .boolean()
+            .default(false)
+            .describe("false previews only; true saves. Use true only after the athlete agreed."),
+          expectedRevision: z.number().int().min(1).optional(),
+        }),
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
+      },
+      async ({ apply, expectedRevision, ...changes }) =>
+        guard(async () => {
+          const { today } = await load();
+          const result = await rebuildPlan(db, userId, changes, { apply, today, expectedRevision });
+          const { plan } = result;
+          return text({
+            status: apply ? "rebuilt" : "preview",
+            title: plan.title,
+            goal: plan.goal,
+            goalDistanceKm: plan.input.goalDistanceKm ?? null,
+            raceDate: plan.raceDate,
+            weeks: plan.weeks.length,
+            estimatedFinish: `${formatDuration(plan.estimatedRaceTimeSec.low)} to ${formatDuration(plan.estimatedRaceTimeSec.high)}`,
+            fitnessScore: plan.fitnessScore,
+            paces: Object.fromEntries(
+              Object.entries(plan.paces).map(([zone, p]) => [zone, paceRange(p)]),
+            ),
+            warnings: result.warnings.map((w) => w.message),
+            ...(result.saved ? { planRevision: result.saved.revision } : {}),
+            next: apply
+              ? "The plan is rebuilt. Tell the athlete it's done and call get_plan to see the new weeks."
+              : "Nothing is saved yet. Show the athlete the goal, paces and estimated finish. Call rebuild_plan again with apply true only after they say yes.",
+          });
+        }),
     );
 
     server.registerTool(

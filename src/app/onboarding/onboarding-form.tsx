@@ -13,6 +13,7 @@ import {
   Leaf,
   Medal,
   Rocket,
+  Ruler,
   Sprout,
   Timer,
   Trophy,
@@ -36,7 +37,15 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { authClient } from "@/lib/auth-client";
-import { GOAL_TEMPLATES, RACE_DISTANCE_M, type PlanInput } from "@/lib/plan";
+import {
+  CUSTOM_GOAL_MAX_KM,
+  CUSTOM_GOAL_MIN_KM,
+  GOAL_TEMPLATES,
+  goalForDistanceKm,
+  goalLabel,
+  RACE_DISTANCE_M,
+  type PlanInput,
+} from "@/lib/plan";
 
 type Weekday = PlanInput["runDays"][number];
 const DAYS: { value: Weekday; short: string; long: string }[] = [
@@ -51,7 +60,9 @@ const DAYS: { value: Weekday; short: string; long: string }[] = [
 const dayOrder = (d: Weekday) => DAYS.findIndex((x) => x.value === d);
 
 interface FormState {
-  goal: PlanInput["goal"];
+  goal: PlanInput["goal"] | "custom";
+  /** Goal distance in km when `goal` is "custom" */
+  customKm: string;
   raceDate: string;
   noRace: boolean;
   experience: PlanInput["experience"];
@@ -178,6 +189,7 @@ export function OnboardingForm({
   const [name, setName] = useState(guestName ?? "");
   const [f, setF] = useState<FormState>({
     goal: "half",
+    customKm: "15",
     raceDate: "",
     noRace: false,
     experience: "intermediate",
@@ -192,11 +204,27 @@ export function OnboardingForm({
   });
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setF((prev) => ({ ...prev, [key]: value }));
-  const tpl = GOAL_TEMPLATES[f.goal];
+  const customKm = f.goal === "custom" ? Number(f.customKm) : undefined;
+  const validCustomKm =
+    customKm !== undefined &&
+    Number.isFinite(customKm) &&
+    customKm >= CUSTOM_GOAL_MIN_KM &&
+    customKm <= CUSTOM_GOAL_MAX_KM;
+  const templateGoal: PlanInput["goal"] =
+    f.goal !== "custom" ? f.goal : validCustomKm ? goalForDistanceKm(customKm) : "half";
+  const tpl = GOAL_TEMPLATES[templateGoal];
+  const goalName =
+    f.goal === "custom" && validCustomKm
+      ? goalLabel({ goal: templateGoal, goalDistanceKm: customKm })
+      : tpl.label;
   const greeting = guestName === null ? firstName : name.trim().split(" ")[0];
 
   function stepError(): string | null {
     switch (step) {
+      case 0:
+        if (f.goal === "custom" && !validCustomKm)
+          return `Enter a goal distance between ${CUSTOM_GOAL_MIN_KM} and ${CUSTOM_GOAL_MAX_KM} km.`;
+        return null;
       case 1:
         if (f.noRace) return null;
         if (!f.raceDate) return "Pick your race date, or choose no race.";
@@ -235,7 +263,8 @@ export function OnboardingForm({
     const sessions = f.strengthDays.length;
     const time = f.raceDistance !== "none" ? f.raceTimeSec : null;
     const input: PlanInput = {
-      goal: f.goal,
+      goal: templateGoal,
+      goalDistanceKm: customKm,
       raceDate: f.noRace ? undefined : f.raceDate,
       startDate: localToday(),
       experience: f.experience,
@@ -346,7 +375,36 @@ export function OnboardingForm({
                 title="Marathon"
                 description={`${GOAL_TEMPLATES.marathon.minWeeks}–${GOAL_TEMPLATES.marathon.maxWeeks} weeks. 42.2 km.`}
               />
+              <OptionCard
+                value="custom"
+                current={f.goal}
+                icon={Ruler}
+                tone="bg-primary text-primary-foreground"
+                title="Custom distance"
+                description="Any distance from 3 to 42.2 km, like a 15K or a 30K."
+              />
             </RadioGroup>
+            {f.goal === "custom" && (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="customKm">Goal distance (km)</Label>
+                <Input
+                  id="customKm"
+                  type="number"
+                  inputMode="decimal"
+                  min={CUSTOM_GOAL_MIN_KM}
+                  max={CUSTOM_GOAL_MAX_KM}
+                  step="any"
+                  value={f.customKm}
+                  onChange={(e) => set("customKm", e.target.value)}
+                />
+                {validCustomKm && (
+                  <p className="text-muted-foreground text-xs">
+                    Built like a {tpl.label} plan: {tpl.minWeeks}–{tpl.maxWeeks} weeks, with race
+                    pace set for {goalName}.
+                  </p>
+                )}
+              </div>
+            )}
           </>
         )}
 
@@ -369,7 +427,7 @@ export function OnboardingForm({
                   {weeksUntil(f.raceDate) > tpl.maxWeeks
                     ? `The plan will start ${tpl.maxWeeks} weeks before race day.`
                     : weeksUntil(f.raceDate) < tpl.minWeeks
-                      ? `That's short for a ${tpl.label}; ${tpl.minWeeks}+ weeks is better. The plan will stay conservative.`
+                      ? `That's short for a ${goalName}; ${tpl.minWeeks}+ weeks is better. The plan will stay conservative.`
                       : ""}
                 </p>
               )}

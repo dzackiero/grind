@@ -31,3 +31,10 @@ export {
   workoutOneLine,
   type ChangeLine,
 } from "./describe";
+export {
+  CUSTOM_GOAL_MAX_KM,
+  CUSTOM_GOAL_MIN_KM,
+  goalDistanceM,
+  goalForDistanceKm,
+  goalLabel,
+} from "./goal";

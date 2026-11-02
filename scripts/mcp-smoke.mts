@@ -308,6 +308,7 @@ const expected = [
   "apply_plan_changes",
   "discard_plan_changes",
   "write_coach_notes",
+  "rebuild_plan",
   "get_athlete_context",
   "validate_plan",
   "get_plan_diff",
@@ -634,6 +635,7 @@ check(
     ![
       "propose_plan_changes",
       "write_coach_notes",
+      "rebuild_plan",
       "update_workout",
       "bulk_update_workouts",
       "set_coaching_preferences",
