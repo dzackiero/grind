@@ -111,7 +111,11 @@ export default async function ProgressPage({
           </CardDescription>
         </CardHeader>
         <CardContent layout="stack" gap="5">
-          <RecordsGrid records={progress.records} goal={plan.goal} raceDate={plan.raceDate} />
+          <RecordsGrid
+            records={progress.records}
+            goal={plan.input.goalDistanceKm === undefined ? plan.goal : undefined}
+            raceDate={plan.raceDate}
+          />
           {progress.toCheck > 0 && (
             <div className="bg-secondary flex flex-col items-start gap-3 rounded-md p-3">
               <p className="text-muted-foreground text-sm">

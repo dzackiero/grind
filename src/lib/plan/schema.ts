@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { WEEKDAYS } from "./dates";
+import { CUSTOM_GOAL_MAX_KM, CUSTOM_GOAL_MIN_KM, goalForDistanceKm } from "./goal";
 
 /*
  * The plan format. Templates, Claude (through MCP) and the UI all speak this shape.
@@ -34,7 +35,14 @@ export const PaceZoneSchema = z.enum(["E", "M", "T", "I", "R", "race"]);
 
 export const PlanInputSchema = z
   .object({
+    /** Standard race, or the nearest one to `goalDistanceKm`, whose template shapes the plan. */
     goal: GoalSchema,
+    /** Custom goal distance in km. Paces, race day and labels use it instead of the standard race. */
+    goalDistanceKm: z
+      .number()
+      .min(CUSTOM_GOAL_MIN_KM, `Pick a goal distance of at least ${CUSTOM_GOAL_MIN_KM} km.`)
+      .max(CUSTOM_GOAL_MAX_KM, `Pick a goal distance of ${CUSTOM_GOAL_MAX_KM} km or less.`)
+      .optional(),
     /** Race day. Leave out for a "get fitter" plan of default length. */
     raceDate: isoDate.optional(),
     /** First day the athlete can train. Defaults to today. */
@@ -67,6 +75,12 @@ export const PlanInputSchema = z
     intensity: IntensitySchema,
   })
   .superRefine((v, ctx) => {
+    if (v.goalDistanceKm !== undefined && v.goal !== goalForDistanceKm(v.goalDistanceKm))
+      ctx.addIssue({
+        code: "custom",
+        path: ["goal"],
+        message: `A ${v.goalDistanceKm} km goal uses the ${goalForDistanceKm(v.goalDistanceKm)} template.`,
+      });
     if (new Set(v.runDays).size !== v.runDays.length)
       ctx.addIssue({ code: "custom", path: ["runDays"], message: "Each run day can appear once." });
     if (!v.runDays.includes(v.longRunDay))

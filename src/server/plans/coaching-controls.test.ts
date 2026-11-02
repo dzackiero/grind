@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDb, type DB } from "../db/client";
 import { user } from "../db/schema";
 import { setCoachingProfile } from "../profile/coaching";
@@ -11,7 +11,9 @@ let uid: string;
 let workoutId: string;
 let sequence = 0;
 const TODAY = "2026-10-28";
+// resolveChange reads the real clock; pin it to the fixture date so workouts are not "in the past"
 beforeAll(async () => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-28T12:00:00Z") });
   db = await createDb("memory://");
 });
 beforeEach(async () => {
@@ -229,4 +231,8 @@ describe("new plans without hills", () => {
     expect(runs.some((w) => w.type === "hills")).toBe(false);
     expect(runs.some((w) => w.title.endsWith("Hard Efforts"))).toBe(true);
   });
+});
+
+afterAll(() => {
+  vi.useRealTimers();
 });

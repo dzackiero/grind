@@ -8,13 +8,8 @@ import {
   weekdayOf,
   type Weekday,
 } from "./dates";
-import {
-  expectedGain,
-  paceZones,
-  predictRaceTime,
-  RACE_DISTANCE_M,
-  startingFitness,
-} from "./paces";
+import { expectedGain, paceZones, predictRaceTime, startingFitness } from "./paces";
+import { goalDistanceM, goalLabel } from "./goal";
 import {
   easyRun,
   finishRun,
@@ -209,7 +204,8 @@ export interface GenerateOptions {
 export function generatePlan(rawInput: PlanInput, options: GenerateOptions = {}): Plan {
   const input = PlanInputSchema.parse(rawInput);
   const tpl = GOAL_TEMPLATES[input.goal];
-  const goalDistance = RACE_DISTANCE_M[input.goal];
+  const goalDistance = goalDistanceM(input);
+  const label = goalLabel(input);
 
   // Plan length and dates
   let firstMonday = mondayOf(input.startDate);
@@ -285,7 +281,7 @@ export function generatePlan(rawInput: PlanInput, options: GenerateOptions = {})
     let longKm = 0;
     if (raceWeek) {
       workouts.push(
-        finishRun(raceDay(tpl.label, goalDistance, paces), id(raceDate, "race"), raceDate, paces),
+        finishRun(raceDay(label, goalDistance, paces), id(raceDate, "race"), raceDate, paces),
       );
     } else if (available.includes(input.longRunDay)) {
       longDay = input.longRunDay;
@@ -400,7 +396,7 @@ export function generatePlan(rawInput: PlanInput, options: GenerateOptions = {})
   return {
     version: 1,
     goal: input.goal,
-    title: `${tpl.label} Plan`,
+    title: `${label} Plan`,
     raceDate,
     startDate: effectiveStart,
     fitnessScore: Math.round(fitness * 10) / 10,
